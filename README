@@ -1,0 +1,79 @@
+	********************************************************************
+	********************************************************************
+					oEdtk v 0.3			08/04/2005 
+	********************************************************************
+	********************************************************************
+		
+	oEdtk IS A PROJECT FOR PRINTING PROCESSING specialized namespace for 
+	enhancement of data tracking and knowledge for industrial printing processing.
+
+	oEdtk is a group of methods that allow the user to quickly 
+	develop application for parsing data stream. Those methods allow
+	the user to prepare the data so that printing application build 
+	documents with these data.
+	
+	This module is a toolkit for developping parsing application
+	dedicated to DSC Compuset or Excel (and Latex in the future). 
+	You would create application by loading stream documentation (such as
+	Cobol CopyBooks). Developpers will customize their application. 
+	Then the core (basics functions) of this module is used by the 
+	applications to product documents such as mailings, invoices, banking 
+	statement, etc. 
+	
+	In the future, we would like to add a user interface.
+	You can contact us at edtk at free.fr 	or  	 daunay at users.sourceforge.net
+	https://sourceforge.net/projects/oedtk/
+
+	
+	
+	INSTALLATION
+	********************************************************************
+	
+	By now, copy this oEdtk directory and all its components in your 
+		\Perl\site\lib
+	
+	
+	CONTENT OF THIS ARCHIVE
+	********************************************************************
+	chaineLib.pm		this module is used by the application generator
+	COPYING			GNU GENERAL PUBLIC LICENSE
+	dataEdtk.pm		used for copy group analysis by the generator
+	logger.pm			this module is used to format log
+	objData.pm		module planned for data representation in analysis
+	prodEdtk.pm		methods used for parsing and printing production 
+	prodEdtkXls.pm		methods used for parsing and excel document production
+	README			this file
+	
+	
+	DEPENDENCIES
+	********************************************************************
+	Spreadsheet::WriteExcel		(for excel document only)
+	
+	
+	HISTORY
+	********************************************************************
+	version 0.30
+	Optimized for production version.
+
+	version 0.21
+	Production test version.
+
+	version 0.10
+	Functionnal version.
+
+	version 0.01
+	Original beta version.
+	
+	
+	COPYRIGHT AND LICENCE
+	********************************************************************
+	These modules are under GNU GENERAL PUBLIC LICENSE (see COPYING file)
+	 Everyone is permitted to copy and distribute verbatim copies
+	 of this license document, but changing it is not allowed.
+	You can use these modules as you want without any warranty.
+
+	You can contact us at edtk at free.fr 	or  	 daunay at users.sourceforge.net
+	https://sourceforge.net/projects/oedtk/
+
+
+	  		
