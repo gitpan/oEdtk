@@ -1,0 +1,11 @@
+lib/oEdtk/chaineLib.pm
+COPYING
+lib/oEdtk/dataEdtk.pm
+lib/oEdtk/logger.pm
+Makefile.PL
+MANIFEST
+MANIFEST.SKIP
+lib/oEdtk/objData.pm
+lib/oEdtk/prodEdtk.pm
+lib/oEdtk/prodEdtkXls.pm
+README

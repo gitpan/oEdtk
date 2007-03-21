@@ -29,9 +29,11 @@
 	INSTALLATION
 	********************************************************************
 	
-	By now, copy this oEdtk directory and all its components in your 
-		\Perl\site\lib
-	
+	perl Makefile.PL
+	make                # or 'nmake' on Win32
+	make test
+	make install
+
 	
 	CONTENT OF THIS ARCHIVE
 	********************************************************************

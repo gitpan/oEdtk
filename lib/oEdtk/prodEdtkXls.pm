@@ -5,12 +5,12 @@ use strict;
 BEGIN{
 		use Exporter   ();
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-		$VERSION 	=0.16; 				# 08/04/2005 11:18:58
+		$VERSION 	=0.31; 				
 		@ISA 	= qw(Exporter);
 		@EXPORT 	= qw( prod_Xls_Init 	prod_Xls_Insert_Val
 					 prod_Xls_Col_Init 	prod_Xls_Edit_Ligne
 					);
-		@EXPORT_OK= qw( prod_Xls_Close );
+		@EXPORT_OK= qw( prod_Xls_Close);
 	}
 
 
@@ -263,19 +263,34 @@ our $local_ref_workbook;
 		return $statut, $XLSROW;
 	}
 
-	sub 	prod_Xls_Close {
-		# EDITION EVENTUELLE DE LA DERNIERE LIGNE ET PURGE DU TAMPOn
+	sub 	prod_Xls_Close(;$$) {
+		my $fi =shift;
+		# EDITION EVENTUELLE DE LA DERNIERE LIGNE ET PURGE DU TAMPON
 		prod_Xls_Edit_Ligne();
+		
 		# ON INDIQUE LA LISTE DES FICHIERS EXCEL PRODUITS
 		print @tabListeXls;
 		${$local_ref_workbook}->close() or die "Error closing file: $!";
+
+		if ($fi) {
+			close (IN)  or die "echec a la fermeture de $fi, code retour $!\n";
+		}
+		
+		undef $local_ref_workbook;
+	1;
 	}
 	
 }
 
+sub prod_Xls_Open ($;$){ # GESTION E/S DANS LE CONTEXTE DE PRODUCTION EXCEL
+	my $fi =shift;
+	open (IN,  "$fi")	or die "echec a l'ouverture de $fi, code retour $!\n";
+
+1;
+}
+
 
 END {
-	prod_Xls_Close();
-	undef $local_ref_workbook;
+	prod_Xls_Close() if ($local_ref_workbook);
 }
 1;
