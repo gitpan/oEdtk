@@ -37,14 +37,21 @@
 	
 	CONTENT OF THIS ARCHIVE
 	********************************************************************
-	chaineLib.pm		this module is used by the application generator
-	COPYING			GNU GENERAL PUBLIC LICENSE
-	dataEdtk.pm		used for copy group analysis by the generator
-	logger.pm			this module is used to format log
-	objData.pm		module planned for data representation in analysis
-	prodEdtk.pm		methods used for parsing and printing production 
-	prodEdtkXls.pm		methods used for parsing and excel document production
-	README			this file
+	COPYING					GNU GENERAL PUBLIC LICENSE
+	Makefile.PL				Makefile for installation
+	MANIFEST					Manifest for l'installation
+	MANIFEST.SKIP				Skip files
+	README					this file
+	\lib\oEdtk\chaineLib.pm		this module is used by the application generator
+	\lib\oEdtk\dataEdtk.pm		used for copy group analysis by the generator
+	\lib\oEdtk\logger.pm		this module is used to format log
+	\lib\oEdtk\objData.pm		module planned for data representation in analysis
+	\lib\oEdtk\prodEdtk.pm		mains methods used for parsing and printing production
+	\lib\oEdtk\prodEdtkXls.pm	methods used for parsing and excel document production
+	\t\test.t					test plan for installation
+	\t\test_fixe_oEdtk.pl		simple test application for installation
+	\t\cp_fr_fixe.dat			test file for simple Excel test
+	\t\cp_fr.dat				test file for simple Excel test 2 (planned)
 	
 	
 	DEPENDENCIES

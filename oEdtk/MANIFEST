@@ -1,11 +1,15 @@
-lib/oEdtk/chaineLib.pm
+README
 COPYING
 lib/oEdtk/dataEdtk.pm
 lib/oEdtk/logger.pm
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
+lib/oEdtk/chaineLib.pm
 lib/oEdtk/objData.pm
 lib/oEdtk/prodEdtk.pm
 lib/oEdtk/prodEdtkXls.pm
-README
+t/test_fixe_oEdtk.pl
+t/cp_fr_fixe.dat
+t/test.t
+

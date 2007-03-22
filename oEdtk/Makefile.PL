@@ -11,14 +11,19 @@ use ExtUtils::MakeMaker;
 
 # write makefile
 WriteMakefile(
-			  NAME         => 'oEdtk',
-			  VERSION_FROM => 'lib/oEdtk/prodEdtk.pm',
-                          PREREQ_PM    => {
-                          				Spreadsheet::WriteExcel => 1.0,
-                                          },
-			  dist         => {
-			                   COMPRESS => 'gzip -9',
-			                   SUFFIX   => 'tar.gz',
-					  },
-			 );
+		NAME         => 'oEdtk',
+		VERSION_FROM => 'lib/oEdtk/prodEdtk.pm',
+		PREREQ_PM    => {
+					Spreadsheet::WriteExcel => 1.0,
+				},
+		
+		dist         => {
+					COMPRESS => 'gzip -9',
+					SUFFIX   => 'tar.gz',
+				},
+				
+		);
+
+1;
+
 

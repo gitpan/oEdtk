@@ -4,7 +4,7 @@ use strict;
 BEGIN{
 		use Exporter   ();
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-		$VERSION 	=0.31;
+		$VERSION 	=0.31.1;
 		@ISA 	= qw(Exporter);
 		@EXPORT 	= qw(trtEdtkEnr trtEdtk_Add_Value maj_sans_accents
 					mntSignX date2time nowTime toC7date toDate
@@ -239,10 +239,12 @@ sub prodEdtkClose ($$){
 }
 
 sub prodEdtkAppUsage() {
+	my $app="";
 	$0=~/([\w-]+\.pl$)/;
+	$1 ? $app=$1 : $app="";
 	print STDOUT << "EOF";
 
-	Usage : [perl] $1 <fichier_entree> <fichier_sortie>
+	Usage : [perl] $app <fichier_entree> <fichier_sortie>
 EOF
 exit 0;
 }
