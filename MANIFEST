@@ -13,3 +13,4 @@ t/test_fixe_oEdtk.pl
 t/cp_fr_fixe.dat
 t/test.t
 
+META.yml                                 Module meta-data (added by MakeMaker)
