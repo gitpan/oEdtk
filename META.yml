@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                oEdtk
-version:             0.312
+version:             0.314
 abstract:            ~
 license:             ~
 generated_by:        ExtUtils::MakeMaker version 6.32

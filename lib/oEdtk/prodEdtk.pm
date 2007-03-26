@@ -4,7 +4,7 @@ use strict;
 BEGIN{
 		use Exporter   ();
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-		$VERSION 	=0.312;
+		$VERSION 	=0.314;
 		@ISA 	= qw(Exporter);
 		@EXPORT 	= qw(trtEdtkEnr trtEdtk_Add_Value maj_sans_accents
 					mntSignX date2time nowTime toC7date toDate
@@ -41,7 +41,7 @@ BEGIN{
 		$lenData||="";
 
 		if ($motifs{$typEnr} eq "-1") {
-			print STDERR "INFO trtEdtkEnr() > LIGNE >$typEnr< (offset $offset) INCONNUE\n";
+			print STDERR "INFO trtEdtkEnr() > LIGNE $. >$typEnr< (offset $offset) INCONNUE\n";
 			#${$rLigne}=$C7r.${$rLigne};
 			return 0;
 		}
@@ -56,7 +56,7 @@ BEGIN{
 		${$rLigne}=~s/^.{$offset}(.{1,$lenData}).*/$1/o if ($offset > 0);
 		
 		# ECLATEMENT DE L'ENREGISTREMENT EN CHAMPS
-		@DATATAB =unpack ($motifs{$typEnr},${$rLigne}) or die "echec dans l'extraction de l'enregistrement type $typEnr";
+		@DATATAB =unpack ($motifs{$typEnr},${$rLigne}) or die "echec dans l'extraction de l'enregistrement $. type $typEnr";
 		
 		# STEP 1 : EVAL TRAITEMENT CHAMPS
 		&{$evalSsTrt{$typEnr}[1]} if $evalSsTrt{$typEnr}[1];
@@ -64,7 +64,7 @@ BEGIN{
 		# STRUCTURATION DE L'ENREGISTREMENT POUR SORTIE
 		if ($ouTags{$typEnr} ne "-1"){
 			${$rLigne}  ="${C7o}a${typEnr}${C7c}";
-			${$rLigne} .=sprintf ($ouTags{$typEnr},@DATATAB) or die "echec dans le formatage de l'enregistrement type $typEnr";;
+			${$rLigne} .=sprintf ($ouTags{$typEnr},@DATATAB) or die "echec dans le formatage de l'enregistrement $. type $typEnr";;
 			${$rLigne} .="${C7o}e${typEnr}${C7c}";
 		} else {
 			${$rLigne}="";
