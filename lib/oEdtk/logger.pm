@@ -3,15 +3,14 @@ package oEdtk::logger;
 BEGIN {
 		use Exporter   ();
 		use vars       qw($VERSION @ISA @EXPORT @EXPORT_OK);
-		# On défini une version pour les vérifications
-		$VERSION     =1.03; 			#05/04/2005 16:14:13
+
+		$VERSION     =1.0323;
 		@ISA         = qw(Exporter);
 		@EXPORT      = qw(logger);
 		@EXPORT_OK   = qw($LOGGERLEVEL);
 
 		use POSIX qw(strftime);
-}
-use vars      @EXPORT_OK;
+	}
 
 	$LOGGERLEVEL =4;
 

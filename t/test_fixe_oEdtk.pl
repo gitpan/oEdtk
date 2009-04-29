@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-use oEdtk::prodEdtk	0.31.1; 
-use oEdtk::prodEdtkXls	0.31;
+use oEdtk::prodEdtk		0.42; 
+use oEdtk::prodEdtkXls;
 
 #################################################################################
 # CORPS PRINCIPAL DE L'APPLICATION :
@@ -8,17 +8,17 @@ use oEdtk::prodEdtkXls	0.31;
 
 sub run() {
 	# OUVERTURE DES FLUX
-	fXlsOpen("cp_fr_fixe.dat");
+	&fXlsOpen("cp_fr_fixe.dat"); # A REMPLACER CF PACKAGE
 
 	# INITIALISATION ET CARTOGRAPHIE DE L'APPLICATION
-	initApp();
+	&initApp();
 	# INITIALISATION PROPRE AU DOCUMENT
-	initDoc();
+	&initDoc();
 
-	while (my $ligne=<IN>) {
+	while (my $ligne=<IN> && $.<2000 ) {
 		chomp ($ligne);
 
-		if 		(trtEdtkEnr('X',\$ligne,0,)){
+		if 		(trtEdtkEnr('X',$ligne,0,)){
 				# FIN traitement enregistrement 
 
 		} else {
@@ -38,9 +38,9 @@ sub run() {
 sub initApp{
 	# DECLARATIONS DES VARIABLES PROPRES A L'APPLICATION
 
-	# CARTOGRAPHIE APPLICATIVE v 20070320-153834
-	$motifs{'X'}='A13 A35 A11 A8 A*';
-	$evalSsTrt{'X'}[1]=\&trtEnr;
+	# CARTOGRAPHIE APPLICATIVE 
+	recEdtk_motif 		('X', 'A13 A35 A11 A8 A*');
+	recEdtk_process	('X', \&trtEnr);
 
 1;
 }
@@ -92,7 +92,7 @@ sub trtEnr() {
 1;
 }
 
-sub fXlsOpen ($){ #nouveau en test
+sub fXlsOpen ($){  # A REMPLACER CF PACKAGE
 	my $fi =shift;
 
 	open (IN,  "$fi")	or die "echec a l'ouverture de $fi, code retour $!\n";

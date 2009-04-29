@@ -1,10 +1,8 @@
 	***************************************************************************
 	***************************************************************************
-				- oEdtk - 			(see README in oEdtk directory)
+						oEdtk v 0.417			22/04/2009  
 	***************************************************************************
 	***************************************************************************
-
-	You can find complete README and COPYING in ./lib/oEdtk
 		
 	oEdtk IS A PROJECT FOR PRINTING PROCESSING specialized namespace for 
 	enhancement of data tracking and knowledge for industrial printing 
@@ -44,6 +42,75 @@
 	make test
 	make install
 	make clean
+	
+	
+	CONTENT OF THIS ARCHIVE
+	***************************************************************************
+	/lib/oEdtk.pm					main module dedicated for documentation
+	/lib/oEdtk/libEdtkC7.pm			methods for DSC Compuset integration
+	/lib/oEdtk/libEdtkDev.pm			general methods for developpements only
+	/lib/oEdtk/prodEdtk.pm			main methods used for production
+	/lib/oEdtk/prodEdtkXls.pm		methods used for excel docs production
+	/lib/oEdtk/trackEdtk.pm			module planned for production statistics
+	/lib/oEdtk/tuiEdtk.pm			text user interface for libEdtkDev
+	/lib/oEdtk/iniEdtk/tplate.edtk.ini	main configuration file template
+	/lib/oEdtk/logger.pm			module for logging (could be replaced by Log4perl)
+	/lib/oEdtk/dataEdtk.pm			Tests - copy group analysis for generator
+	/lib/oEdtk/README				this file
+	/lib/oEdtk/COPYING				GNU GENERAL PUBLIC LICENSE
+
+	/t/test.t						test plan for installation
+	/t/test_fixe_oEdtk.pl			simple test application for installation
+	/t/cp_fr_fixe.dat				test file for simple Excel test
+	/t/cp_fr.dat					test file for simple Excel test 2 (planned)
+
+	Makefile.PL					Makefile for installation
+	MANIFEST						Manifest for installation
+	MANIFEST.SKIP					Skip files
+	README						extract of this file
+
+
+	PLANNED
+	***************************************************************************
+	/lib/oEdtk/objData.pm			Tests - data representation in analysis
+
+	
+	DEPENDENCIES
+	***************************************************************************
+
+	Config::IniFiles		(for develoments and tracking)
+	DBI					(for tracking)
+
+	Term::ReadKey			(for developments only - used for tuiEdtk)
+
+	Spreadsheet::WriteExcel	(for excel document only)
+	OLE::Storage_Lite		(for Spreadsheet::WriteExcel only)
+	Parse::RecDescent		(for Spreadsheet::WriteExcel only)
+
+	
+	HISTORY
+	***************************************************************************
+	version 0.400
+		File configuration for developpements
+		Developpement application launcher
+		Integration of DSC Compuset launcher
+		Beta text user interface for developpements
+		Records methods for production
+		Excel file spliting
+		tracking module
+		Documentation
+	
+	version 0.30
+		Optimized for production version.
+
+	version 0.21
+		Production test version.
+
+	version 0.10
+		Functionnal version.
+
+	version 0.01
+		Original beta version.
 	
 	
 	COPYRIGHT AND LICENCE
