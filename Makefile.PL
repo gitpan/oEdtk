@@ -12,7 +12,7 @@
 
 
 BEGIN {
-    require 5.8.9;
+    require 5.8.8;
 }
 
 

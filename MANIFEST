@@ -1,6 +1,7 @@
 lib/oEdtk.pm
 lib/oEdtk/README
 lib/oEdtk/COPYING
+lib/oEdtk/dataEdtk.pm
 lib/oEdtk/logger.pm
 lib/oEdtk/libEdtkC7.pm
 lib/oEdtk/libEdtkDev.pm

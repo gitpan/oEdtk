@@ -1,23 +1,17 @@
 --- #YAML:1.0
-name:               oEdtk
-version:            0.41776
-abstract:           ~
-author:  []
-license:            unknown
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Config::IniFiles:     2.3
-    DBI:                  1.6
-    Spreadsheet::WriteExcel:  1
-    Sys::Hostname:        Digest::MD5
-    Term::ReadKey:        POSIX
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.4801
+name:                oEdtk
+version:             0.42
+abstract:            ~
+license:             ~
+author:              ~
+generated_by:        ExtUtils::MakeMaker version 6.44
+distribution_type:   module
+requires:     
+    Config::IniFiles:              2.3
+    DBI:                           1.6
+    Spreadsheet::WriteExcel:       1
+    Sys::Hostname:                 Digest::MD5
+    Term::ReadKey:                 POSIX
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3
