@@ -8,7 +8,7 @@ BEGIN {
 		use Term::ReadKey;
 		use oEdtk::trackEdtk	qw(env_Var_Completion);
 
-		$VERSION		= 0.0023;
+		$VERSION		= 0.0025;
 		@ISA			= qw(Exporter);
 		@EXPORT		= qw(
 						clear_Screen	start_Screen	stop_Screen
@@ -297,13 +297,17 @@ sub VCS_merge() {
 1;
 }
 
-sub VCS_commit() {
+sub VCS_commit(;$) {
+	my $comment=shift;
+	$comment||="";
+	
 	# potentiellement problème de localisation de la branch, si execution en dehors de la branche
 	my $base	=$ENV{EDTK_DIR_BASE};
 	env_Var_Completion($base);
 	chdir $base;
 
 	my @args	=("bzr", "commit");
+	if ($comment ne "") { push (@args, "-m $comment");}
 
 	eval {
 		system(@args);
@@ -315,18 +319,20 @@ sub VCS_commit() {
 		return $?;
 	}
 
-	&VCS_merge();
+	#&VCS_merge();
 	&readKey_Wait();
 1;
 }
 
 sub VCS_missing() {
 	# potentiellement problème de localisation de la branch, si execution en dehors de la branche
-	my $base	=$ENV{EDTK_DIR_BASE};
+	my $other_branch	=$ENV{EDTK_VCS_LOCATION};
+	env_Var_Completion($other_branch);
+	my $base			=$ENV{EDTK_DIR_BASE};
 	env_Var_Completion($base);
 	chdir $base;
 
-	my @args	=("bzr", "missing");
+	my @args	=("bzr", "missing", $other_branch);
 
 	eval {
 		system(@args);
@@ -351,7 +357,7 @@ sub VCS_add() {
 	env_Var_Completion($base);
 	chdir $base;
 
-	my @args	=("bzr", "add", "--dry-run", "--quiet");
+	my @args	=("bzr", "add", "--dry-run");
 
 	eval {
 		system(@args);
@@ -382,9 +388,8 @@ sub VCS_add() {
 			return $?;
 		}
 		print "Screen refresh";
-		&readKey_Wait();
-
 	}
+	&readKey_Wait();
 1;
 }
 
@@ -456,6 +461,37 @@ sub VCS_log() {
 		return $?;
 	}
 
+sub VCS_rename() {
+	my $wait =10*$ENV{EDTK_WAITRUN};
+
+	my $base	=$ENV{EDTK_DIR_BASE};
+	my $oldname=$ENV{EDTK_DIR_DEVSCRPT}."\\".$ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_TEST};
+	my $newname=$ENV{EDTK_DIR_DEVSCRPT}."\\".$ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_HOMOL};
+	my @extension;
+	
+	push (@extension, $ENV{EDTK_EXT_PERL});
+	push (@extension, $ENV{EDTK_EXT_COMSET});
+	push (@extension, $ENV{EDTK_EXT_LATEX});
+
+	env_Var_Completion($oldname);
+	env_Var_Completion($newname);
+	env_Var_Completion($base);
+	chdir $base;
+
+	foreach my $ext (@extension) {
+		my @args	=("bzr", "move", "$oldname.$ext", "$newname.$ext", "--quiet");	
+		eval {
+			system(@args);
+		};
+
+		if ($?){
+			return $?;
+		}
+	}
+	&readKey_Wait();
+1;
+}
+
 
 sub delivery_Screen {
 	if ($ENV{EDTK_PRGNAME} eq "" or $ENV{EDTK_DIR_BASE} eq "") {not_Configured();}
@@ -477,7 +513,7 @@ Application	$ENV{EDTK_PRGNAME}
 	<A> moving from development to tests for Approval : 
 		from $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_TEST} to $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_HOMOL}
 
-	<P> delivering approved applications to Production : 
+	<P> delivering approved applications to Production : (planned)
 		from $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_HOMOL} to $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_PROD}
 
 	<B> back	<Q> quit
@@ -489,8 +525,8 @@ EOF
 	$key ||="";
 	
 	if		($key =~/A/i) {
-		print "planned...";
-		#&VCS_commit();
+		&VCS_rename();
+		&VCS_commit ("move $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_TEST} to $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_HOMOL}");
 
 	} elsif	($key =~/P/i) {
 		print "planned...";
@@ -546,3 +582,6 @@ END {}
 #    use lib '/mydir/perl/lib';
 
 # =end comment
+
+
+#perl -d:ptkdb

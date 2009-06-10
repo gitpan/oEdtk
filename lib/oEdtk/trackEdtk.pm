@@ -11,7 +11,7 @@ BEGIN {
 		use Exporter;
 		use vars 	qw($VERSION @ISA  @EXPORT_OK); # @EXPORT %EXPORT_TAGS);
 	
-		$VERSION		= 0.0029;
+		$VERSION		= 0.0030;
 		@ISA			= qw(Exporter);
 #		@EXPORT		= qw(
 #						);
@@ -350,8 +350,12 @@ sub define_Track_Key ($;$) {
 	my $value	 =shift;
 	my $indice =shift;
 	$indice 	||=0;
-	
-	if ($indice gt ($ENV{EDTK_MAX_USER_KEY}-1)) { 
+
+	if (!defined $ENV{EDTK_MAX_USER_KEY}) {	
+		warn "WARN : tracking key undefined\n";
+		return 0;
+
+	} elsif ($indice gt ($ENV{EDTK_MAX_USER_KEY}-1)) { 
 		warn "WARN : tracking key not allowed (limit is $ENV{EDTK_MAX_USER_KEY})\n";
 		return 0;
 	}

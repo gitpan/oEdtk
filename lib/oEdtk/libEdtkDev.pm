@@ -19,7 +19,7 @@ BEGIN {
 		use strict;
 		use warnings;
 
-		$VERSION	= 0.3116;
+		$VERSION	= 0.3120;
 		@ISA		= qw(Exporter);
 		@EXPORT		= qw(
 					$NOK
@@ -31,7 +31,7 @@ BEGIN {
 		@EXPORT_OK	= qw(
 					check_EDTK_DIR 	wait_Enter
 					tree_Directory_Completion
-					clean_full_dir
+					clean_full_dir		file_list
 					)
 #					catSp
 	}
@@ -399,6 +399,65 @@ sub clean_full_dir ($;$){
 	#close OUT;
 
 1;
+}
+
+sub file_list ($$;$){
+	my ($key, @listRep, @listFile);
+	my $membre	=shift;
+	my $motif	=shift;
+	my $opt	=shift;
+	$opt ||="";
+	
+
+	# gestion des séparateurs de répertoire
+	# le séparateur standard perl (sous *nix / windows ...) -> /
+	$membre.="/";
+	# le séparateur fourni sous Dos est converti \ -> /
+	$membre =~s/\\+/\//g;
+	# suppression des répétitions /+ -> /
+	$membre =~s/\/+/\//g;
+	
+	unshift (@listRep, $membre);
+
+	$key =pop @listRep;
+	ITEMS: for (;$key;){
+		# comme listRep est interactif foreach ne tient pas compte des valeurs ajoutees dans listRep
+		# print "path= <$key> < \@listRep=>@listRep<\n";
+
+		eval {
+			opendir(DIR, $key);
+		};
+	     if ($?){
+			warn " WARNING opendir(DIR, $key) return $?\n";
+			next ITEMS ;
+		}
+
+		$membre= readdir(DIR);
+		for (;$membre;){
+			if ($membre ne "." && $membre ne ".."){
+				# si le membre est un repertoire
+				if (-d $key.$membre){
+					# print "$key$membre \t (repertoire)\n";
+					push (@listRep, "$key$membre/");
+
+				} else {
+					my $file =$key.$membre;
+					# print "$file\n";
+					if ($file =~m{$motif}){
+						push (@listFile, $file);
+					}
+				} #fin de if
+			} #fin de if
+			$membre= readdir(DIR);
+		} #fin de for
+
+		closedir DIR;
+		$key =pop @listRep;
+	} #fin de for
+
+	#close OUT;
+
+return @listFile;
 }
 
 	

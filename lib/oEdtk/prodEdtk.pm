@@ -4,7 +4,7 @@ use strict;
 BEGIN{
 		use Exporter ();
 		use vars 	qw($VERSION @ISA @EXPORT); # @EXPORT_OK %EXPORT_TAGS);
-		$VERSION 	=0.421;
+		$VERSION 	=0.422;
 		@ISA 	= qw(Exporter);
 		@EXPORT 	= qw(
 					prodEdtk_Current_Rec
@@ -13,6 +13,9 @@ BEGIN{
 					prodEdtkOpen		prodEdtkClose
 					fiEdtkOpen		foEdtkOpen
 					foEdtkClose		prodEdtkAppUsage
+
+					parse_data_spool
+					set_C7_number		emit_C7		emit_C7_number
 
 					maj_sans_accents	mntSignX		mnt2txtUS
 					date2time			nowTime		toDate
@@ -282,6 +285,54 @@ BEGIN{
 	}
 
 
+sub parse_data_spool(&) {
+	# traitement de spool ligne à ligne
+	# reçoit en paramètre la référence à la fonction d'analyse des lignes de données
+	# cette fonction doit accepter les paramètres suivants :
+	#  sub process($$$$\%) {
+	# 	my ($resource, $jump, $dataline, $numln, $state) = @_;
+
+	#  sub process(\$) {
+	# 	my ($resource, $jump, $ref_line, $numln, $state) = @_;
+
+	
+	my ($processfn) = @_;
+	# Read the input file line by line.
+	my $inres;
+	my $numln;
+	my %state = ();
+	while (<IN>) {
+		chomp;
+		if (length $_ == 0) {
+			warn "INFO : line $. is empty\n";
+			next;
+		}
+
+		# Get the first 4 characters.
+		die "ERROR : unexpected line format : \"$_\" at line $.\n"
+		    unless $_ =~ /^(.{4})(.*)$/;
+		my ($header, $data) = ($1, $2);
+
+		if ($header =~ /^(\d{3}) $/) { # Cas numéro 1.
+			$inres = $1;
+			# Reset state for this resource.
+			$numln = 1;
+			%state = ();
+			$processfn->($inres, undef, $data, 1, \%state);
+		} elsif ($header =~ /^   (\d)$/) { # Cas numéro 2.
+			my $jump = $1;
+			if (!defined $inres) {
+				die "ERROR : got seal while not in a resource at line $.\n";
+			}
+			$processfn->($inres, $jump, $data, ++$numln, \%state);
+		} else {
+			die "ERROR : unexpected line header: \"$header\" at line $.\n";
+		}
+	}
+}
+
+
+
 sub mnt2txtUS (\$){
 	# traitement des montants au format Texte
 	# le séparateur de décimal "," est transformé en "." pour les commandes de chargement US / C7
@@ -388,6 +439,40 @@ sub toDate(\$) {
 	${$refVar}||="";
 	${$refVar}=~s/(\d{4})(\d{2})(\d{2})(.*)/$3\/$2\/$1/o;
 1;
+}
+
+
+# The newlines are important here, otherwise if you consume too much
+# input in Compuset and don't process it right away, you'll get bogus
+# errors at character count 16384.
+sub emit_C7($;$) {
+	my ($name, $val) = @_;
+	if (defined $val) {
+		print OUT "<#$name=$val>\n";
+	} else {
+		print OUT "<$name>\n";
+	}
+1;
+}
+
+sub emit_C7_number($$) {
+	my ($name, $mnt) = @_;
+	emit_C7($name, set_C7_number($mnt));
+}
+
+
+sub set_C7_number($) {
+	my $mnt = shift;
+	$mnt =~ s/\s+//;
+	mnt2txtUS($mnt);
+	if ($mnt != 0) {
+		$mnt = "<SET>$mnt<EDIT>";
+	} else {
+		# Some lines have optional amounts and we don't want
+		# to print 0,00 in that case.
+		$mnt = '';
+	}
+	return $mnt;
 }
 
 sub toC7date(\$) {

@@ -7,13 +7,14 @@ BEGIN{
 
 		use Exporter ();
 		use vars 			qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-		$VERSION 	=0.4625; 				
+		$VERSION 	=0.4626; 				
 		@ISA 	= qw (Exporter);
 		@EXPORT 	= qw (prod_Xls_Init 		prod_Xls_Insert_Val
 					 prod_Xls_New			
 					 prod_Xls_Col_Init		prod_Xls_Edit_Ligne
 					 prod_Xls_Row_Height	prod_Xls_Add_Sheet
 					 prod_Xls_Close		prod_Xls_Liste_Output
+					 %XLS_FORMAT
 					);
 	}
 
@@ -30,7 +31,7 @@ my $LOCAL_REF_WORKBOOK;
  my $FNTSZ2 =10;
  my $FNTSZ3 = 8; 
  my $SHEET  = 0; 
- my %XLS_FORMAT;
+ our %XLS_FORMAT;
 
  my @TAB_VALUE;
  my @TAB_HEAD;
@@ -186,7 +187,7 @@ my $LOCAL_REF_WORKBOOK;
 		my $col 		=0; 					# CETTE VARIABLE PERMET DE REPARTIR DE LA PREMIÈRE COLONNE DANS LALIGNE
 		my $format_unique =0;
 		if ($format) {
-			 $format_unique =1;
+			 $format_unique = 1;
 		}
 
 		if ($f_tete_Col eq "HEAD"){
@@ -230,12 +231,21 @@ my $LOCAL_REF_WORKBOOK;
 					&prod_Xls_New();
 				}
 
-			} elsif ($format=~/^N/){
-				$worksheet  ->write_number($XLSROW, $col, $valeur, $XLS_FORMAT{$format});
+			} elsif (ref $format eq 'HASH') {
+				# enrichissement du format de mise en forme de la cellule
+				# attention les valeurs modifiées ne sont pas sauvegardées
+				my $xlsfmt = ${$LOCAL_REF_WORKBOOK}->add_format();
+				if ($TAB_COL_SIZE[$col][0]) {
+					$xlsfmt->copy($XLS_FORMAT{$TAB_COL_SIZE[$col][0]});
+				}
+				$xlsfmt->set_format_properties(%$format);
+				$worksheet->write($XLSROW, $col, $valeur, $xlsfmt);
 				$col++;
-
+			} elsif ($format =~ /^N/) {
+				$worksheet->write_number($XLSROW, $col, $valeur, $XLS_FORMAT{$format});
+				$col++;
 			} else {
-				$worksheet ->write_string($XLSROW, $col, $valeur, $XLS_FORMAT{$format});
+				$worksheet->write_string($XLSROW, $col, $valeur, $XLS_FORMAT{$format});
 				$col++;
 			}
 		}
@@ -350,6 +360,7 @@ my $LOCAL_REF_WORKBOOK;
 		$XLS_FORMAT{'NL'} ->set_num_format('# ### ##0.00'); # UN MONTANT DOIT ÊTRE PASSÉ AU FORMAT US
 		$XLS_FORMAT{'NL'} ->set_align('left');
 		$XLS_FORMAT{'NL'} ->set_border(1);
+
 	1;
 	}
 	
