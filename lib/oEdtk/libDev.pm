@@ -1,17 +1,18 @@
-package oEdtk::libEdtkDev ;
+package oEdtk::libDev ;
 
-# se renseigner sur 
 #[JW for editor]:mode=perl:tabSize=8:indentSize=2:noTabs=true:indentOnEnter=true:
 #
 
 BEGIN {
-		use oEdtk::logger		1.031;
-		use oEdtk::prodEdtk		0.42;
+		use oEdtk::logger	1.032;
+		use oEdtk::Main	0.42;
 		use oEdtk::trackEdtk 	qw (ini_Edtk_Conf conf_To_Env env_Var_Completion);
 		use Config::IniFiles;
+		# use File::Copy; 	# a prevoir pour mettre le dev dans le contexte de la prod
 		use File::Basename;
+		use Date::Calc 		qw(Gmtime Today Compress);
 
-		require oEdtk::libEdtkC7;
+		require oEdtk::libC7;
 		require oEdtk::tuiEdtk;
 
 		use Exporter;
@@ -19,19 +20,22 @@ BEGIN {
 		use strict;
 		use warnings;
 
-		$VERSION	= 0.3120;
+		$VERSION	= 0.3126;
 		@ISA		= qw(Exporter);
 		@EXPORT		= qw(
 					$NOK
 					run_Edtk_dev
 					IdUniqueSur7
-					lastLong 	lastCourt         delSp
+					lastLong
+					lastCourt
+					delSp
 					);
 
 		@EXPORT_OK	= qw(
 					check_EDTK_DIR 	wait_Enter
 					tree_Directory_Completion
 					clean_full_dir		file_list
+					prep_Edtk_Data
 					)
 #					catSp
 	}
@@ -58,7 +62,7 @@ sub check_EDTK_DIR () {
 }
 
 sub tree_Directory_Completion ($){
-	# complète si nécessaire l'arborescence complète du chemin passé en paramètre
+	# complète si nécessaire l'arborescence entière du chemin passé en paramètre
 	# en créant les répertoires du chemin transmis en paramètre
 	my $tree=shift;
 	#print $tree."\n";
@@ -72,7 +76,7 @@ sub tree_Directory_Completion ($){
 			if 		(-e $tree){
 			} elsif 	(-d $tree){		
 			} else {
-				print "-> mkdir, create $tree\n";
+				warn "-> mkdir, create $tree\n";
 				eval {
 					mkdir $tree;
 				} ; die "ERR. mkdir $tree  $@" if $@;
@@ -87,29 +91,31 @@ sub run_Edtk_dev() {
 	
 	my $iniEdtk=ini_Edtk_Conf;
 	conf_To_Env($iniEdtk, 'DEFAULT');
-	conf_To_Env($iniEdtk, 'APPEDTK');
 	conf_To_Env($iniEdtk, 'ENVDESC');
-	$ENV{EDTK_EXT_DFLT} ||=$ENV{EDTK_EXT_HOMOL};
+#	$ENV{EDTK_FTYP_DFLT} ||=$ENV{EDTK_FTYP_HOMOL};
 
 	if ($ENV{EDTK_DIR_BASE} eq "") {
 		not_Configured();
 		exit $NOK;
 	}
 	&check_EDTK_DIR;
+	
 	start_Screen();
-
-	my $styleApp=$ENV{EDTK_DIR_DEVSCRPT}."/".$ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_DFLT}.".".$ENV{EDTK_EXT_COMSET};
+	
+	my $styleApp=$ENV{EDTK_DIR_SCRIPT}."/".$ENV{EDTK_PRGNAME};
 	env_Var_Completion($styleApp);
+	env_Var_Completion($ENV{EDTK_DIR_APPTMP});
 	warn "INFO : ".nowTime()." -START- \n";
 
-	if (-e $styleApp) {
-		import oEdtk::libEdtkC7;
+	my $doclean = 1;
+	if (-e "$styleApp.".$ENV{EDTK_EXT_COMSET}) {
+		import oEdtk::libC7;
 		my $work_file =$ENV{EDTK_FDATWORK}.".".$ENV{EDTK_EXT_WORK};
 		env_Var_Completion($work_file);
 				
 		&conf_To_Env($iniEdtk, 'COMSET');
-		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}, $ENV{EDTK_FDATWORK}.".".$ENV{EDTK_EXT_WORK});
-		warn "INFO : ".nowTime()." -END Extract- \n";
+		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}, $work_file);
+		warn "INFO : ".nowTime()." -END Perl- \n";
 		
 		if ($ctrl eq $NOK) {
 			warn "ERROR : return $? in prep_Edtk_Data\n";
@@ -128,7 +134,11 @@ sub run_Edtk_dev() {
 			#warn "INFO : intermediate file seem good\n";
 		}
 
+		# #
+		if (defined $ENV{EDTK_TESTDATE}) { oe_set_sys_date($ENV{EDTK_TESTDATE}) };
+
 		$ENV{EDTK_DOC_OUTPUT}= "$ENV{EDTK_FDATAOUT}.$ENV{EDTK_EXT_PDF}";
+		$ENV{EDTK_EXT_DEFAULT}=$ENV{EDTK_EXT_PDF};
 		if (c7EdtkComp("PDF") eq $NOK) {
 			warn "ERROR : return $? in c7EdtkComp\n";
 			&wait_Enter();
@@ -144,9 +154,15 @@ sub run_Edtk_dev() {
 		} else {
 			warn "INFO : Emit seem good\n";
 		}
-		
+
 	} else {
+		# Cas LaTeX
+		$doclean = 0;
 		$ENV{EDTK_DOC_OUTPUT}= "$ENV{EDTK_FDATAOUT}.$ENV{EDTK_EXT_WORK}";
+		$ENV{EDTK_EXT_DEFAULT}=$ENV{EDTK_EXT_WORK};
+
+		chdir($ENV{EDTK_DIR_APPTMP})
+		    or die "Cannot change current directory: $!\n";
 		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}, $ENV{EDTK_DOC_OUTPUT});	
 		warn "INFO : ".nowTime()." -END Extract- \n";
 		
@@ -156,17 +172,18 @@ sub run_Edtk_dev() {
 			exit $NOK;	
 		} else {
 			#warn "INFO : data extraction seem good\n";
-			$ENV{EDTK_DOC_OUTPUT} ="";
+			#$ENV{EDTK_DOC_OUTPUT} =$ctrl;
 		}
 	}
 
 	warn "INFO : ".nowTime()." -END- \n";
 
 	# si tout c correctement deroulé, vidage des tmp
-	$| = 1; # autoflush
-	warn "INFO : clean temp\n";
-	env_Var_Completion($ENV{EDTK_DIR_APPTMP});
-	&clean_full_dir($ENV{EDTK_DIR_APPTMP});
+	# $| = 1; # autoflush
+	if ($doclean) {
+		warn "INFO : clean temp\n";
+		clean_full_dir($ENV{EDTK_DIR_APPTMP});
+	}
 
 	stop_Screen();
 1;
@@ -175,14 +192,13 @@ sub run_Edtk_dev() {
 sub prep_Edtk_Data ($$;$) {
 	# déclenchement du traitement d'extraction de données 
 	# dans le contexte du lancement automatisé run_Edtk_dev
-	my $command	="$ENV{EDTK_DIR_DEVAPP}/$ENV{EDTK_PRGNAME}/$ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_DFLT}.$ENV{EDTK_EXT_PERL}";
-	my $arg1		=shift;
-	my $arg2		=shift;
-	my $option	=shift;
-	$option 		||="";
+	my $command	="$ENV{EDTK_DIR_APP}/$ENV{EDTK_PRGNAME}/$ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_PERL}";
+	my $arg1	=shift;
+	my $arg2	=shift;
+	my $option	=shift || "";
 
 	env_Var_Completion($arg2);
-	print "$command $arg1 $arg2\n";
+	warn "$command $arg1 $arg2\n";
 	env_Var_Completion($command);
 	env_Var_Completion($arg1);
 	env_Var_Completion($option);
@@ -191,7 +207,7 @@ sub prep_Edtk_Data ($$;$) {
 		system($command, $arg1, $arg2, $option);
 	};
          
-     if ($?){
+	if ($?){
 		warn " ERROR -> $@";
 		warn " ERROR $command $arg1 $arg2 return $? ";
 
@@ -209,11 +225,6 @@ sub wait_Enter() {
 1;
 }
 
-# vers prodEdtk renommer en trimSP
-# pour compatibilité
-#sub catSp(){
-#	return trimSP(shift);
-#}
 	
 sub delSp(\$){
 	#suppression des espaces
@@ -238,6 +249,7 @@ sub IdUniqueSur6 () { # fonction déprécié
 	$hListeId{${$rId}} =1;
 1;
 }
+
 
 {
 my $appelIUS7=0; 			# variable constante propre a la fonction
@@ -309,7 +321,7 @@ sub lastLong($) {
 return $motLong;
 }
 	
-sub lastCourt () {
+sub lastCourt ($) {
 	# selectionne le terme alpha le plus court de la chaine transmise en reference
 	# exemple d'appel : $mot=&lastCourt ($chaine);
 	my $chaine =shift;
@@ -427,7 +439,7 @@ sub file_list ($$;$){
 		eval {
 			opendir(DIR, $key);
 		};
-	     if ($?){
+		if ($?){
 			warn " WARNING opendir(DIR, $key) return $?\n";
 			next ITEMS ;
 		}
@@ -461,5 +473,6 @@ return @listFile;
 }
 
 	
-END {}
+END {
+}
 1;

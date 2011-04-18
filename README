@@ -1,6 +1,6 @@
 	***************************************************************************
 	***************************************************************************
-				- oEdtk - 			(see README in oEdtk directory)
+				- oEdtk - 	(see README in oEdtk directory)
 	***************************************************************************
 	***************************************************************************
 
@@ -40,11 +40,18 @@
 	
 	Command line for manual installation :
 	perl Makefile.PL
-	make                # or 'nmake' on Win32
+	make                # use 'dmake' on Win32 (install it with cpan or ppm)
 	make test
 	make install
 	make clean
 	
+
+	in case of troubles for libxml2 setup, you should rather use
+		perl Makefile.PL LIBS='-L/usr/lib' INC='-I/usr/include/libxml2'
+			where your paths should point whereis your libxml2
+		or simply install libxml-libxml-perl with Synaptic
+
+
 	
 	COPYRIGHT AND LICENCE
 	***************************************************************************
@@ -59,5 +66,5 @@
 
 	AUTHORS
 	***************************************************************************
-	David Aunay, GJ Chaillou Domingo 2005-2009
+	D Aunay, G Chaillou Domingo, M Henrion 2005-2011
 	  		

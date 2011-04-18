@@ -8,7 +8,7 @@ BEGIN {
 		use Term::ReadKey;
 		use oEdtk::trackEdtk	qw(env_Var_Completion);
 
-		$VERSION		= 0.0025;
+		$VERSION		= 0.0031;
 		@ISA			= qw(Exporter);
 		@EXPORT		= qw(
 						clear_Screen	start_Screen	stop_Screen
@@ -18,9 +18,6 @@ BEGIN {
 #						)
 	}
 
-#
-# CODE - DOC AT THE END
-#
 
 sub clear_Screen(){
 	my $command="clear"; # par défaut
@@ -49,6 +46,7 @@ Select Option
 	<I> show edtk init file
 	<C> version control utility
 	<D> deliveries				(planned)
+	<Q> quit
 
 Choose an option by typing associated letter
 (wait ${wait}s or press any key to stop).
@@ -117,7 +115,7 @@ Parametres :
  temp         $ENV{EDTK_DIR_APPTMP}
 
 Options :
-	<1> Prod: $ENV{EDTK_EXT_PROD}	<2> Homol: $ENV{EDTK_EXT_HOMOL}	<3> Test: $ENV{EDTK_EXT_TEST}	(defaut $ENV{EDTK_EXT_DFLT})
+	<1> Run: $ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_PERL} 
 	<A> Administration
 
 Pour modifier une option, taper sa valeur ou <enter> par defaut.
@@ -125,17 +123,10 @@ EOF
 	my $key =&readKey_Wait();
 	$key ||="";
 
-	if 		($key eq 1) {
-		$ENV{EDTK_EXT_DFLT} =$ENV{EDTK_EXT_PROD};
-		print " -> Choice = $ENV{EDTK_EXT_DFLT}\n";
-	} elsif	($key eq 2) {
-		$ENV{EDTK_EXT_DFLT} =$ENV{EDTK_EXT_HOMOL};
-		print " -> Choice = $ENV{EDTK_EXT_DFLT}\n";
-	} elsif	($key eq 3) {
-		$ENV{EDTK_EXT_DFLT} =$ENV{EDTK_EXT_TEST};
-		print " -> Choice = $ENV{EDTK_EXT_DFLT}\n";
-	} elsif	($key =~/a/i) {
+	if 	($key  =~/a/i) {
 		&admin_Screen();
+	} elsif	($key =~/\d+/) {
+		print " -> Choice = run $ENV{EDTK_PRGNAME}\n";
 	}
 
 print "\n";
@@ -144,9 +135,10 @@ return 1;
 }
 
 sub stop_Screen (){
-	print "\nPause, hit <enter> to exit or <w> to watch Pdf result...\n";
-	my $key =&readKey_Wait($ENV{EDTK_WAITRUN}*100);
-	my $arg =$ENV{EDTK_DOC_OUTPUT};
+	print "\nPause, hit <enter> to exit or <w> to watch Doc result...\n";
+	my $key =&readKey_Wait($ENV{EDTK_WAITRUN}*100) || "";
+	my $arg =$ENV{EDTK_DOC_OUTPUT};	# $ENV{EDTK_FDATAOUT}.$ENV{EDTK_EXT_PDF}
+	#my $arg ="$ENV{EDTK_FDATAOUT}.".$ENV{EDTK_EXT_DEFAULT};
 
 	if	($key =~/W/i and $arg) {
 
@@ -395,7 +387,7 @@ sub VCS_add() {
 
 
 sub VCS_update() {
-	&VCS_merge();
+	#&VCS_merge();
 
 	# potentiellement problème de localisation de la branch, si execution en dehors de la branche
 	my $base	=$ENV{EDTK_DIR_BASE};
@@ -465,8 +457,8 @@ sub VCS_rename() {
 	my $wait =10*$ENV{EDTK_WAITRUN};
 
 	my $base	=$ENV{EDTK_DIR_BASE};
-	my $oldname=$ENV{EDTK_DIR_DEVSCRPT}."\\".$ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_TEST};
-	my $newname=$ENV{EDTK_DIR_DEVSCRPT}."\\".$ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_HOMOL};
+	my $oldname=$ENV{EDTK_DIR_SCRIPT}."\\".$ENV{EDTK_PRGNAME};
+	my $newname=$ENV{EDTK_DIR_SCRIPT}."\\".$ENV{EDTK_PRGNAME};
 	my @extension;
 	
 	push (@extension, $ENV{EDTK_EXT_PERL});
@@ -511,10 +503,10 @@ Application	$ENV{EDTK_PRGNAME}
 
 
 	<A> moving from development to tests for Approval : 
-		from $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_TEST} to $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_HOMOL}
+		from $ENV{EDTK_PRGNAME} to $ENV{EDTK_PRGNAME}
 
 	<P> delivering approved applications to Production : (planned)
-		from $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_HOMOL} to $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_PROD}
+		from $ENV{EDTK_PRGNAME} to $ENV{EDTK_PRGNAME}
 
 	<B> back	<Q> quit
 
@@ -526,7 +518,7 @@ EOF
 	
 	if		($key =~/A/i) {
 		&VCS_rename();
-		&VCS_commit ("move $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_TEST} to $ENV{EDTK_PRGNAME}$ENV{EDTK_EXT_HOMOL}");
+		&VCS_commit ("move $ENV{EDTK_PRGNAME} to $ENV{EDTK_PRGNAME}");
 
 	} elsif	($key =~/P/i) {
 		print "planned...";

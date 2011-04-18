@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-use oEdtk::prodEdtk		0.42; 
-use oEdtk::prodEdtkXls;
+use oEdtk::Main		0.42; 
+use oEdtk::libXls;
 
 #################################################################################
 # CORPS PRINCIPAL DE L'APPLICATION :
@@ -39,7 +39,7 @@ sub initApp{
 	# DECLARATIONS DES VARIABLES PROPRES A L'APPLICATION
 
 	# CARTOGRAPHIE APPLICATIVE 
-	recEdtk_motif 		('X', 'A13 A35 A11 A8 A*');
+	recEdtk_motif 	('X', 'A13 A35 A11 A8 A*');
 	recEdtk_process	('X', \&trtEnr);
 
 1;
