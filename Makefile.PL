@@ -54,6 +54,7 @@ WriteMakefile(
 		Term::ReadKey			=> 0,
 		Text::CSV			=>'1.20',
 		XML::LibXML			=>'1.70',
+		XML::XPath			=>'1.13',
 		XML::Writer			=> 0
 	},
 	AUTHOR     => 'oEdtk group <oedtk@free.fr>',

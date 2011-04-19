@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               oEdtk
-version:            0.5039
+version:            0.504
 abstract:           ~
 author:
     - oEdtk group <oedtk@free.fr>
@@ -35,6 +35,7 @@ requires:
     Text::CSV:            1.20
     XML::LibXML:          1.70
     XML::Writer:          0
+    XML::XPath:           1.13
 no_index:
     directory:
         - t
