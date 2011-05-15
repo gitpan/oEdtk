@@ -1,7 +1,7 @@
 #!/opt/editique/perl/bin/perl
 # this line should be modified to point to your perl install
 
-# this cgi is an interface for EDMS doc search by redirecting request
+# this cgi is an interface for edms doc search by redirecting request
 use strict;
 use warnings;
 
@@ -16,12 +16,12 @@ my $redirect_url;
 
 
 if (defined $req->param('idldocpg') && $req->param('idldocpg') ne "" && defined $req->param('owner') && $req->param('owner') ne "") {
-	$redirect_url =  sprintf ($cfg->{'EDM_URL_LOOKUP'}, 
+	$redirect_url =  sprintf ($cfg->{'EDMS_URL_LOOKUP'}, 
 					$req->param('idldocpg'), 
 					$req->param('view')	|| '1', 
 					$req->param('owner'), 
 					$req->param('owner'));
-	warn "INFO : eDocs Share lookup url for ". $cfg->{'EDM_HTML_HOST'} ." server is $redirect_url\n";
+	warn "INFO : eDocs Share lookup url for ". $cfg->{'EDMS_HTML_HOST'} ." server is $redirect_url\n";
 
 } else {
 	print $req->header(-status=>400),

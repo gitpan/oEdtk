@@ -4,8 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-
-our $VERSION 	=0.5001;
+our $VERSION 	=0.5003;
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
 			c7Flux
@@ -72,6 +71,7 @@ use List::Util 		qw(reduce);
 use List::MoreUtils	qw(uniq);
 use Date::Calc 		qw(Add_Delta_Days Delta_Days Date_to_Time Today Gmtime Week_of_Year);
 use File::Basename;
+use Sys::Hostname;
 
 require oEdtk::libC7;
 require oEdtk::Outmngr;
@@ -971,6 +971,7 @@ sub prodEdtkOpen($$;$) {	# migrer oe_open_files
 	# Do we want to generate an index file?
 	if ($params->{'index'}) {
 		print OUT oe_data_build('xStOmgr');
+		print OUT oe_data_build ('xHost', hostname());
 	}
 	print OUT $TAG_COMMENT;
 	print OUT "\n";
@@ -1266,14 +1267,18 @@ sub oe_ID_LDOC() {
 		my ($week,) = Week_of_Year($year,$month,$day);
 
 		my $pid = "$$";
-		my $modified_pid;
+		my $rnd = int(rand(10));
+#		my $modified_pid;
 		if (length $pid > 5) {
-			$modified_pid = $pid/(10**((length $pid)-5));
-		} else {
-			$modified_pid = $pid + (int(rand(10))/10);
+			$pid = $pid/(10**((length $pid)-5));
+#			$modified_pid = $pid/(10**((length $pid)-5));
+#		} else {
+#			$modified_pid = $pid + (int(rand(10))/10);
 		}
 	
-		$_ID_LDOC =sprintf ("%1d%02d%1d%02d%02d%02d%07.1f", $year % 10, $week, $dow, $hour, $min, $sec, $modified_pid ); #$$
+#		$_ID_LDOC =sprintf ("%1d%02d%1d%02d%02d%02d%07.1f", $year % 10, $week, $dow, $hour, $min, $sec, $modified_pid ); #$$
+		$_ID_LDOC =sprintf ("%1d%02d%1d%02d%02d%02d%05d%1d", $year % 10, $week, $dow, $hour, $min, $sec, $pid, $rnd );
+
 	}
 	# TESTS FORCÉS :
 	#return "099999999999999.0";
@@ -1340,13 +1345,15 @@ return $_ID_LDOC;
  my $_DOCLIB;		# DESIGNTAION DE LA DCLIB pour le lotissment 
  			# valeur accessible uniquement par la méthode _omngr_doclib
 
-	sub _omngr_doclib (;$){
+	sub _omngr_doclib (;$$){
 		if (defined $_DOCLIB) { return $_DOCLIB ; }
 	
-		my $doclib	=shift ;
+		my $doclib	=shift;
 		if (!defined $doclib){
-			$_DOCLIB = "DCLIB_" . oe_ID_LDOC();
-			$_DOCLIB =~ s/\./_/;
+			my $cfg = config_read('ENVDESC');
+			my $ext		=shift || $cfg->{'EDTK_EXT_DEFAULT'};
+			$_DOCLIB = "DCLIB_" . oe_ID_LDOC() . "." . $ext;
+			#$_DOCLIB =~ s/\./_/;
 		} else {
 			$_DOCLIB=$doclib;
 		}

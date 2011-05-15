@@ -72,10 +72,9 @@ eval {
 
 		# The import was successful, send the GED identifier.
 		print $req->header(%headers, -type => 'text/plain');
-		$idldoc =~ s/\./_/g;
+		$idldoc =~ s/\./_/g; ## xxxxxxxx à supprimer lorsque le nouveau idldoc sera généralisé
 		warn "INFO : sending doc to GED - ${idldoc}_0000001 ($ged)";
 		sleep ($cfg->{'EDTK_WAITRUN'});
-		# sleep (8);
 		warn "INFO : sending idldoc_pg to client ";
 		print "${idldoc}_0000001";
 

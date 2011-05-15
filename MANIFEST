@@ -1,4 +1,3 @@
-install.bat
 lib/oEdtk.pm
 lib/oEdtk/AddrField.pm
 lib/oEdtk/C7Doc.pm
@@ -9,7 +8,7 @@ lib/oEdtk/DateField.pm
 lib/oEdtk/DBAdmin.pm
 lib/oEdtk/Dict.pm
 lib/oEdtk/Doc.pm
-lib/oEdtk/EDM.pm
+lib/oEdtk/EDMS.pm
 lib/oEdtk/Field.pm
 lib/oEdtk/FPField.pm
 lib/oEdtk/iniEdtk/postal_dico_FR.ini
@@ -26,7 +25,7 @@ lib/oEdtk/lib/db_historicize_ALL.pl
 lib/oEdtk/lib/db_historicize_index.pl
 lib/oEdtk/lib/db_historicize_tracking.pl
 lib/oEdtk/lib/db_move.pl
-lib/oEdtk/lib/db_schema_init.pl
+lib/oEdtk/lib/db_schema_Init.pl
 lib/oEdtk/lib/edms_process.pl
 lib/oEdtk/lib/edms_runner.pl
 lib/oEdtk/lib/html/edtk_inged.html

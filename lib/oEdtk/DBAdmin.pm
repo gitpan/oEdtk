@@ -8,7 +8,7 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.10;
+our $VERSION		= 0.14;
 our @ISA		= qw(Exporter);
 our @EXPORT_OK		= qw(db_connect
 			     table_historicize
@@ -233,12 +233,13 @@ our @INDEX_COLS = (
 	['ED_CLEGED4', 'VARCHAR2(20)'],		# clef pour système d'archivage
 	['ED_ADRLN5', 'VARCHAR2(38)'],		# ligne d'adresse 5
 	['ED_CORP', 'VARCHAR2(20)'],		# société émettrice de la page
-	['ED_DOCLIB', 'VARCHAR2(23)' ],		# merge library compuset associée à la page
+	['ED_DOCLIB', 'VARCHAR2(32)' ],		# merge library compuset associée à la page
 	['ED_REFIMP', 'VARCHAR2(8)'],		# référence de pré-imprimé ou d'imprimé ou d'encart
 	['ED_ADRLN6', 'VARCHAR2(38)'],		# ligne d'adresse 6
 	['ED_SOURCE', 'VARCHAR2(8) NOT NULL'],	# Source de l'index
-	['ED_IDIDX', 'VARCHAR2(7) NOT NULL'],	# identifiant de l'index
+	['ED_OWNER', 'VARCHAR2(10)'],		# propriétaire du document (utilisation en gestion / archivage de documents)
 	['ED_HOST', 'VARCHAR2(32)'],		# Hostname de la machine d'ou origine cette entrée
+	['ED_IDIDX', 'VARCHAR2(7) NOT NULL'],	# identifiant de l'index
 
 	# SECTION LOTISSEMENT DE L'INDEX
 	['ED_IDLOT', 'VARCHAR2(6)'],		# identifiant du lot

@@ -3,7 +3,7 @@ package oEdtk::Tracking;
 use strict;
 use warnings;
 
-use oEdtk::Main	0.4229;
+use oEdtk::Main;
 use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect tracking_table_create);
 use oEdtk::Dict;

@@ -11,10 +11,10 @@ use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect index_table_create @INDEX_COLS);
 use POSIX		qw(strftime);
 use DBI;
-use Sys::Hostname;
+# use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.1094;
+our $VERSION	= 0.1097;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_seqlot_ref 
@@ -151,7 +151,7 @@ sub omgr_insert($$$$$) {
 
 
 	# Loop through the index file, gathering entries and counting the number of pages, etc...
-	my $host = hostname();
+#	my $host = hostname();
 	my $numpgpli = 0;
 	my $seqpgdoc = 0;
 	my $idldoc = undef;
@@ -196,8 +196,7 @@ sub omgr_insert($$$$$) {
 		}
 
 		my $entry = {
-			# XXX - Should use $data[0] here but it incorrectly includes the -V2 suffix.
-			ED_REFIDDOC	=> $app,
+			ED_REFIDDOC	=> $data[0],
 			ED_IDLDOC	=> $idldoc,
 			ED_IDSEQPG	=> $data[2],
 			ED_SEQDOC	=> $data[3],
@@ -208,7 +207,7 @@ sub omgr_insert($$$$$) {
 			ED_IDEMET	=> $data[8],
 			ED_DTEDTION	=> $data[9],
 			ED_TYPPROD	=> $data[10],
-			ED_PORTADR	=> $doc->{'ED_PORTADR'},
+			ED_PORTADR	=> $doc->{'ED_PORTADR'}, # vérifier qu'on peut le gérer comme ED_TYPPROD
 			ED_ADRLN1	=> $data[12],
 			ED_CLEGED1	=> $data[13],
 			ED_ADRLN2	=> $data[14],
@@ -223,8 +222,9 @@ sub omgr_insert($$$$$) {
 			ED_REFIMP	=> $data[23],
 			ED_ADRLN6	=> $data[24],
 			ED_SOURCE	=> $data[25],
-			ED_IDIDX	=> $data[26],
-			ED_HOST		=> $host,
+			ED_OWNER	=> $data[26],
+			ED_HOST		=> $data[27],
+			ED_IDIDX	=> $data[28],
 			ED_CATDOC	=> $doc->{'ED_CATDOC'},
 			#ED_CODRUPT	=>
 			ED_SEQPGDOC	=> $seqpgdoc,
@@ -775,7 +775,8 @@ sub omgr_purge_fs($) {
 	my @torm = ();
 	foreach my $path (@doclibs) {
 		my $file = basename($path);
-		if ($file =~ /^(DCLIB_[^.]+)\.pdf$/) {
+#		if ($file =~ /^(DCLIB_[^.]+)\.pdf$/) {
+		if ($file =~ /^(DCLIB_[^.\.]+)$/) {
 			my $doclib = $1;
 			if (!$needed{$doclib}) {
 				push(@torm, $path);

@@ -10,13 +10,13 @@ use File::Path		qw(rmtree);
 use Text::CSV;
 use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect);
-use oEdtk::EDM		qw(edm_prepare edm_process edm_import);
+use oEdtk::EDMS		qw(EDMS_prepare EDMS_process EDMS_import);
 use oEdtk::Outmngr	qw(omgr_import omgr_export);
 use oEdtk::TexDoc;
 
 use Exporter;
 
-our $VERSION	= 0.01;
+our $VERSION	= 0.03;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 	oe_status_to_msg
@@ -220,7 +220,7 @@ sub oe_after_compo($$) {
 
 	# Do we need to import the index?
 	if (defined($appdata) && $appdata->{'ED_MASSMAIL'} eq 'Y') {
-		my $doclib = "$cfg->{'EDTK_DIR_DOCLIB'}/$options->{'doclib'}.pdf";
+		my $doclib = "$cfg->{'EDTK_DIR_DOCLIB'}/$options->{'doclib'}";
 		warn "INFO : Moving $pdf into $doclib\n";
 		copy($pdf, $doclib);
 		warn "INFO : Importing index into database...\n";
@@ -231,13 +231,13 @@ sub oe_after_compo($$) {
 	if (defined($appdata) && $appdata->{'ED_EDOCSHARE'} eq 'Y') {
 		if ($options->{'cgi'} && $options->{'cgiged'}) {
 			warn "INFO : Direct GED processing...\n";
-			my ($index, @pdfs) = edm_process($app, $options->{'idldoc'},
+			my ($index, @pdfs) = EDMS_process($app, $options->{'idldoc'},
 			    $pdf, $index);
-			edm_import($index, @pdfs)
-				or die "ERROR: edm_import failed\n";
+			EDMS_import($index, @pdfs)
+				or die "ERROR: EDMS_import failed\n";
 		} elsif (!$options->{'cgi'}) {
 			warn "INFO : Preparing ZIP archive for GED...\n";
-			edm_prepare($app, $options->{'idldoc'}, $pdf, $index);
+			EDMS_prepare($app, $options->{'idldoc'}, $pdf, $index);
 		}
 	}
 
