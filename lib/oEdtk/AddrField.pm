@@ -4,8 +4,8 @@ use strict;
 use warnings;
 
 use oEdtk::Main qw(maj_sans_accents);
-
 use base 'oEdtk::Field';
+our $VERSION		= 0.01;
 
 sub process {
 	my ($self, $data) = @_;

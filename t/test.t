@@ -27,7 +27,7 @@ ok 7, "Loaded";
 use oEdtk::Util; 
 ok 8, "Loaded";
 
-use oEdtk::EDM; 
+use oEdtk::EDMS; 
 ok 9, "Loaded";
 
 use oEdtk::Spool; 

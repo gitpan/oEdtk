@@ -122,7 +122,7 @@ sub track {
 
 	my @usercols = @{$self->{'keys'}};
 	if (@data > @usercols) {
-		warn "Too much values: got " . @data . ", expected " .  @usercols . " maximum\n";
+		warn "INFO : Too much values : got " . @data . ", expected " .  @usercols . " maximum\n";
 	}
 
 	# Validate the job event.

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(blessed);
+our $VERSION		= 0.01;
 
 # METTRE AU POINT PARAMÉTRAGE
 my $_denormalized_record = "OPTION";

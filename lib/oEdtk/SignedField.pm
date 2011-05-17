@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use base 'oEdtk::Field';
+our $VERSION		= 0.01;
 
 sub new {
 	my ($class, $name, $ilen, $flen) = @_;
