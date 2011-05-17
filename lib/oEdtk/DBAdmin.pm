@@ -8,7 +8,7 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.01;
+our $VERSION		= 0.15;
 our @ISA		= qw(Exporter);
 our @EXPORT_OK		= qw(db_connect
 			     table_historicize
@@ -67,7 +67,7 @@ sub tracking_table_create {
 	$sql .= "( ED_TSTAMP VARCHAR2(14) NOT NULL";		# Timestamp of event
 	$sql .= ", ED_USER VARCHAR2(10) NOT NULL";		# Job request user 
 	$sql .= ", ED_SEQ INTEGER NOT NULL";			# Sequence
-	$sql .= ", ED_SNGL_ID VARCHAR2(17) NOT NULL";		# Single ID : format YWWWDHHMMSSPPPP.U (compuset se limite à 16 digits : 15 entiers, 1 decimal)
+	$sql .= ", ED_SNGL_ID VARCHAR2(17) NOT NULL";		# Single ID : format YWWWDHHMMSSPPPP.U (compuset se limite ? 16 digits : 15 entiers, 1 decimal)
 	$sql .= ", ED_APP VARCHAR2(20) NOT NULL";		# Application name
 	$sql .= ", ED_MOD_ED CHAR";				# Editing mode (Batch, Tp, Web, Mail)
 	$sql .= ", ED_JOB_EVT CHAR";				# Level of the event (Spool, Document, Line, Warning, Error)
@@ -232,9 +232,9 @@ our @INDEX_COLS = (
 	['ED_ADRLN4', 'VARCHAR2(38)'],		# ligne d'adresse 4
 	['ED_CLEGED4', 'VARCHAR2(20)'],		# clef pour système d'archivage
 	['ED_ADRLN5', 'VARCHAR2(38)'],		# ligne d'adresse 5
-	['ED_CORP', 'VARCHAR2(20)'],		# société émettrice de la page
-	['ED_DOCLIB', 'VARCHAR2(32)' ],		# merge library compuset associée à la page
-	['ED_REFIMP', 'VARCHAR2(8)'],		# référence de pré-imprimé ou d'imprimé ou d'encart
+	['ED_CORP', 'VARCHAR2(20)'],		# sociét? émettrice de la page
+	['ED_DOCLIB', 'VARCHAR2(32)' ],		# merge library compuset associée ? la page
+	['ED_REFIMP', 'VARCHAR2(8)'],		# référence de pr?-imprim? ou d'imprim? ou d'encart
 	['ED_ADRLN6', 'VARCHAR2(38)'],		# ligne d'adresse 6
 	['ED_SOURCE', 'VARCHAR2(8) NOT NULL'],	# Source de l'index
 	['ED_OWNER', 'VARCHAR2(10)'],		# propriétaire du document (utilisation en gestion / archivage de documents)
@@ -250,7 +250,7 @@ our @INDEX_COLS = (
 	['ED_CODRUPT', 'CHAR'],			# code forçage de rupture
 	['ED_SEQPGDOC', 'INTEGER'],		# numéro de séquence de page dans le document
 	['ED_NBPGDOC', 'INTEGER'],		# nombre de page (faces) du document
-	['ED_POIDSUNIT', 'INTEGER'],		# poids de l'imprimé ou de l'encart en mg
+	['ED_POIDSUNIT', 'INTEGER'],		# poids de l'imprim? ou de l'encart en mg
 	['ED_BAC_INSERT', 'INTEGER'],		# Appel de bac ou d'insert
 
 	# SECTION EDITION DE L'INDEX
