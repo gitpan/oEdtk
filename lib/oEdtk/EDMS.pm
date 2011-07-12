@@ -389,7 +389,7 @@ sub EDMS_edidx_build (\%){
 
 
 	# COMPUTED KEYS
-	my $FILE_EXT		= $$refOpt{'ED_FILENAME'}; #= $req->upload('EDMS_FILENAME');
+	my $FILE_EXT	= $$refOpt{'ED_FILENAME'}; #= $req->upload('EDMS_FILENAME');
 	$FILE_EXT		=~s/^(.*\.)(\w+)$/$2/;
 	$$refOpt{'ED_FORMFLUX'}	= uc ($FILE_EXT);
 

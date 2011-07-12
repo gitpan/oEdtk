@@ -20,7 +20,7 @@ BEGIN {
 		use strict;
 		use warnings;
 
-		$VERSION	= 0.3126;
+		$VERSION	= 0.314;
 		@ISA		= qw(Exporter);
 		@EXPORT		= qw(
 					$NOK
@@ -114,7 +114,7 @@ sub run_Edtk_dev() {
 		env_Var_Completion($work_file);
 				
 		&conf_To_Env($iniEdtk, 'COMSET');
-		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}, $work_file);
+		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}); #, $work_file); #
 		warn "INFO : ".nowTime()." -END Perl- \n";
 		
 		if ($ctrl eq $NOK) {
@@ -163,7 +163,7 @@ sub run_Edtk_dev() {
 
 		chdir($ENV{EDTK_DIR_APPTMP})
 		    or die "Cannot change current directory: $!\n";
-		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}, $ENV{EDTK_DOC_OUTPUT});	
+		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}); #, $ENV{EDTK_DOC_OUTPUT});	
 		warn "INFO : ".nowTime()." -END Extract- \n";
 		
 		if ($ctrl eq $NOK) {
@@ -189,13 +189,13 @@ sub run_Edtk_dev() {
 1;
 }
 
-sub prep_Edtk_Data ($$;$) {
+sub prep_Edtk_Data ($;$$) {
 	# déclenchement du traitement d'extraction de données 
 	# dans le contexte du lancement automatisé run_Edtk_dev
 	my $command	="$ENV{EDTK_DIR_APP}/$ENV{EDTK_PRGNAME}/$ENV{EDTK_PRGNAME}.$ENV{EDTK_EXT_PERL}";
 	my $arg1	=shift;
-	my $arg2	=shift;
-	my $option	=shift || "";
+	my $arg2	=shift || "";
+	my $option=shift || "";
 
 	env_Var_Completion($arg2);
 	warn "$command $arg1 $arg2\n";
@@ -204,7 +204,8 @@ sub prep_Edtk_Data ($$;$) {
 	env_Var_Completion($option);
 
 	eval {
-		system($command, $arg1, $arg2, $option);
+		#system($command, $arg1, $arg2, $option);
+		system($command, $arg1, $option);
 	};
          
 	if ($?){

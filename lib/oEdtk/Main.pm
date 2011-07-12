@@ -66,10 +66,11 @@ our @EXPORT 	= 	qw(
 			%motifs %ouTags %evalSsTrt
 			);
 
-use POSIX		qw(mkfifo);
-use List::Util 		qw(reduce);
+use POSIX			qw(mkfifo);
+use List::Util 	qw(reduce);
 use List::MoreUtils	qw(uniq);
-use Date::Calc 		qw(Add_Delta_Days Delta_Days Date_to_Time Today Gmtime Week_of_Year);
+use Getopt::Long;
+use Date::Calc 	qw(Add_Delta_Days Delta_Days Date_to_Time Today Gmtime Week_of_Year);
 use File::Basename;
 use Sys::Hostname;
 
@@ -592,19 +593,6 @@ sub foEdtkClose ($) {	# migrer oe_close_fo
 1;
 }
 
-
-sub prodEdtkAppUsage() {		# migrer oe_app_usage
-        my $app="";
-        $0=~/([\w-]+[\.plmex]*$)/;
-        $1 ? $app="application.pl" : $app=$1;
-        print STDOUT << "EOF";
-
-        Usage : $app <fichier_entree> <fichier_sortie> [option]
-EOF
-exit 1;
-}
-
-
 sub toDate(\$) {		# migrer oe_to_date
 	# RECOIT UNE REFERENCE SUR UNE DATE AU FORMAT AAAAMMJJ
 	# FORMATE AU FORMAT JJ/MM/AAAA
@@ -872,30 +860,63 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 1;
 }
 
+
+sub prodEdtkAppUsage() {		# migrer oe_app_usage
+        my $app="";
+        $0=~/([\w-]+[\.plmex]*$)/;
+        $1 ? $app="application.pl" : $app=$1;
+        print STDOUT << "EOF";
+
+        Usage : $app <input_data_file> [job_name] [options]
+			options :
+					--help
+					--massmail 	to confirm mass treatment
+					--edms		to confirm edms treatment
+					--cgi
+
+		these values depends on ED_REFIDDOC config table (ie if treatment should be confirmed)
+EOF
+exit 1;
+}
+
+
 # XXX Global variable used to remember stuff from prodEdtkOpen() when we
 # are in prodEdtkClose().  It would be *much* better to keep state in an
 # object instance instead.
 my $_RUN_PARAMS;
 
-sub prodEdtkOpen($$;$) {	# migrer oe_open_files
-	my ($fi, $fo, $params) = @_; 
-
-	# For the sake of backwards compatibility.
-	if (defined($params) && ref($params) ne 'HASH') {
-		warn "WARN : The third parameter of prodEdtkOpen() must be a hash reference, ignoring.\n";
-		undef $params;
-	}
-
-	my $cfg = config_read('COMPO');
-	if (!defined($params)) {
-		$params = {};
-	}
-
+sub prodEdtkOpen(@) {	# migrer oe_open_files / oe_open
+	@ARGV=(@ARGV, @_);
+	my $params = {};
 	# Default option values.
 	my %defaults = (
-		index	=> 0,
+		index => 0,
+		massmail => 0,
+		edms => 0,
 		cgi	=> 0
 	);
+
+	#prodEdtkOpen(@ARGV, {index => 1});
+	GetOptions(\%defaults, 'help', 'index', 'massmail', 'edms', 'cgi');
+	if ($defaults{help} or $#ARGV ==-1) {
+		&prodEdtkAppUsage();
+		exit 0;
+	}
+
+	my $fi = $ARGV[0];	# to keep compatibility
+	#my ($fi, $fo, $params) = @_; 
+
+	# For the sake of backwards compatibility.
+	#if (defined($params) && ref($params) ne 'HASH') {
+	#	warn "WARN : The third parameter of prodEdtkOpen() must be a hash reference, ignoring.\n";
+	#	undef $params;
+	#}
+
+	my $cfg = config_read('COMPO');
+	#if (!defined($params)) {
+	#	$params = {};
+	#}
+
 	if ($^O ne 'MSWin32') {
 		$defaults{'fifo'} = 1;
 	} else {
@@ -916,7 +937,7 @@ sub prodEdtkOpen($$;$) {	# migrer oe_open_files
 		$params->{'fifo'} = 1;
 	}
 
-	$fo = $cfg->{'EDTK_PRGNAME'}.".txt";
+	my $fo = $cfg->{'EDTK_PRGNAME'}.".txt";	# devrait être lié à TexMode
 	$params->{'outfile'} = $fo;
 
 	if ($params->{'fifo'} && $^O eq 'MSWin32') {
@@ -949,7 +970,7 @@ sub prodEdtkOpen($$;$) {	# migrer oe_open_files
 	open(OUT, '>', $fo)	or die "ERROR: Cannot open \"$fo\" for writing: $!\n";
 	warn "INFO : input compo data is $fo\n";
 
-	# Remember for later use in prodEdtkClose().
+	# Remember for later use in prodEdtkClose() & oEdtk::Main.
 	$_RUN_PARAMS = $params;
 
 	print OUT oe_data_build(oe_corporation_tag());
@@ -1185,12 +1206,12 @@ sub oe_outmngr_output_run (;$){
 1;
 }
 
-sub prodEdtkClose ($$;$) {		# migrer c7_oe_close_files
-	my ($fi, $fo) = @_;
+sub prodEdtkClose {		# migrer c7_oe_close_files
+#	my ($fi, $fo) = @_;
 
-	if (defined($_[2])) {
-		warn "WARN : Ignoring third parameter of prodEdtkClose().\n";
-	}
+#	if (defined($_[2])) {
+#		warn "WARN : Ignoring parameter of prodEdtkClose().\n";
+#	}
 
 	# SI LE FLUX D'ENTREE FAIT MOINS DE 1 LIGNE (variable $.), SORTIES EN ERREUR
 	# if ($. == 0) {
@@ -1199,8 +1220,8 @@ sub prodEdtkClose ($$;$) {		# migrer c7_oe_close_files
 	#}
 
 	print OUT oe_data_build('xFinFlux');
-	close(OUT) or die "ERROR: fermeture $fo, code retour $!\n";
-	close(IN)  or die "ERROR: fermeture $fi, code retour $!\n";
+	close(OUT) or die "ERROR: closing output $!\n";
+	close(IN)  or die "ERROR: closing input $!\n";
 
 	if ($TAG_MODE eq 'TEX') {
 		my $cfg = config_read('COMPO');
@@ -1287,6 +1308,7 @@ sub oe_ID_LDOC() {
 
 return $_ID_LDOC;
 }
+
 
 {
  my $_app_typ_trt;	# type de traitement de lotissement, 

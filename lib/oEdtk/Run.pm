@@ -10,13 +10,13 @@ use File::Path		qw(rmtree);
 use Text::CSV;
 use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect);
-use oEdtk::EDMS		qw(EDMS_prepare EDMS_process EDMS_import);
+use oEdtk::EDMS	qw(EDMS_prepare EDMS_process EDMS_import);
 use oEdtk::Outmngr	qw(omgr_import omgr_export);
 use oEdtk::TexDoc;
 
 use Exporter;
 
-our $VERSION	= 0.03;
+our $VERSION	= 0.04;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 	oe_status_to_msg
@@ -218,8 +218,12 @@ sub oe_after_compo($$) {
 		warn "INFO : Application $app was not found in EDTK_REFIDDOC\n";
 	}
 
-	# Do we need to import the index?
-	if (defined($appdata) && $appdata->{'ED_MASSMAIL'} eq 'Y') {
+	# Do we need to import the index ?
+#	if ($options->{'massmail'} or (defined($appdata) && $appdata->{'ED_MASSMAIL'} eq 'Y')) {
+	if ( (defined($appdata) && $appdata->{'ED_MASSMAIL'} eq 'Y')
+	     or
+	     (defined($appdata) && $appdata->{'ED_MASSMAIL'} eq 'C' && $options->{'massmail'})
+		) {
 		my $doclib = "$cfg->{'EDTK_DIR_DOCLIB'}/$options->{'doclib'}";
 		warn "INFO : Moving $pdf into $doclib\n";
 		copy($pdf, $doclib);
@@ -228,7 +232,12 @@ sub oe_after_compo($$) {
 	}
 
 	# Do we need to prepare for GED processing?
-	if (defined($appdata) && $appdata->{'ED_EDOCSHARE'} eq 'Y') {
+#	if (defined($appdata) && $appdata->{'ED_EDOCSHARE'} eq 'Y') {
+	if ( (defined($appdata) && $appdata->{'ED_EDOCSHARE'} eq 'Y')
+	     or
+	     (defined($appdata) && $appdata->{'ED_EDOCSHARE'} eq 'C' && $options->{'edms'})
+		) {
+
 		if ($options->{'cgi'} && $options->{'cgiged'}) {
 			warn "INFO : Direct GED processing...\n";
 			my ($index, @pdfs) = EDMS_process($app, $options->{'idldoc'},
@@ -295,13 +304,13 @@ sub oe_outmngr_output_run_tex($;$) {
 
 		my $lotdir = "$basedir/$lot";
 		chdir($lotdir) or die "Cannot change directory to \"$lotdir\": $!\n";
-		warn "INFO : Preparation job ticket $lot pour compo - doclibs = @doclibs\n";
+		warn "INFO : Preparation job ticket $lot for compo (doclibs = @doclibs)\n";
 
 		# Création du flux intermédiaire.
 		my $doc = oEdtk::TexDoc->new;
 		$doc->append(oe_csv_to_doc("$lot.job", 'edStartPg'));
 
-		warn "INFO : Preparation de l'index $lot pour compo\n";
+		warn "INFO : Preparation de l'index $lot for compo\n";
 		$doc->append(oe_csv_to_doc("$lot.idx", 'xFLigne'));
 		$doc->append('edEndPg');
 		$doc->append('xFinFlux');

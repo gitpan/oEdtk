@@ -10,21 +10,21 @@ use oEdtk::Config	qw(config_read);
 
 use Exporter;
 
-our $VERSION 	= 0.4627; 				
+our $VERSION 	= 0.463; 				
 our @ISA 	= qw(Exporter);
 our @EXPORT 	= qw(prod_Xls_Init
 		     prod_Xls_New		prod_Xls_Insert_Val
-		     prod_Xls_Col_Init		prod_Xls_Edit_Ligne
+		     prod_Xls_Col_Init	prod_Xls_Edit_Ligne
 		     prod_Xls_Row_Height	prod_Xls_Add_Sheet
 		     prod_Xls_Close		prod_Xls_Liste_Output
 		     %XLS_FORMAT);
 
 
 my $LOCAL_REF_WORKBOOK; 
-my $cfg = config_read();
+my $CFG = config_read();
 
  # METHODES ASSOCIEES A LA GESTION DU FORMAT EXCEL
- my $MAX_ROW_BY_FIC =$cfg->{'EDTK_XLS_MAX_ROW'};
+ my $MAX_ROW_BY_FIC =$CFG->{'EDTK_XLS_MAX_ROW'};
  my $XLSCOL = 0;
  my $XLSROW = 0;
  my $XLSHEIG= undef;
@@ -41,18 +41,21 @@ my $cfg = config_read();
  my @TAB_LISTE_XLS;
  my ($FILENAME_REF, $XLS_NAME, $HEADER_LEFT,$HEADER_CENTER,$HEADER_RIGHT);
 
-sub prod_Xls_Init($;$$$){
+sub prod_Xls_Init(;$$$){
 	# INITIALISATION DE LA FEUILLE EXCEL
-	# ARGUMENTS : NOM DU FICHIER XLS, [TEXTE EN-TÊTE GAUCHE], [TEXTE EN-TÊTE CENTRE], [TEXTE EN-TÊTE DROIT]
-	my $TXT_NAME = shift;
-	($HEADER_LEFT,$HEADER_CENTER,$HEADER_RIGHT) =@_;
+	# ARGUMENTS : [TEXTE EN-TÊTE GAUCHE], [TEXTE EN-TÊTE CENTRE], [TEXTE EN-TÊTE DROIT]
+    	($HEADER_LEFT,$HEADER_CENTER,$HEADER_RIGHT) =@_;
 	$HEADER_RIGHT		||="Édition du &D";
 
-	$XLS_NAME = basename($TXT_NAME);
+	# EN FONCTION DU NOMBRE D'ÉLÉMENTS ON FABRIQUE L'INDICE DU PROCHAIN FICHIER
+	my $item = sprintf ("%03s", $#TAB_LISTE_XLS+2);
+	$XLS_NAME = $CFG->{'EDTK_PRGNAME'}.".".$item.".".$CFG->{'EDTK_EXT_EXCEL'};
+
+#	$XLS_NAME = basename($TXT_NAME);
 #	$XLS_NAME =~ s/\.[^.]+/.xls/;
-	$XLS_NAME =~ s/(.+)\.\D{2,}$/$1.xls/;
+#	$XLS_NAME =~ s/(.+)\.\D{2,}$/$1.xls/;
 	push (@TAB_LISTE_XLS, $XLS_NAME);
-	if ($#TAB_LISTE_XLS==0) {$FILENAME_REF=$XLS_NAME;}
+#	if ($#TAB_LISTE_XLS==0) {$FILENAME_REF=$XLS_NAME;}
 
 	# CREATION D'UN FICHIER EXCEL
 	my $workbook = Spreadsheet::WriteExcel->new($XLS_NAME)
@@ -70,7 +73,7 @@ sub prod_Xls_Init($;$$$){
 sub prod_Xls_New (;$$){
 	# deux paramètres optionnels
 	# 	- "HEAD" pour répéter la tête de tableau
-	#	- une racine de nom de fichier (s'intègre à la gestion des ruptures automatiques de fichiers)
+#	#	- une racine de nom de fichier (s'intègre à la gestion des ruptures automatiques de fichiers)
 	if ($TAB_LISTE_XLS[0]){
 		my $option1=shift;
 		$option1 ||="";
@@ -80,21 +83,22 @@ sub prod_Xls_New (;$$){
 
 		# CRÉATION D'UN NOUVEAU FICHIER XLS
 		# ON RÉCUPÈRE LE NOM DU FICHIER DANS LE TABLEAU S'IL N'EST PAS PASSE EN PARAMETRE
-		my $xls_name;
-		if ($xls_name=shift) {$FILENAME_REF=$xls_name;}
-		$xls_name ||=$FILENAME_REF;
+#		my $xls_name;
+#		if ($xls_name=shift) {$FILENAME_REF=$xls_name;}
+#		$xls_name ||=$FILENAME_REF;
 
 		# EN FONCTION DU NOMBRE D'ÉLÉMENTS ON FABRIQUE L'INDICE DU PROCHAIN FICHIER
-		my $item= sprintf ("%03s", $#TAB_LISTE_XLS+2);
+#		my $item= sprintf ("%03s", $#TAB_LISTE_XLS+2);
 
 		# ON CRÉE LE NOM DU FICHIER
-		$xls_name=~s/(.+\.).*$/$1$item.xls/;
+#		$xls_name=~s/(.+\.).*$/$1$item.xls/;
 
 		# CRÉATION DU NOUVEAU FICHIER AVEC SES PROPRIÉTÉS PAR DÉFAUT
 		$SHEET  =0;
 		$XLSROW =0;
 
-		return prod_Xls_Init($xls_name,$HEADER_LEFT,$HEADER_CENTER,$HEADER_RIGHT);
+		#return prod_Xls_Init($xls_name,$HEADER_LEFT,$HEADER_CENTER,$HEADER_RIGHT);
+		return prod_Xls_Init($HEADER_LEFT,$HEADER_CENTER,$HEADER_RIGHT);
 	} else {
 		die "No init found for prodEdtkXls\n";
 	}		
@@ -168,6 +172,7 @@ sub prod_Xls_Set_Sheet($) {
 
 sub prod_Xls_Insert_Val{
 	# AJOUT DE LA OU LES VALEURS TRANSMISES AU TABLEAU DE VALEURS LOCAL 
+
 	@TAB_VALUE=(@TAB_VALUE, @_);
 	1;
 }
@@ -242,9 +247,11 @@ sub prod_Xls_Edit_Ligne (;$$){
 			$worksheet->write($XLSROW, $col, $valeur, $xlsfmt);
 			$col++;
 		} elsif ($format =~ /^N/) {
+			$valeur=~s/\s//g;
 			$worksheet->write_number($XLSROW, $col, $valeur, $XLS_FORMAT{$format});
 			$col++;
 		} else {
+			$valeur=~s/\ +/ /g;	# on ne substitue que les blancs par les caractères tq cr lf
 			$worksheet->write_string($XLSROW, $col, $valeur, $XLS_FORMAT{$format});
 			$col++;
 		}

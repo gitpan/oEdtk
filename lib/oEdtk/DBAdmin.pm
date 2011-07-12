@@ -8,8 +8,8 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.15;
-our @ISA		= qw(Exporter);
+our $VERSION		= 0.16;
+our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(db_connect
 			     table_historicize
 			     table_move
@@ -64,15 +64,15 @@ sub tracking_table_create {
 	my ($dbh, $table, $maxkeys) = @_;
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_TSTAMP VARCHAR2(14) NOT NULL";		# Timestamp of event
-	$sql .= ", ED_USER VARCHAR2(10) NOT NULL";		# Job request user 
-	$sql .= ", ED_SEQ INTEGER NOT NULL";			# Sequence
-	$sql .= ", ED_SNGL_ID VARCHAR2(17) NOT NULL";		# Single ID : format YWWWDHHMMSSPPPP.U (compuset se limite ? 16 digits : 15 entiers, 1 decimal)
-	$sql .= ", ED_APP VARCHAR2(20) NOT NULL";		# Application name
+	$sql .= "( ED_TSTAMP VARCHAR2(14) NOT NULL";	# Timestamp of event
+	$sql .= ", ED_USER VARCHAR2(10) NOT NULL";	# Job request user 
+	$sql .= ", ED_SEQ INTEGER NOT NULL";		# Sequence
+	$sql .= ", ED_SNGL_ID VARCHAR2(17) NOT NULL";# Single ID : format YWWWDHHMMSSPPPP.U (compuset se limite ? 16 digits : 15 entiers, 1 decimal)
+	$sql .= ", ED_APP VARCHAR2(20) NOT NULL";	# Application name
 	$sql .= ", ED_MOD_ED CHAR";				# Editing mode (Batch, Tp, Web, Mail)
 	$sql .= ", ED_JOB_EVT CHAR";				# Level of the event (Spool, Document, Line, Warning, Error)
-	$sql .= ", ED_CORP VARCHAR2(8) NOT NULL";		# Entity related to the document
-	$sql .= ", ED_SOURCE VARCHAR2(128)";			# Input stream of this document
+	$sql .= ", ED_CORP VARCHAR2(8) NOT NULL";	# Entity related to the document
+	$sql .= ", ED_SOURCE VARCHAR2(128)";		# Input stream of this document
 	$sql .= ", ED_OBJ_COUNT INTEGER";			# Number of objects attached to the event
 	$sql .= ", ED_HOST VARCHAR2(32)";			# Input stream of this document
 
@@ -120,21 +120,22 @@ sub params_FILIERES_table_create {
 	my $table = "EDTK_FILIERES";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_IDFILIERE VARCHAR2(3) NOT NULL";		# Application name
+	$sql .= "( ED_IDFILIERE VARCHAR2(5) NOT NULL";	# filiere id   ALTER table edtk_filieres modify ED_IDFILIERE VARCHAR2(5);
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16)";	  
 	$sql .= ", ED_DESIGNATION VARCHAR2(64)";		# 
 	$sql .= ", ED_ACTIF CHAR NOT NULL";			# Flag indiquant si la filiere est active ou pas 
 	$sql .= ", ED_PRIORITE INTEGER NOT NULL";		# Ordre d'execution des filieres 
 	$sql .= ", ED_TYPED CHAR NOT NULL";			# 
 	$sql .= ", ED_MODEDI CHAR NOT NULL";			# 
+	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	# alter table EDTK_FILIERES add ED_IDGPLOT VARCHAR2(16) 
 	$sql .= ", ED_NBBACPRN INTEGER NOT NULL";		# 
 	$sql .= ", ED_NBENCMAX INTEGER";
-	$sql .= ", ED_MINFEUIL_L INTEGER";			# 
-	$sql .= ", ED_MAXFEUIL_L INTEGER";			# 
-	$sql .= ", ED_FEUILPLI INTEGER";			#
-	$sql .= ", ED_MINPLIS INTEGER";				#
-	$sql .= ", ED_MAXPLIS INTEGER NOT NULL";		#
-	$sql .= ", ED_POIDS_PLI INTEGER";			# poids maximum du pli dans la filiere
+	$sql .= ", ED_MINFEUIL_L INTEGER"; 
+	$sql .= ", ED_MAXFEUIL_L INTEGER"; 
+	$sql .= ", ED_FEUILPLI INTEGER";
+	$sql .= ", ED_MINPLIS INTEGER";
+	$sql .= ", ED_MAXPLIS INTEGER NOT NULL";
+	$sql .= ", ED_POIDS_PLI INTEGER";				# poids maximum du pli dans la filiere
 	$sql .= ", ED_REF_ENV VARCHAR2(8) NOT NULL";
 	$sql .= ", ED_FORMFLUX VARCHAR2(3) NOT NULL";
 	$sql .= ", ED_SORT VARCHAR2(128) NOT NULL";
@@ -150,13 +151,14 @@ sub params_LOTS_table_create {
 	my $table = "EDTK_LOTS";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_IDLOT VARCHAR2(8) NOT NULL";		# 
-	$sql .= ", ED_PRIORITE INTEGER NOT NULL";		#  
+	$sql .= "( ED_IDLOT VARCHAR2(8) NOT NULL"; 
+	$sql .= ", ED_PRIORITE INTEGER NOT NULL";  
 	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";
-	$sql .= ", ED_CPDEST VARCHAR2(6) NOT NULL";		# 
-	$sql .= ", ED_GROUPBY VARCHAR2(16)";			# 
-	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL";	# 
-	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";		# 
+	$sql .= ", ED_CPDEST VARCHAR2(6) NOT NULL"; 
+	$sql .= ", ED_GROUPBY VARCHAR2(16)"; 
+	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
+	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS add ED_LOTNAME VARCHAR2(16) NOT NULL
+	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -167,14 +169,14 @@ sub params_REFIDDOC_table_create {
 	my $table = "EDTK_REFIDDOC";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_REFIDDOC VARCHAR2(20) NOT NULL";		# 
+	$sql .= "( ED_REFIDDOC VARCHAR2(20) NOT NULL"; 
 	$sql .= ", ED_CORP VARCHAR2(8) NOT NULL";		# Entity related to the document
-	$sql .= ", ED_CATDOC CHAR NOT NULL";			#  
-	$sql .= ", ED_PORTADR CHAR NOT NULL";			#  
-	$sql .= ", ED_MASSMAIL CHAR NOT NULL";			#
-	$sql .= ", ED_EDOCSHARE CHAR NOT NULL";			#  
-	$sql .= ", ED_TYPED CHAR NOT NULL";			#  
-	$sql .= ", ED_MODEDI CHAR NOT NULL";			#  
+	$sql .= ", ED_CATDOC CHAR NOT NULL";  
+	$sql .= ", ED_PORTADR CHAR NOT NULL";  
+	$sql .= ", ED_MASSMAIL CHAR NOT NULL";
+	$sql .= ", ED_EDOCSHARE CHAR NOT NULL";  
+	$sql .= ", ED_TYPED CHAR NOT NULL";  
+	$sql .= ", ED_MODEDI CHAR NOT NULL";  
 	$sql .= ", ED_PGORIEN VARCHAR2(2)";
 	$sql .= ", ED_FORMATP VARCHAR2(2)"; 
 	$sql .= ", ED_REFIMP_P1 VARCHAR2(16)"; 
@@ -213,16 +215,16 @@ our @INDEX_COLS = (
 	['ED_REFIDDOC', 'VARCHAR2(20) NOT NULL'],# identifiant dans le référentiel de document
 	['ED_IDLDOC', 'VARCHAR2(17) NOT NULL'],	# Identifiant du document dans le lot de mise en page ED_SNGL_ID
 	['ED_IDSEQPG', 'INTEGER NOT NULL'],	# Sequence Numéro de séquence de page dans le lot de mise en page
-	['ED_SEQDOC', 'INTEGER NOT NULL'],	# Numéro de séquence du document dans le lot
+	['ED_SEQDOC', 'INTEGER NOT NULL'],		# Numéro de séquence du document dans le lot
 
-	['ED_CPDEST', 'VARCHAR2(8)'],		# Code postal Destinataire
-	['ED_VILLDEST', 'VARCHAR2(25)'],	# Ville destinataire
+	['ED_CPDEST', 'VARCHAR2(8)'],			# Code postal Destinataire
+	['ED_VILLDEST', 'VARCHAR2(25)'],		# Ville destinataire
 	['ED_IDDEST', 'VARCHAR2(25)'],		# Identifiant du destinataire dans le système de gestion
 	['ED_NOMDEST', 'VARCHAR2(30)'],		# Nom destinataire
 	['ED_IDEMET', 'VARCHAR2(10)'],		# identifiant de l'émetteur
 	['ED_DTEDTION', 'VARCHAR2(8) NOT NULL'],# date d'édition, celle qui figure sur le document
-	['ED_TYPPROD', 'CHAR'],			# type de production associée au lot
-	['ED_PORTADR', 'CHAR'],			# indicateur de document porte adresse
+	['ED_TYPPROD', 'CHAR'],				# type de production associée au lot
+	['ED_PORTADR', 'CHAR'],				# indicateur de document porte adresse
 	['ED_ADRLN1', 'VARCHAR2(38)'],		# ligne d'adresse 1
 	['ED_CLEGED1', 'VARCHAR2(20)'],		# clef pour système d'archivage
 	['ED_ADRLN2', 'VARCHAR2(38)'],		# ligne d'adresse 2
@@ -232,46 +234,48 @@ our @INDEX_COLS = (
 	['ED_ADRLN4', 'VARCHAR2(38)'],		# ligne d'adresse 4
 	['ED_CLEGED4', 'VARCHAR2(20)'],		# clef pour système d'archivage
 	['ED_ADRLN5', 'VARCHAR2(38)'],		# ligne d'adresse 5
-	['ED_CORP', 'VARCHAR2(20)'],		# sociét? émettrice de la page
+	['ED_CORP', 'VARCHAR2(20)'],			# sociét? émettrice de la page
 	['ED_DOCLIB', 'VARCHAR2(32)' ],		# merge library compuset associée ? la page
-	['ED_REFIMP', 'VARCHAR2(8)'],		# référence de pr?-imprim? ou d'imprim? ou d'encart
+	['ED_REFIMP', 'VARCHAR2(8)'],			# référence de pr?-imprim? ou d'imprim? ou d'encart
 	['ED_ADRLN6', 'VARCHAR2(38)'],		# ligne d'adresse 6
 	['ED_SOURCE', 'VARCHAR2(8) NOT NULL'],	# Source de l'index
-	['ED_OWNER', 'VARCHAR2(10)'],		# propriétaire du document (utilisation en gestion / archivage de documents)
-	['ED_HOST', 'VARCHAR2(32)'],		# Hostname de la machine d'ou origine cette entrée
+	['ED_OWNER', 'VARCHAR2(10)'],			# propriétaire du document (utilisation en gestion / archivage de documents)
+	['ED_HOST', 'VARCHAR2(32)'],			# Hostname de la machine d'ou origine cette entrée
 	['ED_IDIDX', 'VARCHAR2(7) NOT NULL'],	# identifiant de l'index
 
 	# SECTION LOTISSEMENT DE L'INDEX
-	['ED_IDLOT', 'VARCHAR2(6)'],		# identifiant du lot
-	['ED_SEQLOT', 'VARCHAR2(6)'],		# identifiant du lot de mise sous plis (sous-lot)
-	['ED_DTLOT', 'VARCHAR2(8)'],		# date de la création du lot de mise sous plis
-	['ED_IDFILIERE', 'VARCHAR2(3)'],	# identifiant de la filière de production
-	['ED_CATDOC', 'CHAR'],			# catégorie de document
-	['ED_CODRUPT', 'CHAR'],			# code forçage de rupture
-	['ED_SEQPGDOC', 'INTEGER'],		# numéro de séquence de page dans le document
-	['ED_NBPGDOC', 'INTEGER'],		# nombre de page (faces) du document
-	['ED_POIDSUNIT', 'INTEGER'],		# poids de l'imprim? ou de l'encart en mg
-	['ED_BAC_INSERT', 'INTEGER'],		# Appel de bac ou d'insert
+	['ED_IDLOT', 'VARCHAR2(6)'],			# identifiant du lot
+	['ED_SEQLOT', 'VARCHAR2(6)'],			# identifiant du lot de mise sous plis (sous-lot)
+	['ED_DTLOT', 'VARCHAR2(8)'],			# date de la création du lot de mise sous plis
+	['ED_IDFILIERE', 'VARCHAR2(5)'],		# identifiant de la filière de production     ALTER table edtk_index modify ED_IDFILIERE VARCHAR2(5);
+	['ED_CATDOC', 'CHAR'],				# catégorie de document
+	['ED_CODRUPT', 'CHAR'],				# code forçage de rupture
+	['ED_SEQPGDOC', 'INTEGER'],			# numéro de séquence de page dans le document
+	['ED_NBPGDOC', 'INTEGER'],			# nombre de page (faces) du document
+	['ED_POIDSUNIT', 'INTEGER'],			# poids de l'imprim? ou de l'encart en mg
+	['ED_NBENC', 'INTEGER'],				# nombre d'encarts du doc				ALTER table edtk_index add ED_NBENC integer;
+	['ED_ENCPDS', 'INTEGER'],			# poids des encarts du doc				ALTER table edtk_index add ED_ENCPDS INTEGER;
+	['ED_BAC_INSERT', 'INTEGER'],			# Appel de bac ou d'insert
 
 	# SECTION EDITION DE L'INDEX
-	['ED_TYPED', 'CHAR'],			# type d'édition
-	['ED_MODEDI', 'CHAR'],			# mode d'édition
+	['ED_TYPED', 'CHAR'],				# type d'édition
+	['ED_MODEDI', 'CHAR'],				# mode d'édition
 	['ED_FORMATP', 'VARCHAR2(2)'],		# format papier
 	['ED_PGORIEN', 'VARCHAR2(2)'],		# orientation de l'édition
 	['ED_FORMFLUX', 'VARCHAR2(3)'],		# format du flux d'édition
 #	['ED_FORMDEF', 'VARCHAR2(8)'],		# Formdef AFP
 #	['ED_PAGEDEF', 'VARCHAR2(8)'],		# Pagedef AFP
-#	['ED_FORMS', 'VARCHAR2(8)'],		# Forms 
+#	['ED_FORMS', 'VARCHAR2(8)'],			# Forms 
 
 	# SECTION PLI DE L'INDEX
-	['ED_IDPLI', 'INTEGER'],		# identifiant du pli
+	['ED_IDPLI', 'INTEGER'],				# identifiant du pli
 	['ED_NBDOCPLI', 'INTEGER NOT NULL'],	# nombre de documents du pli
 	['ED_NUMPGPLI', 'INTEGER NOT NULL'],	# numéro de la page (face) dans le pli
-	['ED_NBPGPLI', 'INTEGER'],		# nombre de pages (faces) du pli
-	['ED_NBFPLI', 'INTEGER'],		# nombre de feuillets du pli
-	['ED_LISTEREFENC', 'VARCHAR2(64)'],		# liste des encarts du pli
-	['ED_PDSPLI', 'INTEGER'],		# poids du pli en mg
-	['ED_TYPOBJ', 'CHAR'],			# type d'objet dans le pli
+	['ED_NBPGPLI', 'INTEGER'],			# nombre de pages (faces) du pli
+	['ED_NBFPLI', 'INTEGER'],			# nombre de feuillets du pli
+	['ED_LISTEREFENC', 'VARCHAR2(64)'],	# liste des encarts du pli
+	['ED_PDSPLI', 'INTEGER'],			# poids du pli en mg
+	['ED_TYPOBJ', 'CHAR'],				# type d'objet dans le pli	xxxxxx  conserver ?
 	['ED_DTPOSTE', 'VARCHAR2(8)'],		# date de remise en poste
 );
 
@@ -281,8 +285,8 @@ sub PARA_table_create {
 	my $table = "EDTK_TEST_PARA";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_PARA_REFIDDOC VARCHAR2(20) NOT NULL";	# 
-	$sql .= ", ED_PARA_CORP VARCHAR2(8) NOT NULL";		# Entity related to the document
+	$sql .= "( ED_PARA_REFIDDOC VARCHAR2(20) NOT NULL"; 
+	$sql .= ", ED_PARA_CORP VARCHAR2(8) NOT NULL";	# Entity related to the document
 	$sql .= ", ED_ID INTEGER NOT NULL";			#
 	$sql .= ", ED_TSTAMP VARCHAR2(14) NOT NULL";		# Timestamp of event
 	$sql .= ", ED_TEXTBLOC VARCHAR2(512)";
@@ -297,8 +301,8 @@ sub DATAGROUPS_table_create {
 	my $table = "EDTK_TEST_DATAGROUPS";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_DGPS_REFIDDOC VARCHAR2(20) NOT NULL";	# 
-	$sql .= ", ED_ID INTEGER NOT NULL";			#
+	$sql .= "( ED_DGPS_REFIDDOC VARCHAR2(20) NOT NULL"; 
+	$sql .= ", ED_ID INTEGER NOT NULL";
 	$sql .= ", ED_DATA VARCHAR2(64)";
 
 	$sql .= ")";

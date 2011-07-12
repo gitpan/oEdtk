@@ -3,7 +3,7 @@ package oEdtk::Messenger;
 use strict;
 use warnings;
 
-use Email::Sender::Simple 		qw(sendmail);
+use Email::Sender::Simple 	qw(sendmail);
 use Email::Sender::Transport::SMTP;
 use oEdtk::Config			qw(config_read);
 

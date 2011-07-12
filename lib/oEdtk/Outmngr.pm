@@ -9,12 +9,12 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 use List::Util		qw(max sum);
 use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect index_table_create @INDEX_COLS);
-use POSIX		qw(strftime);
+use POSIX			qw(strftime);
 use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.1097;
+our $VERSION	= 0.15;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_seqlot_ref 
@@ -30,6 +30,7 @@ our @EXPORT_OK	= qw(
 
 # Le lot par défaut.
 use constant DEFLOT => 'DEF';
+use constant DEFFIL => 'DEF';
 
 # Description des traitements que l'on applique à nos lots de documents, avec
 # la liste des champs mis à jour à chaque étape.
@@ -76,7 +77,7 @@ sub omgr_import($$$) {
 	# Retrieve the database connection parameters.
 	my $cfg = config_read('EDTK_DB');
 	
-	my $pdbh = db_connect($cfg, 'EDTK_PARAM_DSN');
+	my $pdbh= db_connect($cfg, 'EDTK_PARAM_DSN');
 	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 0, RaiseError => 1 });
 
 	# Create the $cfg->{'EDTK_DBI_OUTMNGR'} table if we're using SQLite.
@@ -88,7 +89,6 @@ sub omgr_import($$$) {
 		my ($idldoc, $numencs, $encpds) = omgr_insert($dbh, $pdbh, $app, $in, $corp);
 		omgr_lot($dbh, $pdbh, $idldoc);
 		omgr_filiere($dbh, $pdbh, $app, $idldoc, $numencs, $encpds);
-		# omgr_filiere($dbh, $pdbh, $app, $idldoc);
 		$dbh->commit;
 	};
 	if ($@) {
@@ -101,6 +101,10 @@ sub omgr_import($$$) {
 }
 
 sub omgr_insert($$$$$) {
+	# - injection des données page/page de l'index compo en base de données
+	# - complétion de l'index avec les infos des tables de paramétrage REFIDDOC et SUPPORTS
+	# - calculs des quantités pages/supports
+	# revoir la gestion des encarts   xxxxxxxxxx
 	my ($dbh, $pdbh, $app, $in, $corp) = @_;
 	my $cfg = config_read('EDTK_DB');
 
@@ -137,6 +141,9 @@ sub omgr_insert($$$$$) {
 	my $encpds = 0;
 	my @needed = ();
 	foreach my $encref (@encrefs) {
+	
+		# l'erreur est ici : on devrait ajouter des ligens d'index par encart avec TYPIMP = E xxxxxx
+		 
 		my $enc = $pdbh->selectrow_hashref($sth, undef, $encref) or die $pdbh->errstr;
 		if (defined($enc->{'ED_DEBVALID'}) && length($enc->{'ED_DEBVALID'}) > 0) {
 			next if $now < $enc->{'ED_DEBVALID'};
@@ -197,51 +204,53 @@ sub omgr_insert($$$$$) {
 
 		my $entry = {
 			ED_REFIDDOC	=> $data[0],
-			ED_IDLDOC	=> $idldoc,
+			ED_IDLDOC		=> $idldoc,
 			ED_IDSEQPG	=> $data[2],
-			ED_SEQDOC	=> $data[3],
-			ED_CPDEST	=> $data[4],
+			ED_SEQDOC		=> $data[3],
+			ED_CPDEST		=> $data[4],
 			ED_VILLDEST	=> $data[5],
-			ED_IDDEST	=> $data[6],
+			ED_IDDEST		=> $data[6],
 			ED_NOMDEST	=> $data[7],
-			ED_IDEMET	=> $data[8],
+			ED_IDEMET		=> $data[8],
 			ED_DTEDTION	=> $data[9],
 			ED_TYPPROD	=> $data[10],
 			ED_PORTADR	=> $doc->{'ED_PORTADR'}, # vérifier qu'on peut le gérer comme ED_TYPPROD
-			ED_ADRLN1	=> $data[12],
+			ED_ADRLN1		=> $data[12],
 			ED_CLEGED1	=> $data[13],
-			ED_ADRLN2	=> $data[14],
+			ED_ADRLN2		=> $data[14],
 			ED_CLEGED2	=> $data[15],
-			ED_ADRLN3	=> $data[16],
+			ED_ADRLN3		=> $data[16],
 			ED_CLEGED3	=> $data[17],
-			ED_ADRLN4	=> $data[18],
+			ED_ADRLN4		=> $data[18],
 			ED_CLEGED4	=> $data[19],
-			ED_ADRLN5	=> $data[20],
+			ED_ADRLN5		=> $data[20],
 			ED_CORP		=> $data[21],
-			ED_DOCLIB	=> $data[22],
-			ED_REFIMP	=> $data[23],
-			ED_ADRLN6	=> $data[24],
-			ED_SOURCE	=> $data[25],
-			ED_OWNER	=> $data[26],
+			ED_DOCLIB		=> $data[22],
+			ED_REFIMP		=> $data[23],
+			ED_ADRLN6		=> $data[24],
+			ED_SOURCE		=> $data[25],
+			ED_OWNER		=> $data[26],
 			ED_HOST		=> $data[27],
-			ED_IDIDX	=> $data[28],
-			ED_CATDOC	=> $doc->{'ED_CATDOC'},
+			ED_IDIDX		=> $data[28],
+			ED_CATDOC		=> $doc->{'ED_CATDOC'},
 			#ED_CODRUPT	=>
 			ED_SEQPGDOC	=> $seqpgdoc,
 			ED_POIDSUNIT	=> $first ? $p1->{'ED_POIDSUNIT'} : $ps->{'ED_POIDSUNIT'},
+			ED_NBENC		=> scalar @needed,				# ceci est un hack incompatible avec le regroupement de plis 
+			ED_ENCPDS		=> $encpds,					# ceci est un hack incompatible avec le regroupement de plis
 			ED_BAC_INSERT	=> $first ? $p1->{'ED_BAC_INSERT'} : $ps->{'ED_BAC_INSERT'},
-			ED_TYPED	=> $doc->{'ED_TYPED'},
-			ED_MODEDI	=> $doc->{'ED_MODEDI'},
+			ED_TYPED		=> $doc->{'ED_TYPED'},
+			ED_MODEDI		=> $doc->{'ED_MODEDI'},
 			ED_FORMATP	=> $doc->{'ED_FORMATP'},
 			ED_PGORIEN	=> $doc->{'ED_PGORIEN'},
 #			ED_FORMDEF	=> $doc->{'ED_FORMDEF'},
 #			ED_PAGEDEF	=> $doc->{'ED_PAGEDEF'},
-#			ED_FORMS	=> $doc->{'ED_FORMS'},
-			#ED_IDPLI	=>
+#			ED_FORMS		=> $doc->{'ED_FORMS'},
+			#ED_IDPLI		=>
 			ED_NBDOCPLI	=> 1,		# XXX Sera différent de 1 quand on fera du regroupement
 			ED_NUMPGPLI	=> $numpgpli,
 			ED_LISTEREFENC	=> $listerefenc,
-			ED_TYPOBJ	=> 'I'		# XXX Il nous manque des données pour ce champ
+			ED_TYPOBJ		=> 'I'		# XXX Il nous manque des données pour ce champ
 		};
 
 		# On ne remplit le champ pré-imprimé que s'il n'est pas renseigné dans l'index.
@@ -284,6 +293,7 @@ sub omgr_insert($$$$$) {
 }
 
 sub omgr_lot($$$) {
+	# rapprochement entre documents de l'index et table des lots => affectation du lot
 	my ($dbh, $pdbh, $idldoc) = @_;
 	my $cfg = config_read('EDTK_DB');
 
@@ -312,6 +322,25 @@ sub omgr_lot($$$) {
 	}
 }
 
+
+sub omgr_get_next_filiere ($$){
+	my ($pdbh, $filiere) = @_;
+
+	# Récupération des paramètres d'assignation de la filiere.
+	my ($ed_priorite, $ed_idmanufact, $ed_typed, $ed_modedi, $ed_idgplot, $ed_nbbacprn) 
+			= $pdbh->selectrow_array('select ED_PRIORITE, ED_IDMANUFACT, ED_TYPED, ED_MODEDI, ED_IDGPLOT, ED_NBBACPRN from EDTK_FILIERES where ED_IDFILIERE =? ',
+	    			undef, $filiere) or die $pdbh->errstr;
+	# Récupération du 1er élément de la liste ordonnée des filieres.
+	my $next_filiere 
+			= $pdbh->selectrow_array('select ED_IDFILIERE from EDTK_FILIERES where ED_IDMANUFACT =? and ED_TYPED =? and ED_MODEDI =? and ED_NBBACPRN >=? and ED_ACTIF =? and ED_IDFILIERE !=? and ED_PRIORITE >? and (ED_IDGPLOT = ? or ED_IDGPLOT = ?) order by ED_PRIORITE',
+	    			undef, $ed_idmanufact, $ed_typed, $ed_modedi, $ed_nbbacprn, 'O', $filiere, $ed_priorite, $ed_idgplot, '%');
+
+     $next_filiere||=DEFFIL;
+	warn "INFO : next_filiere is $next_filiere\n";
+	return $next_filiere; 
+}
+
+
 sub omgr_filiere($$$$$$) {
 	my ($dbh, $pdbh, $app, $idldoc, $numencs, $encpds) = @_;
 	my $cfg = config_read('EDTK_DB');
@@ -339,7 +368,8 @@ sub omgr_filiere($$$$$$) {
 	my $ps = $pdbh->selectrow_hashref('SELECT * FROM EDTK_SUPPORTS WHERE ED_REFIMP = ?',
 	    undef, $doc->{'ED_REFIMP_PS'}) or die $pdbh->errstr;
 
-	# On recherche toutes les entrées qui ont un lot assigné mais pas encore de filière.
+	# On recherche toutes les entrées qui ont un lot assigné 
+	# mais pas encore de filière ? xxxxxxxxxxxx
 	my $sql = 'SELECT DISTINCT ED_IDLOT FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} . 
 	    ' WHERE ED_IDLDOC = ? AND ED_IDLOT IS NOT NULL AND ED_IDFILIERE IS NULL';
 	my $lotids = $dbh->selectcol_arrayref($sql, undef, $idldoc);
@@ -348,10 +378,10 @@ sub omgr_filiere($$$$$$) {
 		my $lot = $pdbh->selectrow_hashref('SELECT * FROM EDTK_LOTS WHERE ED_IDLOT = ?',
 		    undef, $lotid) or die $pdbh->errstr;
 
-		# On essaye maintenant de matcher des documents avec chacune des filières.
-		my $sql = "SELECT * FROM EDTK_FILIERES WHERE ED_ACTIF = 'O' AND " .
-		    "(ED_IDMANUFACT IS NULL OR ED_IDMANUFACT = '' OR ED_IDMANUFACT = ?) " .
-		    "ORDER BY ED_PRIORITE";
+		# On essaye maintenant de matcher les documents avec chacune des filières.
+		my $sql = "SELECT * FROM EDTK_FILIERES WHERE ED_ACTIF = 'O' "
+		    . "AND (ED_IDMANUFACT IS NULL OR ED_IDMANUFACT = '' OR ED_IDMANUFACT = ?) "
+		    . "ORDER BY ED_PRIORITE";
 		my $sth = $pdbh->prepare($sql) or die $pdbh->errstr;
 		$sth->execute($lot->{'ED_IDMANUFACT'});
 
@@ -359,6 +389,12 @@ sub omgr_filiere($$$$$$) {
 		# uniquement lorsqu'on exporte les lots dans omgr_export() pour permettre
 		# le regroupement.
 		while (my $fil = $sth->fetchrow_hashref()) {
+			if (defined $fil->{'ED_IDGPLOT'} && length($fil->{'ED_IDGPLOT'}) > 0) {
+				if ($lot->{'ED_IDGPLOT'} ne $fil->{'ED_IDGPLOT'} and $fil->{'ED_IDGPLOT'} ne "%") {
+					next;
+				}
+			}
+
 			if (defined $fil->{'ED_NBENCMAX'} && length($fil->{'ED_NBENCMAX'}) > 0) {
 				next if $numencs > $fil->{'ED_NBENCMAX'};
 			}
@@ -370,8 +406,8 @@ sub omgr_filiere($$$$$$) {
 
 			my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ?, " .
 			    "ED_FORMFLUX = ?, ED_NBFPLI = $sqlnbfpli, ED_PDSPLI = $sqlpdspli " .
-			    "WHERE ED_IDLDOC = ? AND ED_IDLOT = ? AND ED_IDFILIERE IS NULL AND " .
-			    "ED_MODEDI LIKE ? AND ED_TYPED LIKE ?";
+			    "WHERE ED_IDLDOC = ? AND ED_IDLOT = ? AND ED_IDFILIERE IS NULL " .
+			    "AND ED_MODEDI LIKE ? AND ED_TYPED LIKE ? ";
 			my @vals = ($fil->{'ED_IDFILIERE'}, $fil->{'ED_FORMFLUX'}, $idldoc,
 			    $lotid, $fil->{'ED_MODEDI'}, $fil->{'ED_TYPED'});
 			if (defined $fil->{'ED_POIDS_PLI'} && length($fil->{'ED_POIDS_PLI'}) > 0) {
@@ -391,294 +427,321 @@ sub omgr_filiere($$$$$$) {
 	}
 }
 
+
 sub omgr_export(%) {
 	my (%conds) = @_;
 
 	my $cfg = config_read('EDTK_DB');
 	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 0, RaiseError => 1 });
 	my $pdbh= db_connect($cfg, 'EDTK_PARAM_DSN');
+	# omgr_filiere2($dbh, $pdbh, $app, $idldoc, $numencs, $encpds);
 
 	my $basedir = $cfg->{'EDTK_DIR_OUTMNGR'};
 
 	my @done = ();
 	eval {
 		# Transformation des éventuels filtres utilisateurs en clause WHERE.
-		my $uwhere = join(' AND ', map { "$_ = ?" } keys(%conds));
+		my $user_where = join(' AND ', map { "$_ = ?" } keys(%conds));
 
 		# Cette requête sélectionne les couples (idlot,idfiliere) contenant des plis non affectés.
 		my $idsql = 'SELECT DISTINCT ED_IDLOT, ED_IDFILIERE FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
 		    ' WHERE ED_IDLOT IS NOT NULL AND ED_IDFILIERE IS NOT NULL AND ED_SEQLOT IS NULL';
-		if (length($uwhere) > 0) {
-			$idsql .= " AND $uwhere";
+		if (length($user_where) > 0) {
+			$idsql .= " AND $user_where";
 		}
 		my $ids = $dbh->selectall_arrayref($idsql, undef, values(%conds));
 
-		foreach (@$ids) {
+		foreach (@$ids) {    # il faut tenir compte de l'ordre de priorité des filières
 			my ($idlot, $idfiliere) = @$_;
 
-			warn "DEBUG: Considering couple : $idlot, $idfiliere\n";
-			# La clause WHERE que l'on réutilise dans la plupart des requêtes afin de ne
-			# traiter que les entrées qui nous intéressent.
-			my $where = 'WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_SEQLOT IS NULL';
-			if (length($uwhere) > 0) {
-				$where .= " AND $uwhere";
-			}
-			my @wvals = ($idlot, $idfiliere, values(%conds));
-
-			my $fil = $pdbh->selectrow_hashref('SELECT * FROM EDTK_FILIERES WHERE ED_IDFILIERE = ?',
-			    undef, $idfiliere);
-			my $lot = $pdbh->selectrow_hashref('SELECT * FROM EDTK_LOTS WHERE ED_IDLOT = ?',
-			    undef, $idlot);
-
-			# On verrouille la table $cfg->{'EDTK_DBI_OUTMNGR'} pour s'assurer que des entrées ne soient pas
-			# ajoutées entre le moment ou on fait nos calculs et le moment ou on fait l'UPDATE.
-			$dbh->do('LOCK TABLE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' IN SHARE ROW EXCLUSIVE MODE');
-
-			# Si le lot définit une colonne pour la valeur de ED_GROUPBY, on doit découper
-			# les lots d'envoi en fonction de cette colonne.  De plus, on découpe toujours
-			# par entité émettrice, format de papier, type de production et liste d'encarts.
-			my @gcols = ('ED_CORP', 'ED_FORMATP', 'ED_TYPPROD', 'ED_LISTEREFENC');
-
-			if (defined($lot->{'ED_GROUPBY'}) && length($lot->{'ED_GROUPBY'}) > 0) {
-				push(@gcols, split(/,/, $lot->{'ED_GROUPBY'}));
-			}
-			my $groups = $dbh->selectall_arrayref("SELECT DISTINCT "
-				. join(', ', @gcols) .  " FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} 
-				. " $where", { Slice => {} }, @wvals);
-
-			foreach my $gvals (@$groups) {
-				my $where2 = $where;
-				my @wvals2 = @wvals;
-
-				if (keys(%$gvals) > 0) {
-					# check if every value is defined and could be used (ED_LISTEREFENC could be defined or not)
-					## which can produce this message : Issuing rollback() for database handle being DESTROY'd without explicit disconnect()
-					foreach my $key (keys (%$gvals)) {
-						if (defined $$gvals{$key}){} else {delete $$gvals{$key}}
+			CHECK_FIL:
+			{
+				warn "DEBUG: Considering couple : $idlot, $idfiliere\n";
+				# La clause WHERE que l'on réutilise dans la plupart des requêtes afin de ne
+				# traiter que les entrées qui nous intéressent.
+				my $where = 'WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_SEQLOT IS NULL';
+				if (length($user_where) > 0) {
+					$where .= " AND $user_where";
+				}
+				my @wvals = ($idlot, $idfiliere, values(%conds));
+	
+				my $fil = $pdbh->selectrow_hashref('SELECT * FROM EDTK_FILIERES WHERE ED_IDFILIERE = ?',
+				    undef, $idfiliere);
+				my $lot = $pdbh->selectrow_hashref('SELECT * FROM EDTK_LOTS WHERE ED_IDLOT = ?',
+				    undef, $idlot);
+	
+				# On verrouille la table $cfg->{'EDTK_DBI_OUTMNGR'} pour s'assurer que des entrées ne soient pas
+				# ajoutées entre le moment ou on fait nos calculs et le moment ou on fait l'UPDATE.
+				$dbh->do('LOCK TABLE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' IN SHARE ROW EXCLUSIVE MODE');
+	
+				# Si le lot définit une colonne pour la valeur de ED_GROUPBY, on doit découper
+				# les lots d'envoi en fonction de cette colonne.  De plus, on découpe toujours
+				# par entité émettrice, format de papier, type de production et liste d'encarts.
+				my @gcols = ('ED_CORP', 'ED_FORMATP', 'ED_TYPPROD', 'ED_LISTEREFENC');
+	
+				if (defined($lot->{'ED_GROUPBY'}) && length($lot->{'ED_GROUPBY'}) > 0) {
+					push(@gcols, split(/,/, $lot->{'ED_GROUPBY'}));
+				}
+				my $groups = $dbh->selectall_arrayref("SELECT DISTINCT "
+					. join(', ', @gcols) .  " FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} 
+					. " $where", { Slice => {} }, @wvals);
+	
+				foreach my $gvals (@$groups) {
+					my $where2 = $where;	# vérifier qu'on l'utilise bien ...
+					my @wvals2 = @wvals;
+	
+					if (keys(%$gvals) > 0) {
+						# check if every value is defined and could be used (ED_LISTEREFENC could be defined or not)
+						## which can produce this message : Issuing rollback() for database handle being DESTROY'd without explicit disconnect()
+						foreach my $key (keys (%$gvals)) {
+							if (defined $$gvals{$key}){} else {delete $$gvals{$key}}
+						}
+						
+						push(@wvals2, values(%$gvals));
+						$where2 .= ' AND ' . join(' AND ', map { "$_ = ?" } keys(%$gvals));
 					}
+	
+					# On calcule le nombre de plis de chaque taille.
+					my $innersql = 'SELECT DISTINCT ED_IDLDOC, ED_SEQDOC, ED_NBPGPLI FROM ' .
+					    $cfg->{'EDTK_DBI_OUTMNGR'};
+	
+					my $sql = "SELECT COUNT(*), i.ED_NBPGPLI FROM ($innersql $where2) i " .
+					    "GROUP BY i.ED_NBPGPLI ORDER BY i.ED_NBPGPLI DESC";
+					my $res = $dbh->selectall_arrayref($sql, undef, @wvals2);
+					next if @$res == 0; 
 					
-					push(@wvals2, values(%$gvals));
-					$where2 .= ' AND ' . join(' AND ', map { "$_ = ?" } keys(%$gvals));
-				}
-
-				# On calcule le nombre de plis de chaque taille.
-				my $innersql = 'SELECT DISTINCT ED_IDLDOC, ED_SEQDOC, ED_NBPGPLI FROM ' .
-				    $cfg->{'EDTK_DBI_OUTMNGR'};
-
-				my $sql = "SELECT COUNT(*), i.ED_NBPGPLI FROM ($innersql $where2) i " .
-				    "GROUP BY i.ED_NBPGPLI ORDER BY i.ED_NBPGPLI DESC";
-#warn "INFO : \$sql = $sql\n";
-#warn "INFO : \@wvals2 = @wvals2\n";
-				my $res = $dbh->selectall_arrayref($sql, undef, @wvals2);
-				next if @$res == 0; 
-				
-				# Calcul du nombre total de plis et de pages à notre disposition.
-				my $availplis = sum(map { $$_[0] } @$res);
-				my $availpgs = sum(map { $$_[0] * $$_[1] } @$res);
-
-				# Aura-t-on besoin de repasser un traitement pour ce couple (idlot/idfiliere)
-				# et pour le groupe définit par les colonnes de @gcols?
-				my $more = 0;
-
-				# Le nombre maximal de plis/pages que l'on peut prendre (soit la
-				# limite de la filière, soit l'intégralité disponible).
-				if (defined($fil->{'ED_MAXPLIS'}) && $availplis > $fil->{'ED_MAXPLIS'}) {
-					$availplis = $fil->{'ED_MAXPLIS'};
-					$more = 1;
-				}
-				
-				if (defined($fil->{'ED_MAXFEUIL_L'})) {
-					my $maxpgs = $fil->{'ED_MAXFEUIL_L'};
-					if ($fil->{'ED_MODEDI'} eq 'V') {
-						$maxpgs *= 2;
-					}
-					if ($availpgs > $maxpgs) {
-						$availpgs = $maxpgs;
+					# Calcul du nombre total de plis et de pages à notre disposition.
+					my $availplis = sum(map { $$_[0] } @$res);
+					my $availpgs = sum(map { $$_[0] * $$_[1] } @$res);
+	
+					# Aura-t-on besoin de repasser un traitement pour ce couple (idlot/idfiliere)
+					# et pour le groupe définit par les colonnes de @gcols?
+					my $more = 0;
+	
+					# Le nombre maximal de plis/pages que l'on peut prendre (soit la
+					# limite de la filière, soit l'intégralité disponible).
+					if (defined($fil->{'ED_MAXPLIS'}) && $availplis > $fil->{'ED_MAXPLIS'}) {
+						$availplis = $fil->{'ED_MAXPLIS'};
 						$more = 1;
 					}
-				}
-
-				my @plis = ();
-				my $selplis = 0;
-				my $selpgs = 0;
-				foreach (@$res) {
-					my ($numplis, $nbpgpli) = @$_;
-
-					# Si on ne peut plus rajouter de plis ou de pages, on arrête.
-					last if $availplis == 0 || $availpgs == 0;
 					
-					# Il n'y a pas suffisamment de pages disponibles pour ajouter de
-					# pli de cette taille, on essaye donc avec de plus petits plis.
-					next if $availpgs < $nbpgpli;
-
-					my $nbplis = int($availpgs / $nbpgpli);
-					if ($nbplis > $availplis) {
-						$nbplis = $availplis;
+					if (defined($fil->{'ED_MAXFEUIL_L'})) {
+						my $maxpgs = $fil->{'ED_MAXFEUIL_L'};
+						if ($fil->{'ED_MODEDI'} eq 'V') {
+							$maxpgs *= 2;
+						}
+						if ($availpgs > $maxpgs) {
+							$availpgs = $maxpgs;
+							$more = 1;
+						}
 					}
-					if ($nbplis > $numplis) {
-						$nbplis = $numplis;
+	
+					my @plis = ();
+					my $selplis = 0;
+					my $selpgs = 0;
+					foreach (@$res) {
+						my ($numplis, $nbpgpli) = @$_;
+	
+						# Si on ne peut plus rajouter de plis ou de pages, on arrête.
+						last if $availplis == 0 || $availpgs == 0;
+						
+						# Il n'y a pas suffisamment de pages disponibles pour ajouter de
+						# pli de cette taille, on essaye donc avec de plus petits plis.
+						next if $availpgs < $nbpgpli;
+	
+						my $nbplis = int($availpgs / $nbpgpli);
+						if ($nbplis > $availplis) {
+							$nbplis = $availplis;
+						}
+						if ($nbplis > $numplis) {
+							$nbplis = $numplis;
+						}
+						my $nbpgs = $nbplis * $nbpgpli;
+	
+						push(@plis, [$nbplis, $nbpgpli]);
+						$availplis -= $nbplis;
+						$availpgs -= $nbpgs;
+						$selplis += $nbplis;
+						$selpgs += $nbpgs;
 					}
-					my $nbpgs = $nbplis * $nbpgpli;
-
-					push(@plis, [$nbplis, $nbpgpli]);
-					$availplis -= $nbplis;
-					$availpgs -= $nbpgs;
-					$selplis += $nbplis;
-					$selpgs += $nbpgs;
-				}
-
-				# On vérifie qu'on a sélectionné suffisamment de pages et de plis pour
-				# remplir les limites basses de la filière si elles existent.
-				my $minplis = $fil->{'ED_MINPLIS'} || 1;
-				if ($selplis < $minplis) {
-					warn "INFO : Not enough plis for filiere \"$idfiliere\" : "
-						."got $selplis, need $minplis\n";
-					next;
-				}
-				my $minpgs = $fil->{'ED_MINFEUIL_L'} || 1;
-				if ($selpgs < $minpgs) {
-					warn "INFO : Not enough pages for filiere \"$idfiliere\" : "
-						."got $selpgs, need $minpgs\n";
-					next;
-				}
-
-				my $seqlot = get_seqlot($dbh);
-				my $name = "$gvals->{'ED_CORP'}.$lot->{'ED_IDMANUFACT'}.$seqlot.$lot->{'ED_IDGPLOT'}.$fil->{'ED_IDFILIERE'}";
-
-				# Préparation de l'ordre de tri pour cette filière.
-				my $order;
-				if (defined $fil->{'ED_SORT'} && length($fil->{'ED_SORT'}) > 0) {
-					$order = $fil->{'ED_SORT'};
-					if (defined $fil->{'ED_DIRECTION'} && length($fil->{'ED_DIRECTION'}) > 0) {
-						$order .= " $fil->{'ED_DIRECTION'}";
+	
+					# On vérifie qu'on a sélectionné suffisamment de pages et de plis pour
+					# remplir les limites basses de la filière si elles existent.
+					my $min_feuilles = $fil->{'ED_MINFEUIL_L'} || 1;
+					if ($selpgs < $min_feuilles) {
+						warn "INFO : Not enough pages for filiere \"$idfiliere\" : "
+							."got $selpgs, need $min_feuilles\n";
+						$more = 1; # à vérifier qu'on en a bien besoin 
+						# omgr_get_next_filiere($pdbh, $idfiliere);
+						# reset filiere avec relance eval ou completion liste @$ids ?  xxxxxxxxxxxxx
+						# cf 388 
+							my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ? " .
+							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? ";
+							my $next_filiere = omgr_get_next_filiere($pdbh, $idfiliere);
+							my @vals = ($next_filiere, $idlot, $idfiliere);
+							my $num = $dbh->do($sql, undef, @vals);
+							$dbh->commit;
+							warn "INFO : downgrade filiere to $next_filiere for $num plis\n";
+							$idfiliere = $next_filiere;
+						redo CHECK_FIL;
 					}
-				} else {
-					$order = "ED_IDLDOC, ED_SEQDOC";
-				}
-
-				# La date d'aujourd'hui. 
-				my $dtlot = sprintf("%04d%02d%02d", Today());
-
-				foreach (@plis) {
-					my ($nbplis, $nbpgpli) = @$_;
-
-					warn "DEBUG: Assigning $nbplis of $nbpgpli pages each to lot $seqlot\n";
-					# Cette requête sélectionne les N premiers plis non affectés
-					# d'une taille donnée, les plis étant uniquement identifiés avec
-					# un identifiant de lot de document + un identifiant de pli.
-					$innersql = "SELECT j.ED_IDLDOC, j.ED_SEQDOC FROM (" .
-					  "SELECT i.ED_IDLDOC, i.ED_SEQDOC, ROW_NUMBER() " .
-					  "OVER (ORDER BY PGNUM) AS PLINUM FROM " .
-					    "(SELECT " . $cfg->{'EDTK_DBI_OUTMNGR'} . ".*, ROW_NUMBER() OVER (ORDER BY $order) AS PGNUM " .
-					    "FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} . " $where2 AND ED_NBPGPLI = ?) i " .
-					  "WHERE ED_SEQPGDOC = 1) j WHERE PLINUM <= ?";
-
-					# On assigne le lot à tous les plis sélectionnés. On en profite
-					# aussi pour positionner la date de création du lot.
-					$sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_SEQLOT = ?, ED_DTLOT = ? " .
-					    "WHERE (ED_IDLDOC, ED_SEQDOC) IN ($innersql)";
-					my $count = $dbh->do($sql, undef, $seqlot, $dtlot, @wvals2, $nbpgpli, $nbplis);
-					my $pages = $nbplis * $nbpgpli;
-					if ($count != $pages) {
-						die "Unexpected UPDATE row count ($count != $pages)\n";
+	    				my $minplis = $fil->{'ED_MINPLIS'} || 1;
+					if ($selplis < $minplis) {
+						warn "INFO : Not enough plis for filiere \"$idfiliere\" : "
+							."got $selplis, need $minplis\n";
+						$more = 1; # à vérifier qu'on en a bien besoin
+						# omgr_get_next_filiere($pdbh, $idfiliere);
+						# reset filiere avec relance eval ou completion liste @$ids ?  xxxxxxxxxxxxx
+						# cf 388 
+							my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ? " .
+							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? ";
+							my $next_filiere = omgr_get_next_filiere($pdbh, $idfiliere);
+							my @vals = ($next_filiere, $idlot, $idfiliere);
+							my $num = $dbh->do($sql, undef, @vals);
+							$dbh->commit;
+							warn "INFO : downgrade filiere to $next_filiere for $num plis\n";
+							$idfiliere = $next_filiere;
+						redo CHECK_FIL;
 					}
+
+					my $seqlot = get_seqlot($dbh);
+					my $name = "$gvals->{'ED_CORP'}.$lot->{'ED_IDMANUFACT'}.$seqlot.$lot->{'ED_LOTNAME'}.$fil->{'ED_IDFILIERE'}";
+	
+					# Préparation de l'ordre de tri pour cette filière.
+					my $order;
+					if (defined $fil->{'ED_SORT'} && length($fil->{'ED_SORT'}) > 0) {
+						$order = $fil->{'ED_SORT'};
+						if (defined $fil->{'ED_DIRECTION'} && length($fil->{'ED_DIRECTION'}) > 0) {
+							$order .= " $fil->{'ED_DIRECTION'}";
+						}
+					} else {
+						$order = "ED_IDLDOC, ED_SEQDOC";
+					}
+	
+					# La date d'aujourd'hui. 
+					my $dtlot = sprintf("%04d%02d%02d", Today());
+	
+					foreach (@plis) {
+						my ($nbplis, $nbpgpli) = @$_;
+	
+						warn "DEBUG: Assigning $nbplis of $nbpgpli pages each to lot $seqlot\n";
+						# Cette requête sélectionne les N premiers plis non affectés
+						# d'une taille donnée, les plis étant uniquement identifiés avec
+						# un identifiant de lot de document + un identifiant de pli.
+						$innersql = "SELECT j.ED_IDLDOC, j.ED_SEQDOC FROM (" .
+						  "SELECT i.ED_IDLDOC, i.ED_SEQDOC, ROW_NUMBER() " .
+						  "OVER (ORDER BY PGNUM) AS PLINUM FROM " .
+						    "(SELECT " . $cfg->{'EDTK_DBI_OUTMNGR'} . ".*, ROW_NUMBER() OVER (ORDER BY $order) AS PGNUM " .
+						    "FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} . " $where2 AND ED_NBPGPLI = ?) i " .
+						  "WHERE ED_SEQPGDOC = 1) j WHERE PLINUM <= ?";
+	
+						# On assigne le lot à tous les plis sélectionnés. On en profite
+						# aussi pour positionner la date de création du lot.
+						$sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_SEQLOT = ?, ED_DTLOT = ? " .
+						    "WHERE (ED_IDLDOC, ED_SEQDOC) IN ($innersql)";
+						my $count = $dbh->do($sql, undef, $seqlot, $dtlot, @wvals2, $nbpgpli, $nbplis);
+						my $pages = $nbplis * $nbpgpli;
+						if ($count != $pages) {
+							die "Unexpected UPDATE row count ($count != $pages)\n";
+						}
+					}
+					warn "INFO : Assigned $selpgs pages to lot \"$name\"\n";
+	
+					# Calcul des identifiants de pli.  XXX Devrait être fait autrement...
+					$sql = "SELECT ED_IDLDOC, ED_SEQDOC, " .
+					           "DENSE_RANK() OVER (ORDER BY ED_IDLDOC, ED_SEQDOC) AS ED_IDPLI " .
+						 "FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} . " WHERE ED_SEQLOT = ? ORDER BY $order";
+					my $rows = $dbh->selectall_arrayref($sql, { Slice => {} }, $seqlot);
+	
+					$sql = 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_IDPLI = ? ' .
+					  'WHERE ED_IDLDOC = ? AND ED_SEQDOC = ? AND ED_SEQLOT = ?';
+					my $sth = $dbh->prepare($sql);
+					foreach my $row (@$rows) {
+						$sth->execute($row->{'ED_IDPLI'}, $row->{'ED_IDLDOC'},
+						    $row->{'ED_SEQDOC'}, $seqlot);
+					}
+	
+					# Récupération de la liste des imprimés nécessaires pour ce lot.
+					$sql = 'SELECT DISTINCT ED_REFIMP FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
+					    ' WHERE ED_SEQLOT = ?';
+					my @refimps = $dbh->selectrow_array($sql, undef, $seqlot);
+	
+					# Calcul du nombre total de feuilles dans le lot.
+					$sql = 'SELECT SUM(i.ED_NBFPLI) FROM ' .
+					    '(SELECT DISTINCT ED_IDLDOC, ED_SEQDOC, ED_NBFPLI ' .
+					      'FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' WHERE ED_SEQLOT = ?) i';
+					my ($nbfeuillot) = $dbh->selectrow_array($sql, undef, $seqlot);
+	
+					# Extraction des données.
+					my $lotdir = "$basedir/$name";
+					mkdir("$lotdir") or die "Cannot create directory \"$lotdir\": $!\n";
+					my $file = "$name.idx";
+					warn "INFO : Creating index file \"$file\"\n";
+					$sql = "SELECT * FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} .
+					    " WHERE ED_SEQLOT = ? ORDER BY $order";
+					$sth = $dbh->prepare($sql);
+					$sth->execute($seqlot);
+	
+					open(my $fh, ">$lotdir/$file") or die $!;
+					# Génération de la ligne de header.
+					my $csv = Text::CSV->new({ binary => 1, eol => "\n", quote_space => 0 });
+					$csv->print($fh, [map { $$_[0] } @INDEX_COLS]);
+					my $doclib;
+					while (my $row = $sth->fetchrow_hashref()) {
+						# Gather the values in the same order as @INDEX_COLS.
+						my @fields = map { $row->{$$_[0]} } @INDEX_COLS;
+						$csv->print($fh, \@fields);
+	
+						$doclib = $row->{'ED_DOCLIB'} unless defined $doclib;
+					}
+					close($fh);
+	
+					# Generate a job ticket file.
+					$file = "$name.job";
+					warn "INFO : Creating job ticket file \"$file\"\n";
+					my @jobfields = (
+						['ED_IDLOT',		$idlot],
+						['ED_SEQLOT',		$seqlot],
+						['ED_CORP',		$gvals->{'ED_CORP'}],
+						['ED_IDAPPDOC',	$lot->{'ED_IDAPPDOC'}],
+						['ED_CPDEST',		$lot->{'ED_CPDEST'}],
+						['ED_GROUPBY',		$lot->{'ED_GROUPBY'}],
+						['ED_IDMANUFACT',	$lot->{'ED_IDMANUFACT'}],
+						['ED_LOTNAME',		$lot->{'ED_LOTNAME'}],
+						['ED_IDFILIERE',	$idfiliere],
+						['ED_DESIGNATION',	$fil->{'ED_DESIGNATION'}],
+						['ED_MODEDI',		$fil->{'ED_MODEDI'}],
+						['ED_TYPED',		$fil->{'ED_TYPED'}],
+						['ED_NBBACPRN',	$fil->{'ED_NBBACPRN'}],
+						['ED_MINFEUIL_L',	$fil->{'ED_MINFEUIL_L'}],
+						['ED_MAXFEUIL_L',	$fil->{'ED_MAXFEUIL_L'}],
+						['ED_FEUILPLI',	$fil->{'ED_FEUILPLI'}],
+						['ED_MINPLIS',		$fil->{'ED_MINPLIS'}],
+						['ED_MAXPLIS',		$fil->{'ED_MAXPLIS'}],
+						['ED_POIDS_PLI',	$fil->{'ED_POIDS_PLI'}],
+						['ED_REF_ENV',		$fil->{'ED_REF_ENV'}],
+						['ED_FORMFLUX',	$fil->{'ED_FORMFLUX'}],
+						['ED_POSTCOMP',	$fil->{'ED_POSTCOMP'}],
+						['ED_NBFEUILLOT',	$nbfeuillot],
+						['ED_NBPLISLOT',	$selplis],
+						['ED_FORMATP',		$gvals->{'ED_FORMATP'}],
+						['ED_LISTEREFENC',	$gvals->{'ED_LISTEREFENC'} || ""],
+						['ED_LISTEREFIMP',	join(', ', @refimps)],
+						['ED_DTLOT',		$dtlot]
+					);
+					open($fh, ">$lotdir/$file") or die $!;
+					$csv->print($fh, [map { $$_[0] } @jobfields]);
+					$csv->print($fh, [map { $$_[1] } @jobfields]);
+					close($fh);
+	
+					# Add this lot to the list of created ones.
+					$dbh->commit;
+					push(@done, [$name, $doclib]);
+	
+					# On reboucle le traitement si l'on a atteint les limites maximales en
+					# pages/plis et que l'on doit traiter d'autres lots.
+					redo if $more;
 				}
-				warn "INFO : Assigned $selpgs pages to lot \"$name\"\n";
-
-				# Calcul des identifiants de pli.  XXX Devrait être fait autrement...
-				$sql = "SELECT ED_IDLDOC, ED_SEQDOC, " .
-				           "DENSE_RANK() OVER (ORDER BY ED_IDLDOC, ED_SEQDOC) AS ED_IDPLI " .
-					 "FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} . " WHERE ED_SEQLOT = ? ORDER BY $order";
-				my $rows = $dbh->selectall_arrayref($sql, { Slice => {} }, $seqlot);
-
-				$sql = 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_IDPLI = ? ' .
-				  'WHERE ED_IDLDOC = ? AND ED_SEQDOC = ? AND ED_SEQLOT = ?';
-				my $sth = $dbh->prepare($sql);
-				foreach my $row (@$rows) {
-					$sth->execute($row->{'ED_IDPLI'}, $row->{'ED_IDLDOC'},
-					    $row->{'ED_SEQDOC'}, $seqlot);
-				}
-
-				# Récupération de la liste des imprimés nécessaires pour ce lot.
-				$sql = 'SELECT DISTINCT ED_REFIMP FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
-				    ' WHERE ED_SEQLOT = ?';
-				my @refimps = $dbh->selectrow_array($sql, undef, $seqlot);
-
-				# Calcul du nombre total de feuilles dans le lot.
-				$sql = 'SELECT SUM(i.ED_NBFPLI) FROM ' .
-				    '(SELECT DISTINCT ED_IDLDOC, ED_SEQDOC, ED_NBFPLI ' .
-				      'FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' WHERE ED_SEQLOT = ?) i';
-				my ($nbfeuillot) = $dbh->selectrow_array($sql, undef, $seqlot);
-
-				# Extraction des données.
-				my $lotdir = "$basedir/$name";
-				mkdir("$lotdir") or die "Cannot create directory \"$lotdir\": $!\n";
-				my $file = "$name.idx";
-				warn "INFO : Creating index file \"$file\"\n";
-				$sql = "SELECT * FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} .
-				    " WHERE ED_SEQLOT = ? ORDER BY $order";
-				$sth = $dbh->prepare($sql);
-				$sth->execute($seqlot);
-
-				open(my $fh, ">$lotdir/$file") or die $!;
-				# Génération de la ligne de header.
-				my $csv = Text::CSV->new({ binary => 1, eol => "\n", quote_space => 0 });
-				$csv->print($fh, [map { $$_[0] } @INDEX_COLS]);
-				my $doclib;
-				while (my $row = $sth->fetchrow_hashref()) {
-					# Gather the values in the same order as @INDEX_COLS.
-					my @fields = map { $row->{$$_[0]} } @INDEX_COLS;
-					$csv->print($fh, \@fields);
-
-					$doclib = $row->{'ED_DOCLIB'} unless defined $doclib;
-				}
-				close($fh);
-
-				# Generate a job ticket file.
-				$file = "$name.job";
-				warn "INFO : Creating job ticket file \"$file\"\n";
-				my @jobfields = (
-					['ED_IDLOT',	$idlot],
-					['ED_SEQLOT',	$seqlot],
-					['ED_CORP',	$gvals->{'ED_CORP'}],
-					['ED_IDAPPDOC',	$lot->{'ED_IDAPPDOC'}],
-					['ED_CPDEST',	$lot->{'ED_CPDEST'}],
-					['ED_GROUPBY',	$lot->{'ED_GROUPBY'}],
-					['ED_IDMANUFACT',$lot->{'ED_IDMANUFACT'}],
-					['ED_IDGPLOT',	$lot->{'ED_IDGPLOT'}],
-					['ED_IDFILIERE',$idfiliere],
-					['ED_DESIGNATION',$fil->{'ED_DESIGNATION'}],
-					['ED_MODEDI',	$fil->{'ED_MODEDI'}],
-					['ED_TYPED',	$fil->{'ED_TYPED'}],
-					['ED_NBBACPRN',	$fil->{'ED_NBBACPRN'}],
-					['ED_MINFEUIL_L',$fil->{'ED_MINFEUIL_L'}],
-					['ED_MAXFEUIL_L',$fil->{'ED_MAXFEUIL_L'}],
-					['ED_FEUILPLI',	$fil->{'ED_FEUILPLI'}],
-					['ED_MINPLIS',	$fil->{'ED_MINPLIS'}],
-					['ED_MAXPLIS',	$fil->{'ED_MAXPLIS'}],
-					['ED_POIDS_PLI',$fil->{'ED_POIDS_PLI'}],
-					['ED_REF_ENV',	$fil->{'ED_REF_ENV'}],
-					['ED_FORMFLUX',	$fil->{'ED_FORMFLUX'}],
-					['ED_POSTCOMP',	$fil->{'ED_POSTCOMP'}],
-					['ED_NBFEUILLOT',$nbfeuillot],
-					['ED_NBPLISLOT',$selplis],
-					['ED_FORMATP',	$gvals->{'ED_FORMATP'}],
-					['ED_LISTEREFENC',$gvals->{'ED_LISTEREFENC'} || ""],
-					['ED_LISTEREFIMP',join(', ', @refimps)],
-					['ED_DTLOT',	$dtlot]
-				);
-				open($fh, ">$lotdir/$file") or die $!;
-				$csv->print($fh, [map { $$_[0] } @jobfields]);
-				$csv->print($fh, [map { $$_[1] } @jobfields]);
-				close($fh);
-
-				# Add this lot to the list of created ones.
-				$dbh->commit;
-				push(@done, [$name, $doclib]);
-
-				# On reboucle le traitement si l'on a atteint les limites maximales en
-				# pages/plis et que l'on doit traiter d'autres lots.
-				redo if $more;
 			}
 		}
 	};
@@ -713,7 +776,7 @@ sub omgr_purge_db($$) {
 		$sql = 'DELETE FROM ' . $cfg->{'EDTK_STATS_OUTMNGR'} . ' WHERE ED_SEQLOT = ?';
 		$dbh->do($sql, undef, $value) or die "ERROR: suppr $type $value from EDTK_STATS_OUTMNGR\n";
 
-	} elsif (length ($value) == 17) {
+	} elsif (length ($value) == 16) { # 1282152443057128
 		$type = "SNGL_ID";	# EDTK_STATS_TRACKING
 		warn "INFO : suppr $type $value from EDTK_STATS_TRACKING\n";
 		$sql = 'DELETE FROM ' . $cfg->{'EDTK_STATS_TRACKING'} . ' WHERE ED_SNGL_ID = ?';
@@ -775,14 +838,12 @@ sub omgr_purge_fs($) {
 	my @torm = ();
 	foreach my $path (@doclibs) {
 		my $file = basename($path);
-#		if ($file =~ /^(DCLIB_[^.]+)\.pdf$/) {
-		if ($file =~ /^(DCLIB_[^.\.]+)$/) {
-			my $doclib = $1;
-			if (!$needed{$doclib}) {
+		if ($file =~ /^DCLIB_/) {
+			if (!$needed{$file}) {
 				push(@torm, $path);
 			}
 		} else {
-			warn "WARN : Unexpected PDF filename: \"$file\"\n";
+			warn "WARN : Unexpected filename : \"$file\"\n";
 		}
 	}
 	return @torm;
@@ -864,7 +925,7 @@ sub omgr_stats($$$$) {
 
 	my $rows = $sth->fetchall_arrayref();
 	foreach my $row (@$rows) {
-		my ($lot) = $pdbh->selectrow_array('SELECT ED_IDGPLOT FROM EDTK_LOTS WHERE ED_IDLOT = ?',
+		my ($lot) = $pdbh->selectrow_array('SELECT ED_LOTNAME FROM EDTK_LOTS WHERE ED_IDLOT = ?',
 		    undef, @$row[0]);
 		@$row[0] = $lot;
 	}
