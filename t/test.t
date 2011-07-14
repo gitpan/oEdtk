@@ -1,7 +1,7 @@
 #!./perl
 use lib qw(t );
 use Test::More;
-plan tests => 25;
+plan tests => 24;
 
 use oEdtk::Main; 
 ok 1, "Loaded";
@@ -76,8 +76,8 @@ ok 23, "Loaded";
 chdir 't';
 require "test_fixe_oEdtk.pl" ;
 ok 24, "Loaded";
-run();
-ok 25, "Run test application";
+#run();
+#ok 25, "Run test application";
 
 END
 {

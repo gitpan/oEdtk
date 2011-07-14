@@ -206,7 +206,7 @@ unwind(\@levels, 01, $cur);
 close($in);
 
 print $out <<EOF;
-package oErecords::Descriptor::$recid;
+package oEUser::Descriptor::$recid;
 
 use strict;
 use warnings;

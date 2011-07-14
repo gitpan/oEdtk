@@ -38,7 +38,7 @@ sub oe_cmd_run($) {
 	return if $? == 0;
 
 	my $reason = oe_status_to_msg($?);
-	warn "ERROR: Command failed: $reason\n";
+	warn "ERROR: Command failed : $reason\n";
 }
 
 sub oe_cmd_run_bg($$) {
@@ -55,7 +55,7 @@ sub oe_cmd_run_bg($$) {
 		if ($pid > 0) {
 			if ($? != 0) {
 				my $msg = oe_status_to_msg($?);
-				die "ERROR: LaTeX process exited prematurely: $msg\n";
+				die "ERROR: LaTeX process exited prematurely : $msg\n";
 			}
 			$$ref = 0;
 		}

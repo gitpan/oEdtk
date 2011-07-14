@@ -5,7 +5,7 @@ BEGIN {
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
 		use strict;
 
-		$VERSION	= 0.5071; # Tests & doc en cours - packager uniquement les v n.nnn0
+		$VERSION	= 0.5072; # Tests & doc en cours - packager uniquement les v n.nnn0
 		@ISA		= qw(Exporter);
 		@EXPORT		= qw(oEdtk_version);
 }

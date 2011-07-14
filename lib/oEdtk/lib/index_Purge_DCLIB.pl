@@ -6,7 +6,7 @@ use warnings;
 use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect);
 use oEdtk::Outmngr	qw(omgr_purge_fs omgr_lot_pending);
-use oEdtk::Messenger	qw(oe_send_mail);
+use oEdtk::Messenger qw(oe_send_mail);
 
 
 # PURGE DES DCLIB (DE PLUS D'UNE SEMAINE) SI ELLES NE SONT PAS EN ATTENTE D'UN SEQLOT

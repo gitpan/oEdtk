@@ -14,9 +14,9 @@ if (@ARGV < 1) {
 }
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
+my $dbh = db_connect($cfg, 'EDTK_STATS_DSN',
     { AutoCommit => 1, RaiseError => 1 });
-my $pdbh = db_connect($cfg, 'EDTK_PARAM_DSN');
+my $pdbh = db_connect($cfg, 'EDTK_STATS_DSN');
 
 my $rows = omgr_stats($dbh, $pdbh, $ARGV[0], $ARGV[1]||"idlot");
 if ($#$rows<0) {

@@ -14,7 +14,7 @@ if (@ARGV < 2) {
 
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
+my $dbh = db_connect($cfg, 'EDTK_STATS_DSN',
     { AutoCommit => 1, RaiseError => 1 });
 
 omgr_depot_poste($dbh, $ARGV[0], $ARGV[1]);

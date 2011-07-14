@@ -33,6 +33,9 @@ foreach my $mail (@$rows) {
 
 
 foreach my $MAIL_TO (keys %hMail){
+	if ($MAIL_TO!~/\@/){
+		$MAIL_TO = $cfg->{$MAIL_TO};
+	}
 	my $mailfile = $cfg->{'EDTK_MAIL_REFER'};
 	open(my $fh, '<', $mailfile) or die "ERROR: Cannot open \"$mailfile\": $!\n";
 	my @body = <$fh>;

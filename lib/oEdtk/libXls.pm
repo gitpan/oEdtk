@@ -49,7 +49,13 @@ sub prod_Xls_Init(;$$$){
 
 	# EN FONCTION DU NOMBRE D'ÉLÉMENTS ON FABRIQUE L'INDICE DU PROCHAIN FICHIER
 	my $item = sprintf ("%03s", $#TAB_LISTE_XLS+2);
-	$XLS_NAME = $CFG->{'EDTK_PRGNAME'}.".".$item.".".$CFG->{'EDTK_EXT_EXCEL'};
+
+	eval {
+		$XLS_NAME = $CFG->{'EDTK_PRGNAME'}.".".$item.".".$CFG->{'EDTK_EXT_EXCEL'};
+	};
+	if ($@) {
+		$XLS_NAME = $ARGV[0].$item.".xls";
+	}
 
 #	$XLS_NAME = basename($TXT_NAME);
 #	$XLS_NAME =~ s/\.[^.]+/.xls/;

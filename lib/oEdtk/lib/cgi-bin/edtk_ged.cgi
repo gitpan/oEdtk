@@ -1,7 +1,7 @@
 #!/opt/editique/perl/bin/perl
 # this line should be modified to point to your perl install
 
-# this cgi is an interface for edms doc search by redirecting request
+# THIS CGI IS A LINK TO SEEK DOCUMENT IN DOCUBASE RHEAWEB
 use strict;
 use warnings;
 
@@ -21,7 +21,7 @@ if (defined $req->param('idldocpg') && $req->param('idldocpg') ne "" && defined 
 					$req->param('view')	|| '1', 
 					$req->param('owner'), 
 					$req->param('owner'));
-	warn "INFO : eDocs Share lookup url for ". $cfg->{'EDMS_HTML_HOST'} ." server is $redirect_url\n";
+	warn "INFO : eDocs Share lookup url for ". $cfg->{'EDMS_HTML_HOST'} ." owner => ". $req->param('owner') ". server => $redirect_url\n";
 
 } else {
 	print $req->header(-status=>400),

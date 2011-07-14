@@ -61,7 +61,7 @@ sub initDoc {
 	# 		le paramètre 1 est obligatoire (nom fichier)
 	#		les paramètres suivants sont optionnels
 	###########################################################################	
-	prod_Xls_Init("cp_fr","oEdtk","LISTE CODE POSTAUX", "FRANCE");
+	prod_Xls_Init("oEdtk","LISTE CODE POSTAUX", "FRANCE");
 
 	# INITIALISATIONS PROPRES A LA MISE EN FORME DU DOCUMENT
 	# PRÉPARATION DES TITRES DE COLONNES

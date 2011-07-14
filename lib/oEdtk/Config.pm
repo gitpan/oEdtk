@@ -9,7 +9,7 @@ use Sys::Hostname;
 use Exporter;
 
 our $VERSION		= 0.03;
-our @ISA		= qw(Exporter);
+our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(config_read);
 
 sub config_read(@) {
