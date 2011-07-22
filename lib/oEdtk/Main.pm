@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.5003;
+our $VERSION 	=0.5074;
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
 			c7Flux
@@ -1206,18 +1206,14 @@ sub oe_outmngr_output_run (;$){
 1;
 }
 
-sub prodEdtkClose {		# migrer c7_oe_close_files
-#	my ($fi, $fo) = @_;
-
-#	if (defined($_[2])) {
-#		warn "WARN : Ignoring parameter of prodEdtkClose().\n";
-#	}
-
+sub prodEdtkClose (;@){		# migrer c7_oe_close_files
 	# SI LE FLUX D'ENTREE FAIT MOINS DE 1 LIGNE (variable $.), SORTIES EN ERREUR
 	# if ($. == 0) {
 	#	# FLUX INVALIDE ARRET
 	#	die 	"ERROR: uncomplete datastream\n $message \n\n";
 	#}
+
+	my @opt=@_;
 
 	print OUT oe_data_build('xFinFlux');
 	close(OUT) or die "ERROR: closing output $!\n";
@@ -1227,6 +1223,13 @@ sub prodEdtkClose {		# migrer c7_oe_close_files
 		my $cfg = config_read('COMPO');
 		my $params = $_RUN_PARAMS;
 		$params->{'corp'} = oe_corporation_set();
+		if (@opt) {
+			foreach (@opt){
+				$_=~s/\-+//g;
+				$params->{$_} = 1;
+			}
+		}
+
 		if ($params->{'fifo'}) {
 			# Disable signal handler.
 			$SIG{'CHLD'} = 'DEFAULT';

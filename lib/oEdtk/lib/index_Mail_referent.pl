@@ -6,7 +6,7 @@ use warnings;
 use oEdtk::DBAdmin	qw(db_connect);
 use oEdtk::Config	qw(config_read);
 use oEdtk::Outmngr	qw(omgr_referent_stats);
-use oEdtk::Messenger	qw(oe_send_mail);
+use oEdtk::Messenger qw(oe_send_mail);
 
 
 # run statistics and send the advertissement by mail.
@@ -33,16 +33,17 @@ foreach my $mail (@$rows) {
 
 
 foreach my $MAIL_TO (keys %hMail){
-	if ($MAIL_TO!~/\@/){
-		$MAIL_TO = $cfg->{$MAIL_TO};
-	}
 	my $mailfile = $cfg->{'EDTK_MAIL_REFER'};
 	open(my $fh, '<', $mailfile) or die "ERROR: Cannot open \"$mailfile\": $!\n";
 	my @body = <$fh>;
 	close($fh);
-	
+
 	push (@body, $hMail{$MAIL_TO});
 	
+	if ($MAIL_TO!~/\@/){
+		$MAIL_TO = $cfg->{$MAIL_TO};
+	}
+
 	my ($sec,$min,$hour,$day,$month,$year) = localtime();
 	my $date = sprintf("%02d/%02d/%d", $day, $month + 1, $year + 1900);
 	my $time = sprintf("%02d:%02d:%02d", $hour, $min, $sec);

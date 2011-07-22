@@ -157,7 +157,7 @@ sub params_LOTS_table_create {
 	$sql .= ", ED_CPDEST VARCHAR2(6) NOT NULL"; 
 	$sql .= ", ED_GROUPBY VARCHAR2(16)"; 
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
-	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS add ED_LOTNAME VARCHAR2(16) NOT NULL
+	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS add ED_LOTNAME VARCHAR2(16);  alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";
 	$sql .= ")";
 
