@@ -14,7 +14,9 @@ lib/oEdtk/FPField.pm
 lib/oEdtk/iniEdtk/postal_dico_FR.ini
 lib/oEdtk/iniEdtk/snip_address.ini
 lib/oEdtk/iniEdtk/tplate.edtk.ini
-lib/oEdtk/lang
+lib/oEdtk/lang/fr
+lib/oEdtk/lang/es
+lib/oEdtk/lang/en
 lib/oEdtk/lib/cgi-bin/edtk.cgi
 lib/oEdtk/lib/cgi-bin/edtk_ged.cgi
 lib/oEdtk/lib/cgi-bin/edtk_inged.cgi

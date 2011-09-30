@@ -14,7 +14,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.15;
+our $VERSION	= 0.16;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_seqlot_ref 
@@ -99,6 +99,7 @@ sub omgr_import($$$) {
 	$dbh->disconnect;
 	$pdbh->disconnect;
 }
+
 
 sub omgr_insert($$$$$) {
 	# - injection des données page/page de l'index compo en base de données
@@ -292,6 +293,7 @@ sub omgr_insert($$$$$) {
 	return ($idldoc, scalar @needed, $encpds);
 }
 
+
 sub omgr_lot($$$) {
 	# rapprochement entre documents de l'index et table des lots => affectation du lot
 	my ($dbh, $pdbh, $idldoc) = @_;
@@ -389,6 +391,7 @@ sub omgr_filiere($$$$$$) {
 		# uniquement lorsqu'on exporte les lots dans omgr_export() pour permettre
 		# le regroupement.
 		while (my $fil = $sth->fetchrow_hashref()) {
+			# compatibilite ascendante
 			if (defined $fil->{'ED_IDGPLOT'} && length($fil->{'ED_IDGPLOT'}) > 0) {
 				if ($lot->{'ED_IDGPLOT'} ne $fil->{'ED_IDGPLOT'} and $fil->{'ED_IDGPLOT'} ne "%") {
 					next;
@@ -576,9 +579,9 @@ sub omgr_export(%) {
 						# reset filiere avec relance eval ou completion liste @$ids ?  xxxxxxxxxxxxx
 						# cf 388 
 							my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ? " .
-							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? ";
+							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_SEQLOT IS NULL ";
 							my $next_filiere = omgr_get_next_filiere($pdbh, $idfiliere);
-							my @vals = ($next_filiere, $idlot, $idfiliere);
+							my @vals= ($next_filiere, $idlot, $idfiliere);
 							my $num = $dbh->do($sql, undef, @vals);
 							$dbh->commit;
 							warn "INFO : downgrade filiere to $next_filiere for $num plis\n";
@@ -594,7 +597,7 @@ sub omgr_export(%) {
 						# reset filiere avec relance eval ou completion liste @$ids ?  xxxxxxxxxxxxx
 						# cf 388 
 							my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ? " .
-							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? ";
+							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_SEQLOT IS NULL ";
 							my $next_filiere = omgr_get_next_filiere($pdbh, $idfiliere);
 							my @vals = ($next_filiere, $idlot, $idfiliere);
 							my $num = $dbh->do($sql, undef, @vals);
@@ -791,6 +794,7 @@ sub omgr_purge_db($$) {
 	}
 }
 
+
 sub omgr_check_seqlot_ref ($$){
 	my ($dbh, $value) = @_;
 	my $cfg = config_read('EDTK_STATS');
@@ -818,7 +822,6 @@ sub omgr_check_seqlot_ref ($$){
 		die "ERROR: $value doesn't seem to be SEQLOT\n";	
 	}
 }
-
 
 
 # Purge doclibs that are no longer referenced in the database.
@@ -858,7 +861,7 @@ sub omgr_referent_stats {
 	$sql = "SELECT A.ED_MAIL_REFERENT, A.ED_REFIDDOC ";
 	$sql .="FROM EDTK_REFIDDOC A, EDTK_INDEX B ";
 	$sql .="WHERE A.ED_REFIDDOC = B.ED_REFIDDOC ";
-	$sql .="AND A.ED_MASSMAIL = 'Y' AND A.ED_MAIL_REFERENT IS NOT NULL ";
+	$sql .="AND A.ED_MASSMAIL != 'N' AND A.ED_MAIL_REFERENT IS NOT NULL ";
 	$sql .="AND B.ED_SEQLOT IS NULL AND B.ED_DTLOT IS NULL ";
 	$sql .="GROUP BY A.ED_MAIL_REFERENT, A.ED_REFIDDOC ";
 	$sql .="ORDER BY A.ED_MAIL_REFERENT ";
@@ -869,6 +872,7 @@ sub omgr_referent_stats {
 	my $rows = $sth->fetchall_arrayref();
 	return $rows;
 }
+
 
 sub omgr_stats($$$$) {
 	my ($dbh, $pdbh, $period, $typeRqt) = @_;
@@ -931,6 +935,7 @@ sub omgr_stats($$$$) {
 	}
 	return $rows;
 }
+
 
 sub omgr_lot_pending($) {
 	my ($dbh) = @_;

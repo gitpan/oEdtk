@@ -27,39 +27,39 @@ use ExtUtils::MakeMaker;
 
 # write makefile
 WriteMakefile(
-	NAME		=> 'oEdtk',
+	NAME			=> 'oEdtk',
 	VERSION_FROM	=> 'lib/oEdtk.pm',
-	PREREQ_PM	=> {
+	PREREQ_PM		=> {
 		# dmake				=> 0,		
 		Archive::Zip			=> 0,
-		charnames			=> 0,
+		charnames				=> 0,
 		Config::IniFiles 		=>'2.30',
-		Cwd				=> 0,
+		Cwd					=> 0,
 		Date::Calc			=> 0,
-		DBI				=>'1.60',
+		DBI					=>'1.60',
 		Digest::MD5			=> 0,
-		Email::Sender::Simple		=> 0,
+		Email::Sender::Simple	=> 0,
 		Email::Sender::Transport::SMTP	=> 0,
 		Encode				=> 0,
 		File::Basename			=> 0,
 		File::Copy			=> 0,
 		File::Path			=> 0,
-		List::MoreUtils			=> 0,
+		List::MoreUtils		=> 0,
 		List::Util			=> 0,
-		Net::FTP			=> 0,
-		overload			=> 0,
+		Net::FTP				=> 0,
+		overload				=> 0,
 		Scalar::Util			=> 0,
 		Spreadsheet::WriteExcel 	=>'1.00',
 		Sys::Hostname			=> 0,
 		Term::ReadKey			=> 0,
-		Text::CSV			=>'1.20',
+		Text::CSV				=>'1.20',
 		XML::LibXML			=>'1.70',
 		XML::XPath			=>'1.13',
 		XML::Writer			=> 0
 	},
-	AUTHOR     => 'oEdtk group <oedtk@free.fr>',
-	dist         => {
-		COMPRESS => 'gzip -9',
-		SUFFIX   => '.gz',
+	AUTHOR	=> 'oEdtk group <oedtk@free.fr>',
+	dist		=> {
+		COMPRESS				=> 'gzip -9',
+		SUFFIX				=> '.gz',
 	},
 );

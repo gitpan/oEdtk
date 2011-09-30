@@ -20,8 +20,9 @@
 \B\.svn\b
 ^debian/
 ~$    		# ignore emacs and vim backup files
-\.bak$  	# ignore manual backups
-\#  		# ignore CVS old revision files and emacs temp files
-\.Dstore$	# .Dstore Osx
+\.bak$  		# ignore manual backups
+\#  			# ignore CVS old revision files and emacs temp files
+\.Dstore$		# .Dstore Osx
 \.bzr*		# Bazaar CVS
 \..*\.sw.$	# vim swap files
+\.tar.gz$
