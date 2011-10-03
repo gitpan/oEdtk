@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use oEdtk::Config	qw(config_read);
-use oEdtk::DBAdmin	qw(db_connect table_historicize);
+use oEdtk::DBAdmin	qw(db_connect historicize_table);
 use Term::ReadKey;
 use POSIX		qw(strftime);
 use warnings;
@@ -20,6 +20,6 @@ ReadMode('raw');
 my $key = ReadKey($wait_time);
 ReadMode ('restore');
 
-table_historicize($dbh, $cfg->{'EDTK_DBI_TRACKING'}, $suffixe);
+historicize_table($dbh, $cfg->{'EDTK_DBI_TRACKING'}, $suffixe);
 
 print "WARN : backup done for ".$cfg->{'EDTK_DBI_TRACKING'}."\n";

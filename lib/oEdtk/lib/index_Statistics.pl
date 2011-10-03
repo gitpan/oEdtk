@@ -13,14 +13,14 @@ if (@ARGV < 1) {
 	die "Usage: $0 <day|week|all|value> <idlot|idgplot> [file]\n\n \t where 'value' has the format wwd (one or more numbers like 521 or 52)\n";
 }
 
-my $cfg = config_read('EDTK_DB');
+my $cfg = config_read('EDTK_STATS');
 my $dbh = db_connect($cfg, 'EDTK_STATS_DSN',
     { AutoCommit => 1, RaiseError => 1 });
 my $pdbh = db_connect($cfg, 'EDTK_STATS_DSN');
 
 my $rows = omgr_stats($dbh, $pdbh, $ARGV[0], $ARGV[1]||"idlot");
 if ($#$rows<0) {
-	warn "INFO : pas de statistiques.\n";
+	warn "INFO : pas de statistiques pour cette periode.\n";
 	exit;
 }
 

@@ -88,7 +88,7 @@ use oEdtk::Run		qw(oe_status_to_msg oe_compo_run oe_after_compo oe_outmngr_outpu
 # METHODE GENERIQUE D'EXTRACTION ET DE TRAITEMENT DES DONNEES
 
  our @DATATAB;			# le tableau dans lequel les enregistrements sont ventilés
- 				# changer en OE_DATATAB
+ 					# changer en OE_DATATAB
  our $LAST_ENR		="";	# QUID LAST_ENR ????
  our $CURRENT_REC	="";	# enrgistrement courant
  our $PREVIOUS_REC	="";	# enregistrement précédent
@@ -98,7 +98,7 @@ use oEdtk::Run		qw(oe_status_to_msg oe_compo_run oe_after_compo oe_outmngr_outpu
  our %evalSsTrt;		#rendre privée
 
  my $_ID_LDOC		='';	# initialisation de l'identifiant unique de document (un par run)
- my $PUSH_VALUE		="";
+ my $PUSH_VALUE	="";
 
 
 # PLANNED : CONFIGURATION OF OUTPUT SYSTEM
@@ -888,7 +888,7 @@ my $_RUN_PARAMS;
 sub prodEdtkOpen(@) {	# migrer oe_open_files / oe_open
 	@ARGV=(@ARGV, @_);
 	my $params = {};
-	# Default option values.
+	# DEFAULT OPTION VALUES.
 	my %defaults = (
 		index => 0,
 		massmail => 0,
@@ -903,15 +903,7 @@ sub prodEdtkOpen(@) {	# migrer oe_open_files / oe_open
 		exit 0;
 	}
 
-	my $fi = $ARGV[0];	# to keep compatibility
-	#my ($fi, $fo, $params) = @_; 
-
-	# For the sake of backwards compatibility.
-	#if (defined($params) && ref($params) ne 'HASH') {
-	#	warn "WARN : The third parameter of prodEdtkOpen() must be a hash reference, ignoring.\n";
-	#	undef $params;
-	#}
-
+	my $fi = $ARGV[0];	# TO KEEP COMPATIBILITY
 	my $cfg = config_read('COMPO');
 	#if (!defined($params)) {
 	#	$params = {};
@@ -989,6 +981,8 @@ sub prodEdtkOpen(@) {	# migrer oe_open_files / oe_open
 		print OUT oe_data_build('xProdApp');
 	}
 	print OUT oe_data_build('xTYPPROD', substr($env, 0, 1));
+	print OUT oe_data_build('xHOST',	 hostname());
+
 	# Do we want to generate an index file?
 	if ($params->{'index'}) {
 		print OUT oe_data_build('xStOmgr');
@@ -1292,22 +1286,13 @@ sub oe_ID_LDOC() {
 
 		my $pid = "$$";
 		my $rnd = int(rand(10));
-#		my $modified_pid;
 		if (length $pid > 5) {
 			$pid = $pid/(10**((length $pid)-5));
-#			$modified_pid = $pid/(10**((length $pid)-5));
-#		} else {
-#			$modified_pid = $pid + (int(rand(10))/10);
 		}
 	
-#		$_ID_LDOC =sprintf ("%1d%02d%1d%02d%02d%02d%07.1f", $year % 10, $week, $dow, $hour, $min, $sec, $modified_pid ); #$$
 		$_ID_LDOC =sprintf ("%1d%02d%1d%02d%02d%02d%05d%1d", $year % 10, $week, $dow, $hour, $min, $sec, $pid, $rnd );
 
 	}
-	# TESTS FORCÉS :
-	#return "099999999999999.0";
-	#return "099999999999999.9";
-	#return "999999999999999.9";
 
 return $_ID_LDOC;
 }

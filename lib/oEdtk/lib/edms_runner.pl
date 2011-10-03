@@ -7,7 +7,7 @@ use Archive::Zip	qw(:ERROR_CODES);
 
 
 if ($#ARGV ne 1) { 
-	die "Usage : $0 NOM_APP DATA_FILE\n";
+	die "Usage : $0 NOM_APP DATA_FILE\n\n Pour reprise de données GED (lance la compo et la préparation de la GED)\n";
 }
 
 my @files;
@@ -41,19 +41,21 @@ if ($file =~/\.zip$/i){
 # CONFIGURATION (CGI GED A REVOIR POUR SIMPLIFIER ET RENDRE PLUS EXPLICITE)
 my $perl 	= $cfg->{'EDTK_BIN_PERL'} . '/perl';
 my $script	= $cfg->{'EDTK_DIR_APP'} . "/$app.pl";
-my @options 	= ('cgi');
-push (@options, 'cgiged');
+my @options 	= ();
+# my @options 	= ('cgi');
+# push (@options, 'cgiged');
+
 # ATTENTION, il faut aussi que le document soit paramétré dans la base de paramétrage
 $ENV{'EDTK_OPTIONS'}= join(',', @options);
 
 foreach my $filename ( @files ){
 	# LANCEMENT DU TRAITEMENT DE MISE EN PAGE AVEC ENVOI A LA GED
 	warn "INFO : traitement de $filename\n";
-	my $rv = system ("$perl $script $filename $app.txt > $app.perl.log 2>&1");
+	my $rv = system ("$perl $script $filename $filename --edms > $app.perl.log 2>&1");
 	die "ERROR: Could not extract data ($rv)\n" if $rv != 0;
 	unlink ($filename);
 } 
-warn "INFO : docs sent to GED\n";
+warn "INFO : done, docs prepared for GED\n";
 
 # SUPPRESSION DES PDF INTERMEDIAIRES DU RÉPERTOIRE DE TRAVAIL		
-unlink glob "*.pdf";
+# unlink glob "*.pdf";

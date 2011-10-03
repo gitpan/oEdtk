@@ -5,7 +5,7 @@ use warnings;
 
 use oEdtk::Main;
 use oEdtk::Config	qw(config_read);
-use oEdtk::DBAdmin	qw(db_connect tracking_table_create);
+use oEdtk::DBAdmin	qw(db_connect create_table_TRACKING);
 use oEdtk::Dict;
 use Config::IniFiles;
 use Sys::Hostname;
@@ -14,7 +14,7 @@ use DBI;
 use Exporter;
 
 our $VERSION		= 0.10;
-our @ISA		= qw(Exporter);
+our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(stats_week stats_month stats_iddest);
 
 sub new {
@@ -87,13 +87,13 @@ sub new {
 	my $self = bless {
 		dict	=> $dict,
 		mode	=> $mode,
-		table	=> $table,
-		edmode	=> $edmode,
+		table=> $table,
+		edmode=>$edmode,
 		id	=> oe_ID_LDOC(),
 		seq	=> 1,
 		keys	=> \@userkeys,
 		user	=> $user,
-		source	=> $source,
+		source=>$source,
 		app	=> $app,
 		dbh	=> $dbh
 	}, $class;
@@ -103,7 +103,7 @@ sub new {
 
 	# Create the table in the SQLite case.
 	if ($dbh->{'Driver'}->{'Name'} eq 'SQLite') {
-		eval { tracking_table_create($dbh, $table, $cfg->{'EDTK_MAX_USER_KEY'}); };
+		eval { create_table_TRACKING($dbh, $table, $cfg->{'EDTK_MAX_USER_KEY'}); };
 		if ($@) {
 			warn "INFO : Could not create table : $@\n";
 		}
@@ -112,6 +112,7 @@ sub new {
 	$self->track('Job', 1);
 	return $self;
 }
+
 
 sub track {
 	my ($self, $job, $count, @data) = @_;
@@ -135,7 +136,7 @@ sub track {
 		ED_SEQ		=> $self->{'seq'}++,
 		ED_SNGL_ID	=> $self->{'id'},
 		ED_APP		=> $self->{'app'},
-		ED_MOD_ED	=> $self->{'edmode'},
+		ED_MOD_ED		=> $self->{'edmode'},
 		ED_JOB_EVT	=> $job,
 		ED_OBJ_COUNT	=> $count,
 		ED_CORP		=> $self->{'entity'},

@@ -8,21 +8,22 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.16;
+our $VERSION		= 0.17;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(db_connect
-			     table_historicize
-			     table_move
-			     tracking_table_create
-			     params_FILIERES_table_create
-			     params_LOTS_table_create
-			     params_REFIDDOC_table_create
-			     params_SUPPORTS_table_create
-			     index_table_create
-			     lot_sequence_create
-			     schema_create
-			     PARA_table_create
-			     DATAGROUPS_table_create
+			     historicize_table
+			     create_lot_sequence
+			     create_SCHEMA
+			     create_table_ACQUIT
+			     create_table_DATAGROUPS
+			     create_table_FILIERES
+			     create_table_INDEX
+			     create_table_LOTS
+			     create_table_PARA
+			     create_table_REFIDDOC
+			     create_table_SUPPORTS
+			     create_table_TRACKING
+			     move_table
 			     @INDEX_COLS);
  
 sub db_connect {
@@ -60,7 +61,8 @@ sub _db_connect1 {
 	return DBI->connect($dsn, $cfg->{"${dsnvar}_USER"}, $cfg->{"${dsnvar}_PASS"}, $dbargs);
 }
 
-sub tracking_table_create {
+
+sub create_table_TRACKING {
 	my ($dbh, $table, $maxkeys) = @_;
 
 	my $sql = "CREATE TABLE $table";
@@ -85,23 +87,26 @@ sub tracking_table_create {
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
 
-sub _tracking_table_drop {
+
+sub _drop_table_TRACKING {
 	my ($dbh, $table) = @_;
 
 	$dbh->do("DROP TABLE $table") or die $dbh->errstr;
 }
 
-sub table_historicize ($$$){
+
+sub historicize_table ($$$){
 	my ($dbh, $table, $suffixe) = @_;
 	my $table_cible =$table."_".$suffixe;
 		
-	table_move ($dbh, $table, $table_cible, '-create');	
+	move_table ($dbh, $table, $table_cible, '-create');	
 
 	my $sql = "TRUNCATE TABLE $table";
 	$dbh->do($sql, undef) or die $dbh->errstr;	
 }
 
-sub table_move ($$$;$){
+
+sub move_table ($$$;$){
 	my ($dbh, $table_source, $table_cible, $create_option) = @_;
 	$create_option ||= "";
 	my $sql_create ="CREATE TABLE ".$table_cible." AS SELECT * FROM ".$table_source;
@@ -115,7 +120,7 @@ sub table_move ($$$;$){
 }
 
 
-sub params_FILIERES_table_create {
+sub create_table_FILIERES {
 	my $dbh = shift;
 	my $table = "EDTK_FILIERES";
 
@@ -146,7 +151,8 @@ sub params_FILIERES_table_create {
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
 
-sub params_LOTS_table_create {
+
+sub create_table_LOTS {
 	my $dbh = shift;
 	my $table = "EDTK_LOTS";
 
@@ -164,7 +170,8 @@ sub params_LOTS_table_create {
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
 
-sub params_REFIDDOC_table_create {
+
+sub create_table_REFIDDOC {
 	my $dbh = shift;
 	my $table = "EDTK_REFIDDOC";
 
@@ -189,7 +196,8 @@ sub params_REFIDDOC_table_create {
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
 
-sub params_SUPPORTS_table_create {
+
+sub create_table_SUPPORTS {
 	my $dbh = shift;
 	my $table = "EDTK_SUPPORTS";
 
@@ -245,16 +253,16 @@ our @INDEX_COLS = (
 
 	# SECTION LOTISSEMENT DE L'INDEX
 	['ED_IDLOT', 'VARCHAR2(6)'],			# identifiant du lot
-	['ED_SEQLOT', 'VARCHAR2(6)'],			# identifiant du lot de mise sous plis (sous-lot)
+	['ED_SEQLOT', 'VARCHAR2(7)'],			# identifiant du lot de mise sous plis (sous-lot) ALTER table edtk_index modify ED_SEQLOT VARCHAR2(7);
 	['ED_DTLOT', 'VARCHAR2(8)'],			# date de la création du lot de mise sous plis
-	['ED_IDFILIERE', 'VARCHAR2(5)'],		# identifiant de la filière de production     ALTER table edtk_index modify ED_IDFILIERE VARCHAR2(5);
+	['ED_IDFILIERE', 'VARCHAR2(5)'],		# identifiant de la filière de production     	ALTER table edtk_index modify ED_IDFILIERE VARCHAR2(5);
 	['ED_CATDOC', 'CHAR'],				# catégorie de document
 	['ED_CODRUPT', 'CHAR'],				# code forçage de rupture
 	['ED_SEQPGDOC', 'INTEGER'],			# numéro de séquence de page dans le document
 	['ED_NBPGDOC', 'INTEGER'],			# nombre de page (faces) du document
 	['ED_POIDSUNIT', 'INTEGER'],			# poids de l'imprim? ou de l'encart en mg
-	['ED_NBENC', 'INTEGER'],				# nombre d'encarts du doc				ALTER table edtk_index add ED_NBENC integer;
-	['ED_ENCPDS', 'INTEGER'],			# poids des encarts du doc				ALTER table edtk_index add ED_ENCPDS INTEGER;
+	['ED_NBENC', 'INTEGER'],				# nombre d'encarts du doc					ALTER table edtk_index add ED_NBENC integer;
+	['ED_ENCPDS', 'INTEGER'],			# poids des encarts du doc					ALTER table edtk_index add ED_ENCPDS INTEGER;
 	['ED_BAC_INSERT', 'INTEGER'],			# Appel de bac ou d'insert
 
 	# SECTION EDITION DE L'INDEX
@@ -276,11 +284,11 @@ our @INDEX_COLS = (
 	['ED_LISTEREFENC', 'VARCHAR2(64)'],	# liste des encarts du pli
 	['ED_PDSPLI', 'INTEGER'],			# poids du pli en mg
 	['ED_TYPOBJ', 'CHAR'],				# type d'objet dans le pli	xxxxxx  conserver ?
-	['ED_DTPOSTE', 'VARCHAR2(8)'],		# date de remise en poste
+	['ED_DTPOSTE', 'VARCHAR2(8)'],		# status de lotissement (date de remise en poste ou status en fonction des versions)  ALTER TABLE edtk_index rename ED_DTPOSTE to ED_STATUS VARCHAR2(8);
 );
 
 
-sub PARA_table_create {
+sub create_table_PARA {
 	my $dbh = shift;
 	my $table = "EDTK_TEST_PARA";
 
@@ -290,13 +298,12 @@ sub PARA_table_create {
 	$sql .= ", ED_ID INTEGER NOT NULL";			#
 	$sql .= ", ED_TSTAMP VARCHAR2(14) NOT NULL";		# Timestamp of event
 	$sql .= ", ED_TEXTBLOC VARCHAR2(512)";
-
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
 
-sub DATAGROUPS_table_create {
+sub create_table_DATAGROUPS {
 	my $dbh = shift;
 	my $table = "EDTK_TEST_DATAGROUPS";
 
@@ -304,14 +311,33 @@ sub DATAGROUPS_table_create {
 	$sql .= "( ED_DGPS_REFIDDOC VARCHAR2(20) NOT NULL"; 
 	$sql .= ", ED_ID INTEGER NOT NULL";
 	$sql .= ", ED_DATA VARCHAR2(64)";
-
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
 
 
-sub index_table_create {
+sub create_table_ACQUIT {
+	my $dbh = shift;
+	my $table = "EDTK_ACQ";
+
+	my $sql = "CREATE TABLE $table";
+	$sql .= "( ED_SEQLOT  VARCHAR2(7)  NOT NULL";	# identifiant du lot de mise sous plis (sous-lot)
+	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS add ED_LOTNAME VARCHAR2(16);  alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
+	$sql .= ", ED_DTPRINT VARCHAR2(8)";			# date de d'imrpession
+	$sql .= ", ED_DTPOST  VARCHAR2(8)  NOT NULL";	# date de remise en poste
+	$sql .= ", ED_NBPGLOT INTEGER   NOT NULL";		# nombre de documents du pli
+	$sql .= ", ED_NBPLISLOT INTEGER NOT NULL";		# nombre de documents du pli
+	$sql .= ", ED_DTPOST2 VARCHAR2(8)";			# date de remise en poste		
+	$sql .= ", ED_DTCHECK VARCHAR2(8)";			# date de check
+	$sql .= ", ED_STATUS VARCHAR2(4)";				# check status
+	$sql .= ")";
+
+	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
+}
+
+
+sub create_table_INDEX {
 	my ($dbh, $table) = @_;
 
 	my $sql = "CREATE TABLE $table (" .
@@ -322,26 +348,29 @@ sub index_table_create {
 	$dbh->do(_sql_fixup($dbh, $sql)) or warn "WARN : " . $dbh->errstr . "\n";
 }
 
-sub lot_sequence_create {
+sub create_lot_sequence {
 	my $dbh = shift;
 
 	$dbh->do('CREATE SEQUENCE EDTK_IDLOT MINVALUE 0 MAXVALUE 999 CYCLE');
 }
 
-sub schema_create {
+
+sub create_SCHEMA {
 	my ($dbh, $table, $maxkeys) = @_;
 	my $cfg = config_read('EDTK_DB');
 
-	lot_sequence_create($dbh);
-	index_table_create($dbh, $cfg->{'EDTK_DBI_OUTMNGR'});
-	params_FILIERES_table_create($dbh);
-	params_LOTS_table_create($dbh);
-	params_REFIDDOC_table_create($dbh);
-	params_SUPPORTS_table_create($dbh);
-
+	create_lot_sequence($dbh);
+	create_table_INDEX($dbh, $cfg->{'EDTK_DBI_OUTMNGR'});
 	$dbh->do('CREATE INDEX ed_seqlot_idx ON EDTK_INDEX (ed_seqlot)');
-	tracking_table_create($dbh, $table, $maxkeys);
+	create_table_TRACKING($dbh, $cfg->{'EDTK_DBI_TRACKING'}, $cfg->{'EDTK_MAX_USER_KEY'});
+		
+	create_table_ACQUIT($dbh);
+	create_table_FILIERES($dbh);
+	create_table_LOTS($dbh);
+	create_table_REFIDDOC($dbh);
+	create_table_SUPPORTS($dbh);
 }
+
 
 sub _sql_fixup {
 	my ($dbh, $sql) = @_;

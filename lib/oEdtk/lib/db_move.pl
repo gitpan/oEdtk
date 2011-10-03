@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use oEdtk::Config	qw(config_read);
-use oEdtk::DBAdmin	qw(db_connect table_move);
+use oEdtk::DBAdmin	qw(db_connect move_table);
 use warnings;
 use strict;
 
@@ -15,6 +15,6 @@ my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 
 print "INFO : data from $ARGV[0] will be inserted in $ARGV[1]\n";
 
-table_move($dbh, $ARGV[0], $ARGV[1], $ARGV[2]);
+move_table($dbh, $ARGV[0], $ARGV[1], $ARGV[2]);
 
 print "INFO : insert done into $ARGV[1]\n";

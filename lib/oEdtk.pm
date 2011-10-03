@@ -5,9 +5,9 @@ BEGIN {
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
 		use strict;
 
-		$VERSION	= 0.6091; # a.ammr a.a année d'existance, mm mois, r release 
+		$VERSION	= 0.6101; # a.ammr a.a année d'existance, mm mois, r release 
 		@ISA		= qw(Exporter);
-		@EXPORT		= qw(oEdtk_version);
+		@EXPORT	= qw(oEdtk_version);
 }
 
 #

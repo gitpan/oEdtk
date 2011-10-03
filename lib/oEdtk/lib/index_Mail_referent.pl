@@ -5,7 +5,7 @@ use warnings;
 
 use oEdtk::DBAdmin	qw(db_connect);
 use oEdtk::Config	qw(config_read);
-use oEdtk::Outmngr	qw(omgr_referent_stats);
+use oEdtk::Outmngr	qw(omgr_stats_referent);
 use oEdtk::Messenger qw(oe_send_mail);
 
 
@@ -15,7 +15,7 @@ my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
     { AutoCommit => 1, RaiseError => 1 });
 my $pdbh = db_connect($cfg, 'EDTK_PARAM_DSN');
 
-my $rows = omgr_referent_stats($dbh, $pdbh);
+my $rows = omgr_stats_referent($dbh, $pdbh);
 
 if ($#$rows<0) {
 	my $subject="INFO : pas de validation de lot prevue dans la base de lotissement.\n";
