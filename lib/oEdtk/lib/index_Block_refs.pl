@@ -30,7 +30,7 @@ if 		($idldoc!~/^\d{16}$/i) { # 1392153206001881
 $idseqpg = $idseqpg || 0;
 
 my $cfg = config_read('EDTK_STATS');
-my $dbh = db_connect($cfg, 'EDTK_STATS_DSN',
+my $dbh = db_connect($cfg, 'EDTK_DSN_STATS',
     { AutoCommit => 1, RaiseError => 1 });
 
 
@@ -81,7 +81,7 @@ ReadMode ('restore');
 $trk->execute('20111003111111', 'idx_Block', $idseqpg, $idldoc, 'idx_Block', 'W', $row_count , $cfg->{'EDTK_CORP'}, hostname(),  "$event for @values");
 
 
-my 	$updt = "UPDATE EDTK_INDEX SET ED_DTLOT = ?, ED_SEQLOT = ? WHERE ED_IDLDOC = ? ";
+my 	$updt = "UPDATE EDTK_INDEX SET ED_DTLOT = ?, ED_SEQLOT = ?, ED_DTPOSTE = ? WHERE ED_IDLDOC = ? ";
 	# probleme la ligne suivante ne gère pas toutes les pages d'un même doc
 	$updt .=" AND ED_IDSEQPG  = ? " if ($idseqpg > 0);
 	$sth = $dbh->prepare($updt);
@@ -89,7 +89,7 @@ my 	$updt = "UPDATE EDTK_INDEX SET ED_DTLOT = ?, ED_SEQLOT = ? WHERE ED_IDLDOC =
 # rajouter un controle, on a pas le droit de changer l'etat d'un doc déjà loti
 # mais on a le droit de faire un reset pour rejouer le lotissement
 if ($event!~/^RESET$/i) {
-	$sth->execute($event, $event, @values);
+	$sth->execute($event, $event, $event, @values);
 } else {
 	my $NULL="";
 	$sth->execute($NULL, $NULL, @values);

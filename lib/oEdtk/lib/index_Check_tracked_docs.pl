@@ -10,7 +10,9 @@ use oEdtk::Outmngr 	0.07	qw(omgr_stats);
 #use Text::CSV;
 
 if (@ARGV < 1) {
-	die "Usage: $0 <today|week|week_value|ALL> [refiddoc] [seqlot|source|source_name]\n\n\t week_value : number of a week in the year\n\t source_name: job name in tracking\n";
+	die "Usage: $0 <today|week|week_value|ALL> [refiddoc] [seqlot|source|source_name]\n"
+		."\t week_value : number of a week in the year\n\t source_name: job name in tracking\n\n"
+		." check references for tracked sources\n";
 }
 
 my $period=	$ARGV[0] || "today";
@@ -18,7 +20,7 @@ my $refiddoc=	$ARGV[1] || 0;
 my $lot	= 	$ARGV[2] || 0;
 
 my $cfg = config_read('EDTK_STATS');
-my $dbh = db_connect($cfg, 'EDTK_STATS_DSN',
+my $dbh = db_connect($cfg, 'EDTK_DSN_STATS',
     { AutoCommit => 1, RaiseError => 1 });
 
 
@@ -36,13 +38,17 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	if ($period =~ /^today$/i) {
 		$idldocKey = sprintf ("%1d%02d%1d", $year % 10, $week, $dow );
 		
-	} elsif ($period =~ /^week$/i){
-		$idldocKey = sprintf("%1d%02d", $year % 10, $week );
+	} elsif ($period =~ /^all$/i){
 		
 	} elsif ($period =~ /^(\d{1,2})$/){
 		$idldocKey = sprintf("%1d%02d", $year % 10, $1 );
+
+	} elsif ($period =~ /^week$/i){
+		$idldocKey = sprintf("%1d%02d", $year % 10, $week );
+
+	} else { 
+		$idldocKey = sprintf("%1d%02d", $year % 10, $week );
 	}
-	# PAR DÉFAUT ET DANS TOUS LES CAS
 	$idldocKey .="%"; # étrangement pour les cas week et \d2 on a le message suivant si on met % dans le sprintf : Invalid conversion in sprintf: end of string at C:\Sources\edtk_MNT\lib\index_Check_docs_omgr.pl line 44. 
 	push (@sql_values, $idldocKey);
 
@@ -85,7 +91,7 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	$sth->execute(@sql_values);
 
 	my $rows= $sth->fetchall_arrayref();
-	warn sprintf "INFO : %6s  %-15s %-16s %s  from EDTK_STATS_OUTMNGR\n", "NB_DOCS", "REFIDDOC", "IDLDOC", $col;
+	warn sprintf "INFO : %6s %-15s %-16s %s  from EDTK_STATS_OUTMNGR\n", "NB_DOCS", "REFIDDOC", "IDLDOC", $col;
 
 ################################################################################
 
@@ -96,6 +102,8 @@ if ($#$rows<0) {
 }
 
 foreach my $row (@$rows) {
-	$$row[$#$row] = $$row[$#$row] || ""; # DANS LE CAS DE SEQLOT? IL PEUT ARRIVER QU'IL NE SOIT PAS ENCORE RENSEIGNE
-	printf "%14d  %-15s %16s %s \n", @$row, ""; # 1391152325098839
+		for (my $i=0; $i<=$#$row ; $i++){
+			$$row[$i] = $$row[$i] || ""; # CERTAINES VALEURS PEUVENT NE PAS ÊTRE RENSEIGNÉES DANS CERTAINS CAS	
+		}
+	printf "%14d %-15s %16s %s \n", @$row, ""; # 1391152325098839
 }

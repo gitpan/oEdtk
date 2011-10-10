@@ -11,7 +11,7 @@ use oEdtk::Messenger qw(oe_send_mail);
 
 # PURGE DES DCLIB (DE PLUS D'UNE SEMAINE) SI ELLES NE SONT PAS EN ATTENTE D'UN SEQLOT
 my $cfg = config_read('EDTK_DB', 'MAIL');
-my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
+my $dbh = db_connect($cfg, 'EDTK_DSN_DBI');
 my $dir = $cfg->{'EDTK_DIR_OUTMNGR'};
 
 my @old = omgr_purge_fs($dbh);

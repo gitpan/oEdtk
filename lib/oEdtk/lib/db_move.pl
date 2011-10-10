@@ -11,7 +11,7 @@ if (@ARGV < 2) {
 
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
+my $dbh = db_connect($cfg, 'EDTK_DSN_DBI');
 
 print "INFO : data from $ARGV[0] will be inserted in $ARGV[1]\n";
 

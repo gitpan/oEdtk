@@ -15,7 +15,7 @@ use Exporter;
 
 our $VERSION		= 0.10;
 our @ISA			= qw(Exporter);
-our @EXPORT_OK		= qw(stats_week stats_month stats_iddest);
+our @EXPORT_OK		= qw(stats_iddest stats_week stats_month);
 
 sub new {
 	my ($class, $source, %params) = @_;
@@ -33,7 +33,7 @@ sub new {
 	}
 
 	my $table = $cfg->{'EDTK_DBI_TRACKING'};
-	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 1 });
+	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI', { AutoCommit => 1 });
 
 	# XXX Should we ensure there is at least one key defined?
 	my $keys = $params{'keys'} || [];
@@ -335,6 +335,8 @@ sub stats_month {
 
 	return $rows;
 }
+
+
 
 my $_PRGNAME;
 

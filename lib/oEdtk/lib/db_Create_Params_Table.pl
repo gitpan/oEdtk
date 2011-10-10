@@ -12,7 +12,7 @@ use oEdtk::DBAdmin qw(db_connect
 		   );
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_PARAM_DSN');
+my $dbh = db_connect($cfg, 'EDTK_DSN_PARAM');
 
 create_table_FILIERES($dbh);
 create_table_LOTS($dbh);

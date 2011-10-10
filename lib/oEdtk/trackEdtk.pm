@@ -187,8 +187,8 @@ sub open_Tracking_Env(){
 	if ($ENV{EDTK_TRACK_MODE} =~/FDB/i){
 		# DB FILE NOWTIME/PROCESS
 		$ENV{EDTK_DBI_DNS}=~s/(.+)\.(\w+)$/$1\.$ED_TSTAMP\.$ED_PROC\.$2/;
-		warn "INFO tracking to $ENV{EDTK_DBI_DSN}\n";
-		create_Track_Table($ENV{EDTK_DBI_DSN});
+		warn "INFO tracking to $ENV{EDTK_DSN_DBI}\n";
+		create_Track_Table($ENV{EDTK_DSN_DBI});
 		open_DBI();
 			
 	} elsif ($ENV{EDTK_TRACK_MODE} =~/LOG/i){
@@ -216,12 +216,12 @@ sub open_DBI(){
 			RaiseError => 	$ENV{EDTK_DBI_RaiseError},
 			PrintError => 	$ENV{EDTK_DBI_PrintError}};
 
-	$DBH = DBI->connect(		$ENV{EDTK_DBI_DSN},
-					$ENV{EDTK_DBI_DSN_USER},
-					$ENV{EDTK_DBI_DSN_PASS}
+	$DBH = DBI->connect(		$ENV{EDTK_DSN_DBI},
+					$ENV{EDTK_DSN_DBI_USER},
+					$ENV{EDTK_DSN_DBI_PASS}
 			#		,$dbargs
 				)
-			or die "ERR no connexion to $ENV{EDTK_DBI_DSN} " . DBI->errstr;
+			or die "ERR no connexion to $ENV{EDTK_DSN_DBI} " . DBI->errstr;
 
 1;
 }
@@ -416,12 +416,12 @@ sub test_exist_table(){
 	my $dbargs = {	AutoCommit => $ENV{EDTK_DBI_AutoCommit},
 				RaiseError => $ENV{EDTK_DBI_RaiseError},
 				PrintError => $ENV{EDTK_DBI_PrintError}};
-	$DBH = DBI->connect($ENV{EDTK_DBI_DSN},
-					$ENV{EDTK_DBI_DSN_USER},
-					$ENV{EDTK_DBI_DSN_PASS}
+	$DBH = DBI->connect($ENV{EDTK_DSN_DBI},
+					$ENV{EDTK_DSN_DBI_USER},
+					$ENV{EDTK_DSN_DBI_PASS}
 					,$dbargs
 				)
-			or die "ERR no connexion to $ENV{EDTK_DBI_DSN} " . DBI->errstr;
+			or die "ERR no connexion to $ENV{EDTK_DSN_DBI} " . DBI->errstr;
 
 	my $request="select * from $ENV{EDTK_DBI_TABLENAME}";
 
@@ -462,11 +462,11 @@ sub create_Track_Table(){
 	my $dbargs = {	AutoCommit => 0,
 				RaiseError => 0,
 				PrintError => 0 };
-	$DBH = DBI->connect($ENV{EDTK_DBI_DSN},
-					$ENV{EDTK_DBI_DSN_USER},
-					$ENV{EDTK_DBI_DSN_PASS},
+	$DBH = DBI->connect($ENV{EDTK_DSN_DBI},
+					$ENV{EDTK_DSN_DBI_USER},
+					$ENV{EDTK_DSN_DBI_PASS},
 					$dbargs)
-			or die "ERR no connexion to $ENV{EDTK_DBI_DSN} " . DBI->errstr;
+			or die "ERR no connexion to $ENV{EDTK_DSN_DBI} " . DBI->errstr;
 
 	my $struct="CREATE TABLE $ENV{EDTK_DBI_TABLENAME} ";
 	$struct .="( ED_TSTAMP NUMBER(14)  NOT NULL";	# interesting for formated date and interval search
@@ -510,7 +510,7 @@ sub drop_Track_Table(){
 	&prepare_Tracking_Env();
 	&open_DBI();
 	
-	warn "=> Drop table $ENV{EDTK_DBI_TABLENAME} from $ENV{EDTK_DBI_DSN}, if exist\n\n";
+	warn "=> Drop table $ENV{EDTK_DBI_TABLENAME} from $ENV{EDTK_DSN_DBI}, if exist\n\n";
 	$DBH->do("DROP TABLE $ENV{EDTK_DBI_TABLENAME}");
 	$DBH->disconnect;
 

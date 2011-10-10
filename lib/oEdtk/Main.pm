@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.5074;
+our $VERSION 	=0.6102;
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
 			c7Flux
@@ -123,6 +123,8 @@ sub oe_define_TeX_output(){
 # \long\gdef\xProdApp\}
 1;
 }
+oe_define_TeX_output();		# valeurs par défaut
+
 
 sub oe_define_Compuset_output(){
 	# <#xAppRef=PRRPC-ADCOMS>
@@ -137,7 +139,6 @@ sub oe_define_Compuset_output(){
 	$TAG_R_SET	= '<EDIT>';	# attribution de variable : partie droite
 1;
 }
-oe_define_Compuset_output();		# valeurs par défaut
 
 
 	sub recEdtk_erase ($){		# migrer oe_rec_erase

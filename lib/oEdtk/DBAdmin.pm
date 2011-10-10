@@ -1,17 +1,16 @@
 package oEdtk::DBAdmin;
 
+use DBI;
 use oEdtk::Config	qw(config_read);
+use Text::CSV;
 use strict;
 use warnings;
 
-use DBI;
-
 use Exporter;
 
-our $VERSION		= 0.17;
+our $VERSION		= 0.19;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(db_connect
-			     historicize_table
 			     create_lot_sequence
 			     create_SCHEMA
 			     create_table_ACQUIT
@@ -23,8 +22,106 @@ our @EXPORT_OK		= qw(db_connect
 			     create_table_REFIDDOC
 			     create_table_SUPPORTS
 			     create_table_TRACKING
+			     historicize_table
+				csv_import
 			     move_table
 			     @INDEX_COLS);
+
+
+sub csv_import ($$$;$){
+	# insertion d'un fichier csv dans une table
+	# csv_import($dbh, "EDTK_ACQ", $ARGV[0], 
+	#		{sep_char => ',' ,					# ',' is default value
+	#		quote_char => '"',					# '"' is default value
+	#		header => 'ED_SEQLOT,ED_LOTNAME,...'},	# default value, no header, read header from csv file
+	# 		mode => 'merge');					# 'insert' is default value
+
+###### VERSION ORACLE DU MERGE, DIFFÉRENTE DE CELLE DE POSTGRESQL
+	#MERGE INTO table_name USING table_reference ON (condition)
+	#  WHEN MATCHED THEN
+	#  UPDATE SET column1 = value1 [, column2 = value2 ...]
+	#  WHEN NOT MATCHED THEN
+	#  INSERT (column1 [, column2 ...]) VALUES (value1 [, value2 ...
+
+	#MERGE INTO Table1 T1
+	#  USING (SELECT Id, Meschamps FROM Table2) T2
+	#    ON ( T1.Id = T2.Id ) -- Condition de correspondance
+	#WHEN MATCHED THEN -- Si Vraie
+	#  UPDATE SET T1.Meschamps = T2.Meschamps
+	#WHEN NOT MATCHED THEN -- Si faux
+	#  INSERT (T1.ID, T1.MesChamps) VALUES ( T2.ID, T2.MesChamps);
+
+###### VERSION POSTGRESQL
+	#MERGE INTO table [[AS] alias]
+	#USING [table-ref | query]
+	#ON join-condition
+	#[WHEN MATCHED [AND condition] THEN MergeUpdate | DELETE | DO NOTHING | RAISE ERROR]
+	#[WHEN NOT MATCHED [AND condition] THEN MergeInsert | DO NOTHING | RAISE ERROR]
+	#MergeUpdate is
+	#
+	#UPDATE SET { column = { expression | DEFAULT } |
+	#( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) }
+	#[, ...]
+	#(yes, there is no WHERE clause here)
+	#MergeInsert is
+	#INSERT [ ( column [, ...] ) ]
+	#{ DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] )
+	#[, ...]} 
+
+	my ($dbh, $table, $in, $params) = @_;
+	$params->{'mode'}		= $params->{'mode'} || "insert";
+	$params->{'sep_char'} 	= $params->{'sep_char'} || ",";
+	$params->{'quote_char'}	= $params->{'quote_char'}||'"' ;
+	
+	open(my $fh, '<', $in) or die "Cannot open index file \"$in\": $!\n";
+	my $csv = Text::CSV->new({ binary => 1, sep_char => $params->{'sep_char'}, 
+							quote_char => $params->{'quote_char'}});
+
+	my $line;
+	if (defined $params->{'header'}){
+		$line = $params->{'header'};
+	} else {
+		$line = <$fh>;
+	}
+	$csv->parse($line);
+	my @cols = $csv->fields();
+
+	while (<$fh>) {
+		$csv->parse($_);
+		my @data = $csv->fields();
+
+		# s'assurer qu'on insère pas des valeurs null (contraintes ???) ou pas ?
+		for (my $i=0 ; $i<=$#data ; $i++ ){
+			$data[$i]=$data[$i] || "";
+		}
+		my ($sql, $seqlot);
+		
+		if 	($params->{'mode'}=~/merge/i) {
+			$sql = "SELECT " . $cols[0] . " FROM " . $table 
+				. " WHERE " . $cols[0] . " =?  ";
+			my $sth = $dbh->prepare_cached($sql);
+			$sth->execute($data[0]);
+
+			$seqlot = $sth->fetchrow_hashref();
+		}
+		
+		if (defined $seqlot->{'ED_SEQLOT'}) {
+			$sql = "UPDATE " . $table . " SET " . join ('=? , ', @cols) . "=? "
+				. " WHERE " . $cols[0] . " =?  ";
+			my $sth = $dbh->prepare_cached($sql);
+			$sth->execute(@data, $data[0]);
+		
+		} else {
+			$sql = "INSERT INTO " . $table . " (" . join(',', @cols)
+				. ") VALUES (" . join(',', ('?') x @cols) . ")";
+			my $sth = $dbh->prepare_cached($sql);
+			$sth->execute(@data);
+		}
+
+	}
+	close($fh);
+}
+
  
 sub db_connect {
 	my ($cfg, $dsnvar, $dbargs) = @_;
@@ -52,13 +149,14 @@ sub db_connect {
 	return $dbh;
 }
 
+
 sub _db_connect1 {
 	my ($cfg, $dsnvar, $dbargs) = @_;
 
 	my $dsn = $cfg->{$dsnvar};
 
 	warn "INFO : Connecting to DSN $dsn...\n";
-	return DBI->connect($dsn, $cfg->{"${dsnvar}_USER"}, $cfg->{"${dsnvar}_PASS"}, $dbargs);
+	return DBI->connect($dsn, $cfg->{"${dsnvar}_USER"}, $cfg->{"${dsnvar}_PASS"}, $dbargs); ## xxxx
 }
 
 
@@ -125,11 +223,11 @@ sub create_table_FILIERES {
 	my $table = "EDTK_FILIERES";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_IDFILIERE VARCHAR2(5) NOT NULL";	# filiere id   ALTER table edtk_filieres modify ED_IDFILIERE VARCHAR2(5);
+	$sql .= "( ED_IDFILIERE VARCHAR2(5) NOT NULL";# rendre UNIQUE filiere id   ALTER table edtk_filieres modify ED_IDFILIERE VARCHAR2(5);
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16)";	  
 	$sql .= ", ED_DESIGNATION VARCHAR2(64)";		# 
 	$sql .= ", ED_ACTIF CHAR NOT NULL";			# Flag indiquant si la filiere est active ou pas 
-	$sql .= ", ED_PRIORITE INTEGER NOT NULL";		# Ordre d'execution des filieres 
+	$sql .= ", ED_PRIORITE INTEGER NOT NULL";	# rendre UNIQUE Ordre d'execution des filieres 
 	$sql .= ", ED_TYPED CHAR NOT NULL";			# 
 	$sql .= ", ED_MODEDI CHAR NOT NULL";			# 
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	# alter table EDTK_FILIERES add ED_IDGPLOT VARCHAR2(16) 
@@ -157,14 +255,15 @@ sub create_table_LOTS {
 	my $table = "EDTK_LOTS";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_IDLOT VARCHAR2(8) NOT NULL"; 
-	$sql .= ", ED_PRIORITE INTEGER NOT NULL";  
+	$sql .= "( ED_IDLOT VARCHAR2(8)  NOT NULL";		# rendre UNIQUE 
+	$sql .= ", ED_PRIORITE INTEGER  NOT NULL"; 		# rendre UNIQUE
 	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";
-	$sql .= ", ED_CPDEST VARCHAR2(6) NOT NULL"; 
+	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
+	$sql .= ", ED_FILTER VARCHAR2(64)";			# alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
 	$sql .= ", ED_GROUPBY VARCHAR2(16)"; 
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
-	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS add ED_LOTNAME VARCHAR2(16);  alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
-	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";
+	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
+	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -218,6 +317,7 @@ sub create_table_SUPPORTS {
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
 
+
 our @INDEX_COLS = (
 	# SECTION COMPOSITION DE L'INDEX
 	['ED_REFIDDOC', 'VARCHAR2(20) NOT NULL'],# identifiant dans le référentiel de document
@@ -250,14 +350,14 @@ our @INDEX_COLS = (
 	['ED_OWNER', 'VARCHAR2(10)'],			# propriétaire du document (utilisation en gestion / archivage de documents)
 	['ED_HOST', 'VARCHAR2(32)'],			# Hostname de la machine d'ou origine cette entrée
 	['ED_IDIDX', 'VARCHAR2(7) NOT NULL'],	# identifiant de l'index
+	['ED_CATDOC', 'CHAR'],				# catégorie de document
+	['ED_CODRUPT', 'CHAR'],				# code forçage de rupture
 
 	# SECTION LOTISSEMENT DE L'INDEX
 	['ED_IDLOT', 'VARCHAR2(6)'],			# identifiant du lot
 	['ED_SEQLOT', 'VARCHAR2(7)'],			# identifiant du lot de mise sous plis (sous-lot) ALTER table edtk_index modify ED_SEQLOT VARCHAR2(7);
 	['ED_DTLOT', 'VARCHAR2(8)'],			# date de la création du lot de mise sous plis
 	['ED_IDFILIERE', 'VARCHAR2(5)'],		# identifiant de la filière de production     	ALTER table edtk_index modify ED_IDFILIERE VARCHAR2(5);
-	['ED_CATDOC', 'CHAR'],				# catégorie de document
-	['ED_CODRUPT', 'CHAR'],				# code forçage de rupture
 	['ED_SEQPGDOC', 'INTEGER'],			# numéro de séquence de page dans le document
 	['ED_NBPGDOC', 'INTEGER'],			# nombre de page (faces) du document
 	['ED_POIDSUNIT', 'INTEGER'],			# poids de l'imprim? ou de l'encart en mg
@@ -284,7 +384,9 @@ our @INDEX_COLS = (
 	['ED_LISTEREFENC', 'VARCHAR2(64)'],	# liste des encarts du pli
 	['ED_PDSPLI', 'INTEGER'],			# poids du pli en mg
 	['ED_TYPOBJ', 'CHAR'],				# type d'objet dans le pli	xxxxxx  conserver ?
-	['ED_DTPOSTE', 'VARCHAR2(8)'],		# status de lotissement (date de remise en poste ou status en fonction des versions)  ALTER TABLE edtk_index rename ED_DTPOSTE to ED_STATUS VARCHAR2(8);
+	['ED_STATUS', 'VARCHAR2(8)'],			# status de lotissement (date de remise en poste ou status en fonction des versions)  # ALTER TABLE EDTK_INDEX ADD ED_STATUS VARCHAR2(8);  # attention très lourd a éxécuter ne pas faire en prod : UPDATE EDTK_INDEX SET ED_STATUS = ED_DTPOSTE;
+	['ED_DTPOSTE', 'VARCHAR2(8)']		# à supprimer : status de lotissement (date de remise en poste ou status en fonction des versions)  ALTER TABLE edtk_index rename ED_DTPOSTE to ED_STATUS VARCHAR2(8);
+
 );
 
 
@@ -302,6 +404,7 @@ sub create_table_PARA {
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
+
 
 sub create_table_DATAGROUPS {
 	my $dbh = shift;
@@ -326,8 +429,8 @@ sub create_table_ACQUIT {
 	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS add ED_LOTNAME VARCHAR2(16);  alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
 	$sql .= ", ED_DTPRINT VARCHAR2(8)";			# date de d'imrpession
 	$sql .= ", ED_DTPOST  VARCHAR2(8)  NOT NULL";	# date de remise en poste
-	$sql .= ", ED_NBPGLOT INTEGER   NOT NULL";		# nombre de documents du pli
-	$sql .= ", ED_NBPLISLOT INTEGER NOT NULL";		# nombre de documents du pli
+	$sql .= ", ED_NBFACES INTEGER   	NOT NULL";	# nombre de faces du lot (faces comptables, comprenant les faces blanches de R°/V°)
+	$sql .= ", ED_NBPLIS INTEGER 		NOT NULL";	# nombre de documents du pli
 	$sql .= ", ED_DTPOST2 VARCHAR2(8)";			# date de remise en poste		
 	$sql .= ", ED_DTCHECK VARCHAR2(8)";			# date de check
 	$sql .= ", ED_STATUS VARCHAR2(4)";				# check status
@@ -347,6 +450,7 @@ sub create_table_INDEX {
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or warn "WARN : " . $dbh->errstr . "\n";
 }
+
 
 sub create_lot_sequence {
 	my $dbh = shift;

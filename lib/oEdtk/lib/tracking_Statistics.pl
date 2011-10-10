@@ -16,7 +16,7 @@ if (@ARGV < 1) {
 }
 
 my $cfg = config_read('EDTK_DB', 'EDTK_STATS');
-my $dbh = db_connect($cfg, 'EDTK_STATS_DSN');
+my $dbh = db_connect($cfg, 'EDTK_DSN_STATS');
 
 my ($stats, $colname, $colsize); # 
 

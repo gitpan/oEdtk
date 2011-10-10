@@ -3,11 +3,11 @@
 use strict;
 use warnings;
 
-use oEdtk::Config	qw(config_read);
-use oEdtk::DBAdmin	qw(db_connect);
+use oEdtk::Config		qw(config_read);
+use oEdtk::DBAdmin		qw(db_connect);
 use oEdtk::Messenger	qw(oe_send_mail);
-use oEdtk::Outmngr	qw(omgr_stats);
-use oEdtk::Run		qw(oe_outmngr_output_run_tex);
+use oEdtk::Outmngr		qw(omgr_stats);
+use oEdtk::Run			qw(oe_outmngr_output_run_tex);
 
 my $cfg = config_read('EDTK_DB', 'MAIL');
 
@@ -29,9 +29,9 @@ if (@ARGV % 2 != 0) {
 	}
 	
 	# Now, run statistics and send the output by mail.
-	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
+	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI',
 	    { AutoCommit => 1, RaiseError => 1 });
-	my $pdbh = db_connect($cfg, 'EDTK_PARAM_DSN');
+	my $pdbh = db_connect($cfg, 'EDTK_DSN_PARAM');
 	
 	my $rows = omgr_stats($dbh, $pdbh, 'day', 'idlot');
 	

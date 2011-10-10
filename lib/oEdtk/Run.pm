@@ -209,7 +209,7 @@ sub oe_after_compo($$) {
 		die "ERROR: No corporation name given\n";
 	}
 
-	my $dbh = db_connect($cfg, 'EDTK_PARAM_DSN', { RaiseError => 1 });
+	my $dbh = db_connect($cfg, 'EDTK_DSN_PARAM', { RaiseError => 1 });
 	my $appdata = $dbh->selectrow_hashref("SELECT * FROM EDTK_REFIDDOC " .
 	    "WHERE ED_REFIDDOC = ? AND (ED_CORP = ? OR ED_CORP = '%')", undef,
 	    $app, $corp);

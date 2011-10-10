@@ -16,7 +16,7 @@ if ($#ARGV < 1) {
 my ($table, $file) = @ARGV;
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_PARAM_DSN',
+my $dbh = db_connect($cfg, 'EDTK_DSN_PARAM',
     { AutoCommit => 1, RaiseError => 1 });
 
 open(my $fh, ">", $file) or die "$file: $!\n";

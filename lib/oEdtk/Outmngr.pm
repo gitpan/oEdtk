@@ -14,10 +14,9 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.18;
+our $VERSION	= 0.22;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
-			csv_import
 			omgr_check_acquit
 			omgr_check_seqlot_ref 
 			omgr_depot_poste 
@@ -79,8 +78,8 @@ sub omgr_import($$$) {
 	# Retrieve the database connection parameters.
 	my $cfg = config_read('EDTK_DB');
 	
-	my $pdbh= db_connect($cfg, 'EDTK_PARAM_DSN');
-	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 0, RaiseError => 1 });
+	my $pdbh= db_connect($cfg, 'EDTK_DSN_PARAM');
+	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI', { AutoCommit => 0, RaiseError => 1 });
 
 	# Create the $cfg->{'EDTK_DBI_OUTMNGR'} table if we're using SQLite.
 	if ($dbh->{'Driver'}->{'Name'} eq 'SQLite') {
@@ -103,101 +102,71 @@ sub omgr_import($$$) {
 }
 
 
-sub csv_import ($$$;$){
-	# insertion de d'un fichier csv dans une table
-	# csv_import($dbh, "EDTK_ACQ", $ARGV[0], 
-	#		{sep_char => ',' ,	# ',' is default value
-	#		quote_char => '"',	# '"' is default value
-	#		header => 'ED_SEQLOT,ED_LOTNAME,ED_DTPRINT,ED_DTPOST,ED_NBPGLOT,ED_NBPLISLOT,ED_DTPOST2'});
-
-
-	my ($dbh, $table, $in, $params) = @_;
-	if (defined $params->{'insert_mode'}) {
-		if 		($params->{'insert_mode'}=~/update/i) {
-		} elsif 	($params->{'insert_mode'}=~/share/i) {
-		}
-	} else {
-		$params->{'insert_mode'}="append";
-	}
-	$params->{'sep_char'} = $params->{'sep_char'} || ",";
-	$params->{'quote_char'}=$params->{'quote_char'}||'"' ;
-	
-	open(my $fh, '<', $in) or die "Cannot open index file \"$in\": $!\n";
-	my $csv = Text::CSV->new({ binary => 1, sep_char => $params->{'sep_char'} , quote_char => $params->{'quote_char'}});
-
-	my $line;
-	if ($params->{'header'}){
-		$line = $params->{'header'};
-	} else {
-		$line = <$fh>;
-	}
-	$csv->parse($line);
-	my @cols = $csv->fields();
-
-	while (<$fh>) {
-		$csv->parse($_);
-		my @data = $csv->fields();
-
-		# s'assurer qu'on insère pas des valeurs null (contraintes ???) ou pas ?
-		for (my $i=0 ; $i<=$#data ; $i++ ){
-			$data[$i]=$data[$i] || "";
-		}
-
-		# gérer option create or update/create ou alors accepter les doublons et travailler sur le dernier -> sequence...
-		# update edtk_acq set ed_dtposte = 'xxx', ed_dtlot = 'xxx', ed_seqlot = 'xx' where $cols[0] = $data[0];
-		my $sql = "INSERT INTO " . $table . " (" . join(',', @cols) .
-		    ") VALUES (" . join(',', ('?') x @cols) . ")";
-		my $sth = $dbh->prepare_cached($sql);
-		$sth->execute(@data);
-	}
-	close($fh);
-}
-
-
 sub omgr_track_folds ($;$){
 	# EDIT LIST AND STATUS FROM START TO END
 	# LISTE DES LOTS PRODUITS JUSQU'A LA MISE SOUS PLIS
 	my $dbh = shift;
 	my $cfg = config_read('EDTK_DB', 'EDTK_STATS');
 	my $nb_j_historique = shift ||  $cfg->{'EDTK_STATS_DAYS_FROM'} || 10;
-	my ($sql, $tlist);
+	my ($sql);
 
 	# REQUETE POUR LE MAIL SUIVI METIER
 	###########################################################################
 	# SELECT A.ED_REFIDDOC, COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS,
 	#  A.ED_DTEDTION, COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS,
-	#  B.ED_DTPOST, B.ED_DTPOST2, COUNT (DISTINCT ED_NBPLISLOT) AS NB_LOTS, 
-	#  NVL(B.ED_STATUS, NVL(A.ED_DTPOSTE, 'PENDING...')) AS STATUS
+	#  B.ED_DTPOST, B.ED_DTPOST2, COUNT (DISTINCT A.ED_SEQLOT) AS NB_LOTS, 
+	#  NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS
 	#  FROM EDTK_INDEX A, EDTK_ACQ B
 	#  WHERE A.ED_SEQLOT=B.ED_SEQLOT (+)
 	#	AND (A.ED_DTEDTION IS NULL OR A.ED_DTEDTION > TO_CHAR(SYSDATE-20, 'IYYYMMDD'))
-	#  GROUP BY A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_DTPOSTE
-	#  ORDER BY A.ED_REFIDDOC;
+	#  GROUP BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_STATUS
+	#  ORDER BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC;
 
-	$sql = "SELECT A.ED_REFIDDOC, COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS,"
-		. " A.ED_DTEDTION, COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS,"
-		. " B.ED_DTPOST, B.ED_DTPOST2, COUNT (DISTINCT ED_NBPLISLOT) AS NB_LOTS," 
-		. " NVL(B.ED_STATUS, NVL(A.ED_DTPOSTE, 'PENDING...')) AS STATUS"
-		. " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B"
+	# SELECT A.ED_REFIDDOC, COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS,
+	#  A.ED_DTEDTION, COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS,
+	#  B.ED_DTPOST, B.ED_DTPOST2, COUNT (DISTINCT A.ED_SEQLOT) AS NB_LOTS, 
+	#  NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS,
+	#  C.ED_MAIL_REFERENT
+	#  FROM EDTK_INDEX A, EDTK_ACQ B, EDTK_REFIDDOC C
+	#  WHERE A.ED_SEQLOT=B.ED_SEQLOT (+)
+	#  AND  A.ED_REFIDDOC=C.ED_REFIDDOC
+	#  AND (A.ED_DTEDTION IS NULL OR A.ED_DTEDTION > TO_CHAR(SYSDATE-20, 'IYYYMMDD'))
+	#  GROUP BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_STATUS
+	#  ORDER BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION;
+
+
+	$sql = "SELECT A.ED_REFIDDOC, "
+		. " NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS,"
+		. " COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS,"
+		. " A.ED_DTEDTION, "
+		. " COUNT (DISTINCT A.ED_SEQLOT) AS NB_LOTS,"
+		. " COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS,"
+		. " B.ED_DTPOST, B.ED_DTPOST2, "
+		. " C.ED_MAIL_REFERENT AS REFERENT"
+		. " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B, EDTK_REFIDDOC C"
 		. " WHERE A.ED_SEQLOT=B.ED_SEQLOT (+)"
+		. "   AND  A.ED_REFIDDOC=C.ED_REFIDDOC"
 		. "   AND (A.ED_DTEDTION IS NULL OR A.ED_DTEDTION > TO_CHAR(SYSDATE-?, 'IYYYMMDD'))"
-		. " GROUP BY A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_DTPOSTE"
-		. " ORDER BY A.ED_REFIDDOC, A.ED_DTEDTION";
+		. " GROUP BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_STATUS"
+		. " ORDER BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION";
 
 	my $sth = $dbh->prepare($sql);
 	$sth->execute($nb_j_historique);
 
-	my $rows = $sth->fetchall_arrayref();
+	my $rows	= $sth->fetchall_arrayref();
 
-	$tlist = 		sprintf "%-16s %9s %9s %9s %8s %8s %7s %-10s\n", "REFIDDOC", "NB_DOCS", "DTEDITION", "NB_PLIS", "DTPOST", "DTPOST2", "NB_LOTS", "STATUS";
+	my $fmt = "%-16s %-10s %9s %9s %7s %9s %8s %8s";
+	my @head= ("REFIDDOC", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
 	foreach my $row (@$rows) {
 		for (my $i=0; $i<=$#$row ; $i++){
-			$$row[$i] = $$row[$i] || ""; # DANS LE CAS DE SEQLOT? IL PEUT ARRIVER QU'IL NE SOIT PAS ENCORE RENSEIGNE	
+			$$row[$i] = $$row[$i] || ""; # DANS LE CAS DE SEQLOT IL PEUT ARRIVER QU'IL NE SOIT PAS ENCORE RENSEIGNE	
 		}
-		$tlist .= sprintf "%-16s %9s %9s %9s %8s %8s %7s %-10s\n", @$row;
+		# push (@tlist, printf ("%-16s %9s %9s %9s %8s %8s %7s %-10s %s\n", @$row));
 	}
 
-	return $tlist;
+	# return @tlist;
+	@$rows = (\$fmt, \@head, @$rows);
+	return $rows;
 }
 
 
@@ -213,37 +182,40 @@ sub omgr_check_acquit($;$){
 	# 4 - renseigner la date de check
 
 #SELECT A.ED_SEQLOT, 
-#  COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS, B.ED_NBPLISLOT,
-#  COUNT (DISTINCT A.ED_SEQLOT||A.ED_IDLDOC||TO_CHAR(A.ED_IDSEQPG,'FM0000000')) AS NB_PG, B.ED_NBPGLOT
+#  COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS, B.ED_NBPLIS,
 #  FROM EDTK_INDEX A, EDTK_ACQ B
 #  WHERE A.ED_SEQLOT=B.ED_SEQLOT 
-#    AND ((B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-10, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))
-#  GROUP BY A.ED_SEQLOT, B.ED_NBPLISLOT, B.ED_NBPGLOT;
+#    AND ((B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-20, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))
+#  GROUP BY A.ED_SEQLOT, A.ED_MODEDI, B.ED_NBPLIS;
 	my ($sql, $num);
 	$sql = "SELECT A.ED_SEQLOT, "
-		. " COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLISLOT, B.ED_NBPLISLOT,"
-		. " COUNT (DISTINCT A.ED_SEQLOT||A.ED_IDLDOC||TO_CHAR(A.ED_IDSEQPG,'FM0000000')) AS NB_PGLOT, B.ED_NBPGLOT"
+		. " COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS, B.ED_NBPLIS"
+	# cf $sqlnbfpli
+	#	. ", (CASE A.ED_MODEDI WHEN 'R' THEN 1 ELSE 2 END * SUM(A.ED_NBFPLI)) AS NB_FACES, B.ED_NBFACES"
+	#	. ", SUM(A.ED_NBFPLI) * (CASE A.ED_MODEDI WHEN 'R' THEN 1 ELSE 2 END) AS NB_FACES, B.ED_NBFACES" 
+	#	. ", COUNT (DISTINCT A.ED_SEQLOT||A.ED_IDLDOC||TO_CHAR(A.ED_IDSEQPG,'FM0000000')) AS NB_PAGES, B.ED_NBPAGES"
 		. " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B"
 		. " WHERE A.ED_SEQLOT=B.ED_SEQLOT"
-		. "   AND ((B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-?, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))"
-		. " GROUP BY A.ED_SEQLOT, B.ED_NBPLISLOT, B.ED_NBPGLOT"
+		. "   AND (B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-?, 'IYYYMMDD'))"
+	#	. "   AND ((B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-?, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))"
+		. " GROUP BY A.ED_SEQLOT, A.ED_MODEDI, B.ED_NBPLIS"
 		;
 	my $sth = $dbh->prepare($sql);
 	$sth->execute($nb_j_historique);
 
 	while (my $seqlot = $sth->fetchrow_hashref()) {
-	#	# On met à jour chacun des seqlots
+	#	# ON MET À JOUR CHACUN DES SEQLOTS
 		$sql = "UPDATE EDTK_ACQ "
 			. " SET ED_DTCHECK = TO_CHAR(SYSDATE, 'IYYYMMDD'), ED_STATUS = "
 			. " CASE "
-			. "      WHEN (ED_NBPGLOT = ? AND ED_NBPLISLOT = ?) THEN "
+			. "      WHEN ED_NBPLIS = ? THEN "
 			. " 			CASE WHEN (ED_DTPOST IS NOT NULL) THEN 'SENT' "
 			. "                 ELSE 'GOOD' "
 			. "            END "
 			. "      ELSE 'LACK' "
 			. " END "
 			. " WHERE ED_SEQLOT = ? ";
-		$num += $dbh->do($sql, undef, $seqlot->{'NB_PGLOT'}, $seqlot->{'NB_PLISLOT'}, $seqlot->{'ED_SEQLOT'});
+		$num += $dbh->do($sql, undef, $seqlot->{'NB_PLIS'}, $seqlot->{'ED_SEQLOT'});
 	}
 return $num;
 }
@@ -380,8 +352,8 @@ sub _omgr_insert($$$$$) {
 			ED_OWNER		=> $data[26],
 			ED_HOST		=> $data[27],
 			ED_IDIDX		=> $data[28],
-			ED_CATDOC		=> $doc->{'ED_CATDOC'},
-			#ED_CODRUPT	=>
+			ED_CATDOC		=> $data[29] || $doc->{'ED_CATDOC'},
+			ED_CODRUPT	=> $data[30],
 			ED_SEQPGDOC	=> $seqpgdoc,
 			ED_POIDSUNIT	=> $first ? $p1->{'ED_POIDSUNIT'} : $ps->{'ED_POIDSUNIT'},
 			ED_NBENC		=> scalar @needed,				# ceci est un hack incompatible avec le regroupement de plis 
@@ -420,9 +392,9 @@ sub _omgr_insert($$$$$) {
 	close($fh);
 
 	# Mise à jour de ED_NBPGDOC.
-	my $sql = 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' i SET ED_NBPGDOC = ' .
-	    '(SELECT COUNT(*) FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
-	    ' WHERE ED_IDLDOC = ? AND ED_SEQDOC = i.ED_SEQDOC) WHERE ED_IDLDOC = ?';
+	my $sql = 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' i SET ED_NBPGDOC = '
+	    		. '(SELECT COUNT(*) FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'}
+	    		. ' WHERE ED_IDLDOC = ? AND ED_SEQDOC = i.ED_SEQDOC) WHERE ED_IDLDOC = ?';
 	$dbh->do($sql, undef, $idldoc, $idldoc);
 
 	# Initialisation de ED_NBPGPLI à ED_NBPGDOC; sera différent si on fait du regroupement.
@@ -442,22 +414,36 @@ sub _omgr_insert($$$$$) {
 
 
 sub _omgr_lot($$$) {
-	# rapprochement entre documents de l'index et table des lots => affectation du lot
+	# RAPPROCHEMENT ENTRE DOCUMENTS DE L'INDEX ET TABLE DES LOTS => AFFECTATION DU LOT
 	my ($dbh, $pdbh, $idldoc) = @_;
 	my $cfg = config_read('EDTK_DB');
 
 	# Sélection des lots appropriés.
-	my $sql = 'SELECT ED_IDLOT, ED_IDAPPDOC, ED_CPDEST, ED_GROUPBY, ED_IDMANUFACT, ED_IDGPLOT ' .
+	my $sql = 'SELECT ED_IDLOT, ED_IDAPPDOC, ED_CPDEST, ED_FILTER, ED_GROUPBY, ED_IDMANUFACT, ED_IDGPLOT ' .
 	    'FROM EDTK_LOTS ORDER BY ED_PRIORITE';
 	my $sth = $pdbh->prepare($sql);
 	$sth->execute();
 	while (my $lot = $sth->fetchrow_hashref()) {
 		# On essaye de matcher des documents avec ce lot.
-		$sql = 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_IDLOT = ? ' .
-		    'WHERE ED_IDLDOC = ? AND ED_REFIDDOC LIKE ? AND ED_CPDEST LIKE ? AND ED_IDLOT IS NULL';
-		my $num = $dbh->do($sql, undef, $lot->{'ED_IDLOT'}, $idldoc, $lot->{'ED_IDAPPDOC'},
-		    $lot->{'ED_CPDEST'});
+		$sql		= 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_IDLOT = ? ' ;
+		my $where = ' WHERE ED_IDLOT IS NULL AND ED_IDLDOC = ? ';
+		if ($lot->{'ED_IDAPPDOC'}=~/\%/) {
+			$where .= " AND ED_REFIDDOC LIKE ? ";
+		} else {
+			$where .= " AND ED_REFIDDOC = ? ";
+		}
+		my @values=($lot->{'ED_IDLOT'}, $idldoc, $lot->{'ED_IDAPPDOC'});
+		
+		if (defined $lot->{'ED_CPDEST'}) {
+			$where .= " AND ED_CPDEST LIKE ? ";
+			push (@values, $lot->{'ED_CPDEST'});
+		}
+		if (defined $lot->{'ED_FILTER'} and $lot->{'ED_FILTER'}=~/\=/) {
+			$where .= " AND " . $lot->{'ED_FILTER'};
+		}
 
+		my $num 	= $dbh->do($sql . $where, undef, @values);
+		    
 		if ($num > 0) {
 			warn "INFO : Assigned $num pages to lot \"$lot->{'ED_IDLOT'}\"\n";
 		}
@@ -582,8 +568,8 @@ sub omgr_export(%) {
 	my (%conds) = @_;
 
 	my $cfg = config_read('EDTK_DB');
-	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 0, RaiseError => 1 });
-	my $pdbh= db_connect($cfg, 'EDTK_PARAM_DSN');
+	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI', { AutoCommit => 0, RaiseError => 1 });
+	my $pdbh= db_connect($cfg, 'EDTK_DSN_PARAM');
 	# _omgr_filiere2($dbh, $pdbh, $app, $idldoc, $numencs, $encpds);
 
 	my $basedir = $cfg->{'EDTK_DIR_OUTMNGR'};
@@ -910,7 +896,7 @@ sub omgr_depot_poste($$$) {
 	
 	$dt_depot=~/^\d{8}$/ or die "ERROR: $dt_depot should be formated as yyyymmdd\n";
 
-	my $sql = 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_DTPOSTE = ? WHERE ED_SEQLOT like ?';
+	my $sql = 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_STATUS = ? WHERE ED_SEQLOT like ?';
 	$dbh->do($sql, undef, $dt_depot, $seqlot) or die "ERROR: can't update $seqlot with $dt_depot";	
 }
 
@@ -954,7 +940,7 @@ sub omgr_check_seqlot_ref ($$){
 		. " COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_IDSEQPG,'FM0000000')) AS NBPGS,"
 		. " A.ED_SEQLOT,"
 		. " COUNT (DISTINCT A.ED_IDLDOC||A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NBPLIS,"
-		. " NVL(B.ED_STATUS, NVL(A.ED_DTPOSTE, 'PENDING...')) AS STATUS"
+		. " NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS"
 		. " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B"
 		. " WHERE A.ED_SEQLOT=B.ED_SEQLOT (+)";
 
@@ -962,12 +948,12 @@ sub omgr_check_seqlot_ref ($$){
 	if ($value =~/^\d{6,7}$/) { # 381123 or 1381123
 		$type = "SEQLOT";
 		$sql .=" AND A.ED_SEQLOT = ?"
-			. " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_DTPOSTE";
+			. " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_STATUS";
 
 	} elsif ($value =~/^\d{16}$/) { # 1282152443057128
 		$type = "IDLDOC";
 		$sql .=" AND A.ED_IDLDOC = ?"
-			. " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_DTPOSTE";
+			. " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_STATUS";
 	
 	} else {
 		die "ERROR: $value doesn't seem to be SEQLOT OR IDLDOC\n";	
@@ -993,12 +979,12 @@ sub omgr_stats_referent {
 	my ($sql, $key);
 
 	$sql = "SELECT A.ED_MAIL_REFERENT, A.ED_REFIDDOC ";
-	$sql .="FROM EDTK_REFIDDOC A, EDTK_INDEX B ";
-	$sql .="WHERE A.ED_REFIDDOC = B.ED_REFIDDOC ";
-	$sql .="AND A.ED_MASSMAIL != 'N' AND A.ED_MAIL_REFERENT IS NOT NULL ";
-	$sql .="AND B.ED_SEQLOT IS NULL AND B.ED_DTLOT IS NULL ";
-	$sql .="GROUP BY A.ED_MAIL_REFERENT, A.ED_REFIDDOC ";
-	$sql .="ORDER BY A.ED_MAIL_REFERENT ";
+	$sql .=" FROM EDTK_REFIDDOC A, EDTK_INDEX B ";
+	$sql .=" WHERE A.ED_REFIDDOC = B.ED_REFIDDOC ";
+	$sql .=" AND A.ED_MASSMAIL != 'N' AND A.ED_MAIL_REFERENT IS NOT NULL ";
+	$sql .=" AND B.ED_SEQLOT IS NULL AND B.ED_DTLOT IS NULL ";
+	$sql .=" GROUP BY A.ED_MAIL_REFERENT, A.ED_REFIDDOC ";
+	$sql .=" ORDER BY A.ED_MAIL_REFERENT ";
 
 	my $sth = $dbh->prepare($sql);
 	$sth->execute();
@@ -1019,9 +1005,9 @@ sub omgr_stats($$$$) {
 	my ($week,) = Week_of_Year($year,$month,$day);
 	
 	if ($period =~ /^day$/i) {
-		$key = sprintf ("%02d%1d", $week, $dow );
+		$key = sprintf ("%1d%02d%1d", $year % 10, $week, $dow );
 	} elsif ($period =~ /^week$/i){
-		$key = sprintf("%02d", $week);
+		$key = sprintf("%1d%02d", $year % 10, $week);
 	} elsif ($period =~ /^all$/i){
 		$key="";
 	} elsif ($period =~ /^\d+$/){

@@ -11,9 +11,9 @@ use oEdtk::Messenger qw(oe_send_mail);
 
 # run statistics and send the advertissement by mail.
 my $cfg = config_read('EDTK_DB', 'MAIL');
-my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
+my $dbh = db_connect($cfg, 'EDTK_DSN_DBI',
     { AutoCommit => 1, RaiseError => 1 });
-my $pdbh = db_connect($cfg, 'EDTK_PARAM_DSN');
+my $pdbh = db_connect($cfg, 'EDTK_DSN_PARAM');
 
 my $rows = omgr_stats_referent($dbh, $pdbh);
 
