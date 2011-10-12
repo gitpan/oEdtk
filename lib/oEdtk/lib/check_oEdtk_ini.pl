@@ -104,8 +104,8 @@ if ($@) {
 # CHECK DB CONNECT
 warn "\nSTART CHECK db_connect FROM oEdtk.ini...\n";
 warn "\t check DB_BAKUP : \n";
-my $dbh1 = db_connect($cfg, 'EDTK_DSN_DBI_BAK') 	or printf " BAD, error connecting EDTK_DSN_DBI_BAK\n";
+my $dbh1 = db_connect($cfg, 'EDTK_DBI_DSN_BAK') 	or printf " BAD, error connecting EDTK_DBI_DSN_BAK\n";
 warn "\n\t check DB_PARAM : \n";
-my $dbh2 = db_connect($cfg, 'EDTK_DSN_PARAM') 	or printf " BAD, error connecting EDTK_DSN_PARAM\n";
+my $dbh2 = db_connect($cfg, 'EDTK_DBI_PARAM') 	or printf " BAD, error connecting EDTK_DBI_PARAM\n";
 warn "\n\t check DB_MAIN : \n";
-my $dbh3 = db_connect($cfg, 'EDTK_DSN_DBI')		or printf " BAD, error connecting EDTK_DSN_DBI\n";
+my $dbh3 = db_connect($cfg, 'EDTK_DBI_DSN')		or printf " BAD, error connecting EDTK_DBI_DSN\n";

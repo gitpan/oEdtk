@@ -78,8 +78,8 @@ sub omgr_import($$$) {
 	# Retrieve the database connection parameters.
 	my $cfg = config_read('EDTK_DB');
 	
-	my $pdbh= db_connect($cfg, 'EDTK_DSN_PARAM');
-	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI', { AutoCommit => 0, RaiseError => 1 });
+	my $pdbh= db_connect($cfg, 'EDTK_DBI_PARAM');
+	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 0, RaiseError => 1 });
 
 	# Create the $cfg->{'EDTK_DBI_OUTMNGR'} table if we're using SQLite.
 	if ($dbh->{'Driver'}->{'Name'} eq 'SQLite') {
@@ -264,7 +264,7 @@ sub _omgr_insert($$$$$) {
 
 	foreach my $encref (@encrefs) {
 		# L'ERREUR EST ICI : ON DEVRAIT AJOUTER DES LIGNES D'INDEX PAR ENCART AVEC TYPIMP = E xxxxxx
-		my $enc = $pdbh->selectrow_hashref($sth, undef, $encref) or die $pdbh->errstr;
+		my $enc = $pdbh->selectrow_hashref($sth, undef, $encref) or die "ERROR: in omgr for encref $encref $pdbh->errstr \n";
 		if (defined($enc->{'ED_DEBVALID'}) && length($enc->{'ED_DEBVALID'}) > 0) {
 			next if $now < $enc->{'ED_DEBVALID'};
 		}
@@ -568,8 +568,8 @@ sub omgr_export(%) {
 	my (%conds) = @_;
 
 	my $cfg = config_read('EDTK_DB');
-	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI', { AutoCommit => 0, RaiseError => 1 });
-	my $pdbh= db_connect($cfg, 'EDTK_DSN_PARAM');
+	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 0, RaiseError => 1 });
+	my $pdbh= db_connect($cfg, 'EDTK_DBI_PARAM');
 	# _omgr_filiere2($dbh, $pdbh, $app, $idldoc, $numencs, $encpds);
 
 	my $basedir = $cfg->{'EDTK_DIR_OUTMNGR'};

@@ -13,7 +13,7 @@ if (@ARGV < 1) {
 }
 
 my $cfg = config_read('EDTK_STATS');
-my $dbh = db_connect($cfg, 'EDTK_DSN_STATS',
+my $dbh = db_connect($cfg, 'EDTK_DBI_STATS',
     { AutoCommit => 1, RaiseError => 1 });
 
 my $rows = omgr_check_seqlot_ref($dbh, $ARGV[0]);

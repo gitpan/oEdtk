@@ -13,7 +13,7 @@ if (@ARGV < 1) {
 }
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DSN_DBI',
+my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
     { AutoCommit => 1, RaiseError => 1 });
 
 csv_import($dbh, "EDTK_ACQ", $ARGV[0], 

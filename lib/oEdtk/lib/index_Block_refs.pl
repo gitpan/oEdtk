@@ -30,7 +30,7 @@ if 		($idldoc!~/^\d{16}$/i) { # 1392153206001881
 $idseqpg = $idseqpg || 0;
 
 my $cfg = config_read('EDTK_STATS');
-my $dbh = db_connect($cfg, 'EDTK_DSN_STATS',
+my $dbh = db_connect($cfg, 'EDTK_DBI_STATS',
     { AutoCommit => 1, RaiseError => 1 });
 
 

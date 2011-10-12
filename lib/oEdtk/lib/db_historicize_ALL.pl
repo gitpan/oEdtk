@@ -9,7 +9,7 @@ use strict;
 
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DSN_DBI');
+my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 my $wait_time =1;
 my $suffixe =strftime "%Y%m%d%H%M%S", localtime;
 $wait_time ||=500*$cfg->{'EDTK_WAITRUN'};

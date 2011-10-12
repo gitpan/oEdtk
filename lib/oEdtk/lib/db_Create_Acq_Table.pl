@@ -9,6 +9,6 @@ use oEdtk::DBAdmin qw(db_connect
 		   );
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DSN_DBI');
+my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 
 create_table_ACQUIT($dbh);

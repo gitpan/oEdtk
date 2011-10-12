@@ -29,9 +29,9 @@ if (@ARGV % 2 != 0) {
 	}
 	
 	# Now, run statistics and send the output by mail.
-	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI',
+	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
 	    { AutoCommit => 1, RaiseError => 1 });
-	my $pdbh = db_connect($cfg, 'EDTK_DSN_PARAM');
+	my $pdbh = db_connect($cfg, 'EDTK_DBI_PARAM');
 	
 	my $rows = omgr_stats($dbh, $pdbh, 'day', 'idlot');
 	

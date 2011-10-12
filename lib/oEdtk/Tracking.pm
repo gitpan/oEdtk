@@ -33,7 +33,7 @@ sub new {
 	}
 
 	my $table = $cfg->{'EDTK_DBI_TRACKING'};
-	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI', { AutoCommit => 1 });
+	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 1 });
 
 	# XXX Should we ensure there is at least one key defined?
 	my $keys = $params{'keys'} || [];

@@ -85,7 +85,7 @@ $form->field(
 if ($form->submitted eq 'Load' && $form->validate) {
 	# Load the text paragraph from the database.
 	my $cfg = config_read('EDTK_DB');
-	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI');
+	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 	my $data = para_load($dbh, $form->field('app'), $form->field('corp'));
 	if (!defined($data)) {
 		$form->text(div('err', 'Could not find data.'));
@@ -99,7 +99,7 @@ if ($form->submitted eq 'Load' && $form->validate) {
 	}
 } elsif ($form->submitted eq 'Update' && $form->validate) {
 	my $cfg = config_read('EDTK_DB');
-	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI');
+	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 	my $ret = para_update($dbh, $form->field('app'), $form->field('corp'),
 	    $form->field('para'));
 	if (defined($ret)) {
@@ -109,7 +109,7 @@ if ($form->submitted eq 'Load' && $form->validate) {
 	}
 } elsif ($form->submitted eq 'Insert' && $form->validate) {
 	my $cfg = config_read('EDTK_DB');
-	my $dbh = db_connect($cfg, 'EDTK_DSN_DBI');
+	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 	my $ret = para_insert($dbh, $form->field('app'), $form->field('corp'),
 	    $form->field('para'));
 	if (defined($ret)) {

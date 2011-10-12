@@ -19,7 +19,7 @@ open(my $fh, "<", $file) or die "$file: $!\n";
 my $csv = Text::CSV->new({ sep_char => ';', binary => 1 });
 
 my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DSN_PARAM',
+my $dbh = db_connect($cfg, 'EDTK_DBI_PARAM',
     { AutoCommit => 0, RaiseError => 1 });
 
 # Set the column names.

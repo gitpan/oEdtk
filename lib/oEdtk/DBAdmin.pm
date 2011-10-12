@@ -8,24 +8,26 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.19;
+our $VERSION		= 0.21;
 our @ISA			= qw(Exporter);
-our @EXPORT_OK		= qw(db_connect
-			     create_lot_sequence
-			     create_SCHEMA
-			     create_table_ACQUIT
-			     create_table_DATAGROUPS
-			     create_table_FILIERES
-			     create_table_INDEX
-			     create_table_LOTS
-			     create_table_PARA
-			     create_table_REFIDDOC
-			     create_table_SUPPORTS
-			     create_table_TRACKING
-			     historicize_table
+our @EXPORT_OK		= qw(
 				csv_import
-			     move_table
-			     @INDEX_COLS);
+				create_lot_sequence
+				create_SCHEMA
+				create_table_ACQUIT
+				create_table_DATAGROUPS
+				create_table_FILIERES
+				create_table_INDEX
+				create_table_LOTS
+				create_table_PARA
+				create_table_REFIDDOC
+				create_table_SUPPORTS
+				create_table_TRACKING
+				db_connect
+				historicize_table
+				move_table
+				@INDEX_COLS
+				);
 
 
 sub csv_import ($$$;$){
