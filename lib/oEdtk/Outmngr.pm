@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use File::Basename;
+use Sys::Hostname;
 use Text::CSV;
 use Date::Calc		qw(Today Gmtime Week_of_Year);
 use List::Util		qw(max sum);
@@ -14,11 +15,12 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.22;
+our $VERSION	= 0.26;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
-			omgr_check_seqlot_ref 
+			omgr_check_doclibs
+			omgr_check_seqlot_ref
 			omgr_depot_poste 
 			omgr_export 
 			omgr_import 
@@ -135,7 +137,7 @@ sub omgr_track_folds ($;$){
 	#  ORDER BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION;
 
 
-	$sql = "SELECT A.ED_REFIDDOC, "
+	$sql = "SELECT A.ED_REFIDDOC, A.ED_CORP,"
 		. " NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS,"
 		. " COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS,"
 		. " A.ED_DTEDTION, "
@@ -147,16 +149,16 @@ sub omgr_track_folds ($;$){
 		. " WHERE A.ED_SEQLOT=B.ED_SEQLOT (+)"
 		. "   AND  A.ED_REFIDDOC=C.ED_REFIDDOC"
 		. "   AND (A.ED_DTEDTION IS NULL OR A.ED_DTEDTION > TO_CHAR(SYSDATE-?, 'IYYYMMDD'))"
-		. " GROUP BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_STATUS"
-		. " ORDER BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION";
+		. " GROUP BY C.ED_MAIL_REFERENT, A.ED_CORP, A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_STATUS"
+		. " ORDER BY C.ED_MAIL_REFERENT, A.ED_CORP, A.ED_REFIDDOC, A.ED_DTEDTION";
 
 	my $sth = $dbh->prepare($sql);
 	$sth->execute($nb_j_historique);
 
 	my $rows	= $sth->fetchall_arrayref();
 
-	my $fmt = "%-16s %-10s %9s %9s %7s %9s %8s %8s";
-	my @head= ("REFIDDOC", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
+	my $fmt = "%-20s %-20s %-10s %9s %9s %7s %9s %8s %8s";
+	my @head= ("REFIDDOC", "CORP", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
 	foreach my $row (@$rows) {
 		for (my $i=0; $i<=$#$row ; $i++){
 			$$row[$i] = $$row[$i] || ""; # DANS LE CAS DE SEQLOT IL PEUT ARRIVER QU'IL NE SOIT PAS ENCORE RENSEIGNE	
@@ -516,13 +518,13 @@ sub _omgr_filiere($$$$$$) {
 		# On essaye maintenant de matcher les documents avec chacune des filières.
 		my $sql = "SELECT * FROM EDTK_FILIERES WHERE ED_ACTIF = 'O' "
 		    . "AND (ED_IDMANUFACT IS NULL OR ED_IDMANUFACT = '' OR ED_IDMANUFACT = ?) "
-		    . "ORDER BY ED_PRIORITE";
+		    . "ORDER BY ED_PRIORITE ASC";
 		my $sth = $pdbh->prepare($sql) or die $pdbh->errstr;
 		$sth->execute($lot->{'ED_IDMANUFACT'});
 
-		# Les contraintes en nombre minimum/maximum de pages et plis sont vérifiées
-		# uniquement lorsqu'on exporte les lots dans omgr_export() pour permettre
-		# le regroupement.
+		# LES CONTRAINTES EN NOMBRE MINIMUM/MAXIMUM DE PAGES ET PLIS SONT VÉRIFIÉES
+		# UNIQUEMENT LORSQU'ON EXPORTE LES LOTS DANS OMGR_EXPORT() POUR PERMETTRE
+		# LE REGROUPEMENT.
 		while (my $fil = $sth->fetchrow_hashref()) {
 			# compatibilite ascendante
 			if (defined $fil->{'ED_IDGPLOT'} && length($fil->{'ED_IDGPLOT'}) > 0) {
@@ -535,6 +537,7 @@ sub _omgr_filiere($$$$$$) {
 				next if $numencs > $fil->{'ED_NBENCMAX'};
 			}
 			# La formule nous permettant de calculer le nombre de feuilles d'un pli.
+			# à faire évoluer pour le regroupement xxxxx
 			my $sqlnbfpli = "$numencs + "
 					. ($fil->{'ED_MODEDI'} eq 'V' ? 'CEIL(ED_NBPGPLI / 2)' : 'ED_NBPGPLI');
 			# La formule calculant le poids total du pli, et les valeurs associées.
@@ -569,6 +572,8 @@ sub omgr_export(%) {
 
 	my $cfg = config_read('EDTK_DB');
 	my $dbh = db_connect($cfg, 'EDTK_DBI_DSN', { AutoCommit => 0, RaiseError => 1 });
+			omgr_check_doclibs($dbh);
+
 	my $pdbh= db_connect($cfg, 'EDTK_DBI_PARAM');
 	# _omgr_filiere2($dbh, $pdbh, $app, $idldoc, $numencs, $encpds);
 
@@ -580,7 +585,7 @@ sub omgr_export(%) {
 		my $user_where = join(' AND ', map { "$_ = ?" } keys(%conds));
 
 		# Cette requête sélectionne les couples (idlot,idfiliere) contenant des plis non affectés.
-		my $idsql = 'SELECT DISTINCT ED_IDLOT, ED_IDFILIERE FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
+		my $idsql = 'SELECT DISTINCT ED_IDLOT, ED_IDFILIERE, ED_CORP FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
 		    ' WHERE ED_IDLOT IS NOT NULL AND ED_IDFILIERE IS NOT NULL AND ED_SEQLOT IS NULL';
 		if (length($user_where) > 0) {
 			$idsql .= " AND $user_where";
@@ -588,18 +593,18 @@ sub omgr_export(%) {
 		my $ids = $dbh->selectall_arrayref($idsql, undef, values(%conds));
 
 		foreach (@$ids) {    # il faut tenir compte de l'ordre de priorité des filières
-			my ($idlot, $idfiliere) = @$_;
+			my ($idlot, $idfiliere, $idcorp) = @$_;
 
 			CHECK_FIL:
 			{
-				warn "DEBUG: Considering couple : $idlot, $idfiliere\n";
+				warn "DEBUG: Considering tuple : $idlot, $idfiliere, $idcorp\n";
 				# La clause WHERE que l'on réutilise dans la plupart des requêtes afin de ne
 				# traiter que les entrées qui nous intéressent.
-				my $where = 'WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_SEQLOT IS NULL';
+				my $where = 'WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_CORP = ? AND ED_SEQLOT IS NULL';
 				if (length($user_where) > 0) {
 					$where .= " AND $user_where";
 				}
-				my @wvals = ($idlot, $idfiliere, values(%conds));
+				my @wvals = ($idlot, $idfiliere, $idcorp, values(%conds));
 	
 				my $fil = $pdbh->selectrow_hashref('SELECT * FROM EDTK_FILIERES WHERE ED_IDFILIERE = ?',
 				    undef, $idfiliere);
@@ -712,9 +717,9 @@ sub omgr_export(%) {
 						# reset filiere avec relance eval ou completion liste @$ids ?  xxxxxxxxxxxxx
 						# cf 388 
 							my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ? " .
-							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_SEQLOT IS NULL ";
+							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_CORP = ? AND ED_SEQLOT IS NULL ";
 							my $next_filiere = _get_next_filiere($pdbh, $idfiliere);
-							my @vals= ($next_filiere, $idlot, $idfiliere);
+							my @vals= ($next_filiere, $idlot, $idfiliere, $idcorp);
 							my $num = $dbh->do($sql, undef, @vals);
 							$dbh->commit;
 							warn "INFO : downgrade filiere to $next_filiere for $num pages\n";
@@ -730,9 +735,9 @@ sub omgr_export(%) {
 						# reset filiere avec relance eval ou completion liste @$ids ?  xxxxxxxxxxxxx
 						# cf 388 
 							my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ? " .
-							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_SEQLOT IS NULL ";
+							    "WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_CORP = ? AND ED_SEQLOT IS NULL ";
 							my $next_filiere = _get_next_filiere($pdbh, $idfiliere);
-							my @vals = ($next_filiere, $idlot, $idfiliere);
+							my @vals = ($next_filiere, $idlot, $idfiliere, $idcorp);
 							my $num = $dbh->do($sql, undef, @vals);
 							$dbh->commit;
 							warn "INFO : downgrade filiere to $next_filiere for $num pages\n";
@@ -803,10 +808,14 @@ sub omgr_export(%) {
 					my @refimps = $dbh->selectrow_array($sql, undef, $seqlot);
 	
 					# Calcul du nombre total de feuilles dans le lot.
-					$sql = 'SELECT SUM(i.ED_NBFPLI) FROM ' .
-					    '(SELECT DISTINCT ED_IDLDOC, ED_SEQDOC, ED_NBFPLI ' .
-					      'FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' WHERE ED_SEQLOT = ?) i';
+					$sql = "SELECT SUM(i.ED_NBFPLI) "
+						. " FROM (SELECT DISTINCT ED_IDLDOC, ED_SEQDOC, ED_NBFPLI "
+								. " FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} 
+								. " WHERE ED_SEQLOT = ?) i ";
 					my ($nbfeuillot) = $dbh->selectrow_array($sql, undef, $seqlot);
+					my $nbfaceslot = $nbfeuillot;
+					if ($fil->{'ED_MODEDI'} ne 'R'){$nbfaceslot *= 2;}
+
 	
 					# Extraction des données.
 					my $lotdir = "$basedir/$name";
@@ -858,6 +867,7 @@ sub omgr_export(%) {
 						['ED_REF_ENV',		$fil->{'ED_REF_ENV'}],
 						['ED_FORMFLUX',	$fil->{'ED_FORMFLUX'}],
 						['ED_POSTCOMP',	$fil->{'ED_POSTCOMP'}],
+						['ED_NBFACESLOT',	$nbfaceslot],
 						['ED_NBFEUILLOT',	$nbfeuillot],
 						['ED_NBPLISLOT',	$selplis],
 						['ED_FORMATP',		$gvals->{'ED_FORMATP'}],
@@ -1078,6 +1088,30 @@ sub omgr_lot_pending($) {
 }
 
 
+# LOOKS IF NEEDED DOCLIBS ARE IN EDTK_DIR_DOCLIB
+sub omgr_check_doclibs ($){
+	my ($dbh) = shift; 
+
+	my $cfg = config_read('EDTK_DB');
+	my $dir = $cfg->{'EDTK_DIR_DOCLIB'};
+	my $host= hostname();
+	
+	my $sql = 'SELECT DISTINCT ED_DOCLIB FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
+	    ' WHERE ED_SEQLOT IS NULL AND ED_HOST = ? ';
+
+	# Transform the list of needed doclibs into a hash for speed.
+	my %needed = map { $_->[0] => 1 } @{$dbh->selectall_arrayref($sql, undef, $host)};
+
+	foreach my $key (keys %needed) {
+			if (-e "$dir/$key") {
+			} else {
+				die "ERROR: missing DOCLIB $key for current DSN\n";
+			}
+	}
+
+}
+
+
 # PURGE DOCLIBS THAT ARE NO LONGER REFERENCED IN THE DATABASE.
 sub omgr_purge_fs($) {
 	my ($dbh) = @_;
@@ -1103,7 +1137,7 @@ sub omgr_purge_fs($) {
 			warn "WARN : Unexpected filename : \"$file\"\n";
 		}
 	}
-	return @torm;
+return @torm;
 }
 
 

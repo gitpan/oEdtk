@@ -24,7 +24,14 @@ if 		($event=~/^ANO$/i) {
 	&usage();
 }
 
-if 		($idldoc!~/^\d{16}$/i) { # 1392153206001881
+my $type="";
+if 		($idldoc=~/^\d{16}$/){ # 1392153206001881
+		$type = 'idldoc';
+
+} elsif 	($idldoc=~/^\d{7}$/) { # 1411123
+		$type = 'seqlot';
+
+} else {
 	&usage();
 }
 $idseqpg = $idseqpg || 0;
@@ -38,19 +45,27 @@ my $dbh = db_connect($cfg, 'EDTK_DBI_STATS',
 
 ################################################################################
 
-my $sql = "select ED_REFIDDOC, ED_SOURCE, ED_IDLDOC, ED_SEQDOC, ED_DTEDTION, ED_NOMDEST"
-		. " from edtk_index "
-		. " where ed_IDLDOC = ? " ;
-	$sql .=  "  and ed_idseqpg  = ? " if ($idseqpg > 0);
-	$sql .=  "  group by ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
-	$sql .=  "  order by ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
+my @values;
+push (@values, $idldoc);
+my $sql = "SELECT ED_REFIDDOC, ED_SOURCE, ED_IDLDOC, ED_SEQDOC, ED_DTEDTION, ED_NOMDEST"
+		. " FROM EDTK_INDEX ";
 
-	my @values;
-	push (@values, $idldoc);
-	push (@values, $idseqpg) if ($idseqpg > 0);
+if 	($type eq 'idldoc') {
+	$sql.= " WHERE ED_IDLDOC = ? ";
+	if (defined $idseqpg && $idseqpg > 0 ){
+		$sql .="  AND ED_SEQDOC  = (SELECT ED_SEQDOC FROM EDTK_INDEX WHERE ED_IDLDOC = ? AND ED_IDSEQPG = ? )";
+		push (@values, $idldoc, $idseqpg);
+	}
+
+} elsif ($type eq 'seqlot'){
+	$sql.= " WHERE ED_SEQLOT = ? ";
+}
+	$sql .=" GROUP BY ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
+	$sql .=" ORDER BY ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
+
+
 	my $sth = $dbh->prepare($sql);
 	$sth->execute(@values);
-
 	my $rows= $sth->fetchall_arrayref();
 
 if ($#$rows<0) {
@@ -74,26 +89,38 @@ if 		($key!~/^y$/i) {
 }
 ReadMode ('restore');
 
-	$sql = "INSERT INTO EDTK_TRACKING(ED_TSTAMP, ED_USER, ED_SEQ, ED_SNGL_ID, ED_APP, ED_JOB_EVT, ED_OBJ_COUNT, ED_CORP, ED_HOST, ED_K4_VAL) ";
-	$sql .=" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-	my $trk = $dbh->prepare($sql);
-# revoir le tracking : mettre un vrai timestamp, la bonne ed_app
-$trk->execute('20111003111111', 'idx_Block', $idseqpg, $idldoc, 'idx_Block', 'W', $row_count , $cfg->{'EDTK_CORP'}, hostname(),  "$event for @values");
 
+my 	$updt = "UPDATE EDTK_INDEX SET ED_DTLOT = ?, ED_SEQLOT = ?, ED_DTPOSTE = ?, ED_STATUS = ? ";
+if 	($type eq 'idldoc') {
+	$updt.= " WHERE ED_IDLDOC = ? ";
+	if (defined $idseqpg && $idseqpg > 0){
+		$updt .="  AND ED_SEQDOC  = (SELECT ED_SEQDOC FROM EDTK_INDEX WHERE ED_IDLDOC = ? AND ED_IDSEQPG = ? )";
+	}
 
-my 	$updt = "UPDATE EDTK_INDEX SET ED_DTLOT = ?, ED_SEQLOT = ?, ED_DTPOSTE = ? WHERE ED_IDLDOC = ? ";
-	# probleme la ligne suivante ne gère pas toutes les pages d'un même doc
-	$updt .=" AND ED_IDSEQPG  = ? " if ($idseqpg > 0);
+} elsif ($type eq 'seqlot'){
+	$updt.= " WHERE ED_SEQLOT = ? ";
+}
 	$sth = $dbh->prepare($updt);
+
 
 # rajouter un controle, on a pas le droit de changer l'etat d'un doc déjà loti
 # mais on a le droit de faire un reset pour rejouer le lotissement
 if ($event!~/^RESET$/i) {
-	$sth->execute($event, $event, $event, @values);
+	# warn "INFO : $updt \n $event, $event, $event, $event, @values\n";
+	$sth->execute($event, $event, $event, $event, @values);
 } else {
 	my $NULL="";
-	$sth->execute($NULL, $NULL, @values);
+	# warn "INFO : $updt \n $NULL, $NULL, $NULL, $event, @values\n";
+	$sth->execute($NULL, $NULL, $NULL, $event, @values);
 }
+
+
+# REVOIR LE TRACKING : METTRE UN VRAI TIMESTAMP, LA BONNE ED_APP
+$sql = "INSERT INTO EDTK_TRACKING(ED_TSTAMP, ED_USER, ED_SEQ, ED_SNGL_ID, ED_APP, ED_JOB_EVT, ED_OBJ_COUNT, ED_CORP, ED_HOST, ED_K4_VAL) ";
+$sql .=" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+my $trk = $dbh->prepare($sql);
+$trk->execute('20111003111111', 'idx_Block', $idseqpg, $idldoc, 'idx_Block', 'W', $row_count , $cfg->{'EDTK_CORP'}, hostname(),  "$event for @values");
+
 print "DONE ";
 ################################################################################
 

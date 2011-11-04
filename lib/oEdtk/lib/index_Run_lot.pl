@@ -40,7 +40,7 @@ if (@ARGV % 2 != 0) {
 	my @body = <$fh>;
 	close($fh);
 	
-	my @cols = ("LOT", "CORP", "ID_LOT", "PLIS", "DOCS", "FEUILLES", "PAGES", "FACES", "FIL.");
+	my @cols= ("LOT", "CORP", "ID_SEQLOT", "PLIS", "DOCS", "FEUILLES", "PAGES", "FACES", "FIL.");
 	my $fmt = "%-16s%-8s" . "%9s" x (@cols - 3) . "  %-6s\n";
 	
 	push(@body, "\n\n\n");

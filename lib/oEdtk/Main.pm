@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.6102;
+our $VERSION 	=0.6103;
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
 			c7Flux
@@ -76,10 +76,11 @@ use Sys::Hostname;
 
 require oEdtk::libC7;
 require oEdtk::Outmngr;
+require oEdtk::TexDoc;
 use oEdtk::Dict;
 use oEdtk::Config 	qw(config_read);
 use oEdtk::Run		qw(oe_status_to_msg oe_compo_run oe_after_compo oe_outmngr_output_run_tex);
-
+#use oEUser::Lib;
 
 #
 # CODE - DOC AT THE END
@@ -470,7 +471,8 @@ sub clean_adress_line(\$) {	# migrer oe_clean_adr_line
 	chomp($$rLine);	# pour être sûr de ne pas avoir de retour à la ligne en fin de champ
 	trimSP($rLine);
 	
-	# faire une expression régulière qui traite tout ce qui n'est pas 0-9\-\°\w par des blancs
+	# à faire : une expression régulière qui traite tout ce qui n'est pas 0-9\-\°\w par des blancs...
+	#      ===> externaliser la liste des caractères à modifier
 	$$rLine =~ s/\./ /g;	# on remplace les points
 	$$rLine =~ s/\,/ /g;	# on remplace les virgules
 	$$rLine =~ s/\:/ /g;	# on remplace les points virgules
@@ -482,10 +484,12 @@ sub clean_adress_line(\$) {	# migrer oe_clean_adr_line
 	$$rLine =~ s/\~/ /g;	# on remplace les '~' (touche alpha num 2)
 	$$rLine =~ s/\]/ /g;	# on remplace les ']' (touche alpha num °)
 	$$rLine =~ s/\[/ /g;	# on remplace les ']' (pas d'explication...)
+	$$rLine =~ s/\¨/ /g;	# on remplace les '¨' (pas d'explication...)
 	
-	$$rLine =~ s/^\s+//;	# on supprime les blancs consécutifs en début de chaîne (on a fait un trimSP en premier...)
-	$$rLine =~ s/\s+$//;	# on supprime les blancs consécutifs en fin de chaîne (...)
-	$$rLine =~ s/^0\s+//;	# on supprime les zéros tout seul en début de chaine (on le passe en dernier, après les trim)
+	$$rLine =~ s/^\s+//;	# on supprime les blancs consécutifs en début de chaîne (on a fait un trimSP en premier...) TRIM gauche
+	$$rLine =~ s/\s+$//;	# on supprime les blancs consécutifs en fin de chaîne (...) TRIM droite
+	$$rLine =~ s/^0\s+//;	# on supprime les zéros tout seul en début de chaine (on le passe en dernier, après les TRIM gauche)
+	$$rLine =~ s/\s+/ /;	# concentration des blancs consécutifs
 
 	# Use the given dictionary to translate words.
 	if (length($$rLine) > 38) {
@@ -769,6 +773,15 @@ sub oe_cdata_table_build($@){	# oe_xdata_table_build
 return $cdata;
 }
 
+sub oe_include_build ($$){ # dans le cadre nettoyage code C7 il faudra raccourcir ces appels
+	my ($name, $path)= @_;
+	#import oEdtk::TexDoc;
+	
+	my $tag 	= oEdtk::TexDoc->new();
+	$tag->include($name, $path);
+	return $tag;
+}
+
 sub oe_data_build($;$) {	#oe_xdata_build
 	my ($name, $val)= @_;
 
@@ -777,6 +790,7 @@ sub oe_data_build($;$) {	#oe_xdata_build
 		return $tag->emit();
 	}
 
+	# POUR COMPUSET
 	my $data	= "";
 	if 	(defined $val) {
 		# s'il s'agit d'une variable numérique
@@ -966,6 +980,9 @@ sub prodEdtkOpen(@) {	# migrer oe_open_files / oe_open
 	# Remember for later use in prodEdtkClose() & oEdtk::Main.
 	$_RUN_PARAMS = $params;
 
+	if (defined $cfg->{'EDTK_COMPO_INCLUDE'} && $cfg->{'EDTK_COMPO_INCLUDE'}=~/yes/i) {
+		print OUT oe_include_build($cfg->{'EDTK_PRGNAME'}.".".$cfg->{'EDTK_EXT_COMPO'}, 'EDTK_DIR_SCRIPT');
+	}
 	print OUT oe_data_build(oe_corporation_tag());
 	print OUT oe_data_build('xIdLdoc', $params->{'idldoc'});
 	print OUT oe_data_build('xDebFlux');

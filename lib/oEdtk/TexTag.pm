@@ -1,9 +1,8 @@
 package oEdtk::TexTag;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-# A simple object that describes a TeX tag.
-
+# A SIMPLE OBJECT THAT DESCRIBES A TEX TAG.
 sub new {
 	my ($class, $name, $val) = @_;
 
@@ -24,9 +23,14 @@ sub new {
 	return $self;
 }
 
+
 sub emit {
 	my ($self) = @_;
 
+	if (defined $self->{'name'} &&  $self->{'name'}=~/^_include_$/){
+		return "\\input{" . $self->{'value'} . "\}";
+	}
+	
 	# A tag containing a scalar value or an HASH/ARRAY/TexDoc object.
 	if (defined $self->{'value'}) {
 		my $ref = ref($self->{'value'});
@@ -56,11 +60,13 @@ sub emit {
 			$value =~ s/\s+/ /g;
 			$value = escape($value);
 		}
+
 		return "\\long\\gdef\\$name\{$value\}";
 	}
 	# A command call.
 	return "\\$self->{'name'}";
 }
+
 
 sub escape {
 	my $str = shift;
@@ -89,7 +95,7 @@ sub escape {
 	$new =~ s/°/\\textdegree{}/g;
 
 	# merci à Thierry qui a recensé tous les cas tordus dans nos adresses 15/07/2010 16:38:23
-	$new =~ s/¨/\\"{}/g;
+	$new =~ s/¨//g;	# \\"{} provoque des erreurs dans le processus d'indexation pour injection en SGBD
 	$new =~ s/¿/\\textquestiondown{}/g;
 	$new =~ s/§/\\textsection{}/g;
 

@@ -93,7 +93,7 @@ foreach my $key (keys %{$cfg}) {
 
 # CHECK SENDMAIL
 warn "\n\nSTART SENDMAIL CHECK...\n";
-my $mail_to=$cfg->{'EDTK_MAIL_SENDER'};
+my $mail_to=$cfg->{'EDTK_MAIL_TST'};
 eval { oe_send_mail( $mail_to, $0, @tCheckMessage); };
 if ($@) {
 	warn "BAD : sendmail check KO\n";
@@ -107,5 +107,7 @@ warn "\t check DB_BAKUP : \n";
 my $dbh1 = db_connect($cfg, 'EDTK_DBI_DSN_BAK') 	or printf " BAD, error connecting EDTK_DBI_DSN_BAK\n";
 warn "\n\t check DB_PARAM : \n";
 my $dbh2 = db_connect($cfg, 'EDTK_DBI_PARAM') 	or printf " BAD, error connecting EDTK_DBI_PARAM\n";
+warn "\n\t check DB_STATS : \n";
+my $dbh3 = db_connect($cfg, 'EDTK_DBI_STATS') 	or printf " BAD, error connecting EDTK_DBI_STAT\n";
 warn "\n\t check DB_MAIN : \n";
-my $dbh3 = db_connect($cfg, 'EDTK_DBI_DSN')		or printf " BAD, error connecting EDTK_DBI_DSN\n";
+my $dbh4 = db_connect($cfg, 'EDTK_DBI_DSN')		or printf " BAD, error connecting EDTK_DBI_DSN\n";

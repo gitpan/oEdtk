@@ -24,6 +24,10 @@ if ($ARGV[0] eq 'month') {
 	$stats = stats_month($dbh, $cfg, $ARGV[1], $ARGV[2], $ARGV[3]);
 	$colname = 'ED_MONTH';
 	$colsize = 6;
+} elsif ($ARGV[0] eq 'monthk') {
+	$stats = stats_month($dbh, $cfg, $ARGV[1], $ARGV[2], $ARGV[3]);
+	$colname = 'ED_MONTH';
+	$colsize = 6;
 } elsif ($ARGV[0] eq 'iddest') {
 	$stats = stats_iddest($dbh, $cfg, $ARGV[1], $ARGV[2], $ARGV[3], $ARGV[4]);
 	$colname = 'ED_WEEK';
@@ -45,22 +49,30 @@ my %data = ();
 foreach my $row (@$stats) {
 	my $line="";
 	if ($colname eq 'ED_MONTH') {
-		my $corp =$row->{'ED_CORP'} 	|| "";
-		my $emet =$row->{'ED_EMET'} 	|| "";
-		my $app  =$row->{'ED_APP'} 	|| "";
-		$line = "$corp\t$emet\t$app";
+		my $corp 	= $row->{'ED_CORP'} 	|| "";
+		my $emet 	= $row->{'ED_EMET'} 	|| "";
+		my $app  	= $row->{'ED_APP'} 		|| "";
+		$line 	= "$corp\t$emet\t$app";
+
+	} elsif ($colname eq 'ED_MONTH_K') {
+		my $corp	= $row->{'ED_CORP'} 	|| "";
+		my $emet	= $row->{'ED_EMET'} 	|| "";
+		my $app	= $row->{'ED_APP'} 		|| "";
+		my $k2	= $row->{'ED_K2_VAL'} 	|| "";
+		my $k3	= $row->{'ED_K3_VAL'} 	|| "";
+		$line	= "$corp\t$emet\t$app\t$k2\t$k3";
 
 	} elsif ($ARGV[0] eq 'iddest'){
-		my $corp =$row->{'ED_CORP'} 	|| "";
-		my $emet =$row->{'ED_EMET'} 	|| "";
-		my $app  =$row->{'ED_APP'} 	|| "";
-		my $dest =$row->{'ED_IDDEST'}	|| "";
-		$line = "$corp\t$emet\t$app\t$dest";	
+		my $corp	= $row->{'ED_CORP'} 	|| "";
+		my $emet	= $row->{'ED_EMET'} 	|| "";
+		my $app	= $row->{'ED_APP'} 		|| "";
+		my $dest	= $row->{'ED_IDDEST'}	|| "";
+		$line	= "$corp\t$emet\t$app\t$dest";	
 
 	} else {
-		my $corp =$row->{'ED_CORP'} 	|| "";
-		my $app  =$row->{'ED_APP'} 	|| "";
-		$line = "$corp\t$app";
+		my $corp	= $row->{'ED_CORP'} 	|| "";
+		my $app	= $row->{'ED_APP'} 		|| "";
+		$line	= "$corp\t$app";
 	}
 	if (!exists($data{$line})) {
 		$data{$line} = [(0) x @cols];

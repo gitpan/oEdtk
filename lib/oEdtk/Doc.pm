@@ -1,10 +1,9 @@
 package oEdtk::Doc;
+our $VERSION = '0.02';
 
 use Scalar::Util qw(blessed);
-
-our $VERSION = '0.01';
-
 use overload '""' => \&dump;
+use oEdtk::Config (config_read);
 
 # The maximum number of characters to output before inserting
 # a newline character.
@@ -19,12 +18,14 @@ sub new {
 	return $self;
 }
 
+
 sub reset {
 	my ($self) = @_;
 
 	$self->{'taglist'} = [];
 	$self->{'emitted'} = 0;
 }
+
 
 sub append {
 	my ($self, $name, $value) = @_;
@@ -40,6 +41,7 @@ sub append {
 		push(@{$self->{'taglist'}}, $tag);
 	}
 }
+
 
 sub dump {
 	my ($self) = @_;
@@ -58,16 +60,40 @@ sub dump {
 	return $out;
 }
 
-# The two following methods should only be implemented by
-# the subclasses (see C7Doc or TexDoc).
 
+sub include {
+	my ($self, $file, $path) = @_;
+
+	if (defined $path){
+		if ($path=~/^EDTK_DIR_/) {
+			my $cfg	= config_read('ENVDESC');
+			$path	= $cfg->{$path};
+		}
+	} else {
+		$path = ".";
+		warn "INFO : include param1 is $file, assuming param2 is $path \n";
+	}
+
+	my $link = $path ."/". $file;
+	$link=~s/\\/\//g;
+	if (-e $link){} else {die "ERROR: can't find include $link\n";}
+
+	#$self->append("input{".$link."}");
+	$self->append("_include_", $link);
+}
+
+
+# THE FOLLOWINGS METHODS SHOULD ONLY BE IMPLEMENTED BY
+# THE SUBCLASSES (SEE C7DOC OR TEXDOC).
 sub mktag {
 	die "ERROR: oEdtk::Doc::mktag unimplemented method";
 }
 
+
 sub append_table {
 	die "ERROR: oEdtk::Doc::append_table unimplemented method";
 }
+
 
 sub line_break {
 	die "ERROR: oEdtk::Doc::line_break unimplemented method";

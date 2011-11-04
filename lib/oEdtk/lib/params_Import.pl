@@ -33,8 +33,8 @@ eval {
 	}
 
 	while (my $row = $csv->getline_hr($fh)) {
-		my $sql = "INSERT INTO $table (" . join(', ', keys(%$row)) .
-		    ") VALUES (" . join(', ', ('?') x keys(%$row)) . ")";
+		my $sql = "INSERT INTO $table (" . join(', ', keys(%$row)) 
+				. ") VALUES (" . join(', ', ('?') x keys(%$row)) . ")";
 		$dbh->do($sql, undef, values(%$row));
 	}
 	$dbh->commit;

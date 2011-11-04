@@ -10,8 +10,8 @@ use oEdtk::Outmngr 	0.07	qw(omgr_stats);
 #use Text::CSV;
 
 if (@ARGV < 1) {
-	die "Usage: $0 <today|week|week_value|ALL> [refiddoc] [seqlot|source|source_name]\n"
-		."\t week_value : number of a week in the year\n\t source_name: job name in tracking\n\n"
+	die "Usage: $0 <today|week|yweek_value|ALL> [refiddoc] [seqlot|source|source_name]\n"
+		."\t yweek_value : number of week in the year as YWW \n\t source_name : job name in tracking\n\n"
 		." check references for tracked sources\n";
 }
 
@@ -38,12 +38,15 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	if ($period =~ /^today$/i) {
 		$idldocKey = sprintf ("%1d%02d%1d", $year % 10, $week, $dow );
 		
-	} elsif ($period =~ /^all$/i){
+	} elsif ($period=~ /^all$/i){
 		
-	} elsif ($period =~ /^(\d{1,2})$/){
-		$idldocKey = sprintf("%1d%02d", $year % 10, $1 );
+	} elsif ($period=~ /^(\d{3})$/){		# références au format YWW...
+		$idldocKey = sprintf("%d",$1 );
 
-	} elsif ($period =~ /^week$/i){
+	} elsif ($period=~ /^(\d{1,2})$/){ 	# références au format WW...
+		$idldocKey = sprintf("%1d%d", $year % 10, $1 );
+
+	} elsif ($period=~ /^week$/i){
 		$idldocKey = sprintf("%1d%02d", $year % 10, $week );
 
 	} else { 
@@ -51,7 +54,6 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	}
 	$idldocKey .="%"; # étrangement pour les cas week et \d2 on a le message suivant si on met % dans le sprintf : Invalid conversion in sprintf: end of string at C:\Sources\edtk_MNT\lib\index_Check_docs_omgr.pl line 44. 
 	push (@sql_values, $idldocKey);
-
 
 	$select	= "SELECT COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS, A.ED_REFIDDOC, A.ED_IDLDOC "; 
 	$sql		= " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, " . $cfg->{'EDTK_STATS_TRACKING'} . " B "
@@ -87,6 +89,7 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	}
 
 	$sql = $select . $sql . $groupby . $orderby;
+
 	my $sth = $dbh->prepare($sql);
 	$sth->execute(@sql_values);
 

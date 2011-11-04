@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.21;
+our $VERSION		= 0.22;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -225,11 +225,11 @@ sub create_table_FILIERES {
 	my $table = "EDTK_FILIERES";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_IDFILIERE VARCHAR2(5) NOT NULL";# rendre UNIQUE filiere id   ALTER table edtk_filieres modify ED_IDFILIERE VARCHAR2(5);
+	$sql .= "( ED_IDFILIERE VARCHAR2(5) NOT NULL";	# rendre UNIQUE filiere id   ALTER table edtk_filieres modify ED_IDFILIERE VARCHAR2(5) NOT NULL;
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16)";	  
 	$sql .= ", ED_DESIGNATION VARCHAR2(64)";		# 
 	$sql .= ", ED_ACTIF CHAR NOT NULL";			# Flag indiquant si la filiere est active ou pas 
-	$sql .= ", ED_PRIORITE INTEGER NOT NULL";	# rendre UNIQUE Ordre d'execution des filieres 
+	$sql .= ", ED_PRIORITE INTEGER UNIQUE";			# rendre UNIQUE Ordre d'execution des filieres ALTER table edtk_filieres modify  ED_PRIORITE INTEGER UNIQUE; 
 	$sql .= ", ED_TYPED CHAR NOT NULL";			# 
 	$sql .= ", ED_MODEDI CHAR NOT NULL";			# 
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	# alter table EDTK_FILIERES add ED_IDGPLOT VARCHAR2(16) 
@@ -258,7 +258,7 @@ sub create_table_LOTS {
 
 	my $sql = "CREATE TABLE $table";
 	$sql .= "( ED_IDLOT VARCHAR2(8)  NOT NULL";		# rendre UNIQUE 
-	$sql .= ", ED_PRIORITE INTEGER  NOT NULL"; 		# rendre UNIQUE
+	$sql .= ", ED_PRIORITE INTEGER   UNIQUE"; 		# rendre UNIQUE 	ALTER table EDTK_LOTS modify ED_PRIORITE INTEGER UNIQUE;
 	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";
 	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
 	$sql .= ", ED_FILTER VARCHAR2(64)";			# alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
@@ -303,7 +303,7 @@ sub create_table_SUPPORTS {
 	my $table = "EDTK_SUPPORTS";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_REFIMP VARCHAR2(16) NOT NULL"; 
+	$sql .= "( ED_REFIMP VARCHAR2(16) UNIQUE"; 	# ALTER table EDTK_SUPPORTS modify ED_REFIMP VARCHAR2(16) UNIQUE;
 	$sql .= ", ED_TYPIMP CHAR NOT NULL";  
 	$sql .= ", ED_FORMATP VARCHAR2(2) NOT NULL";
 	$sql .= ", ED_POIDSUNIT INTEGER NOT NULL";  
@@ -322,72 +322,72 @@ sub create_table_SUPPORTS {
 
 our @INDEX_COLS = (
 	# SECTION COMPOSITION DE L'INDEX
-	['ED_REFIDDOC', 'VARCHAR2(20) NOT NULL'],# identifiant dans le référentiel de document
-	['ED_IDLDOC', 'VARCHAR2(17) NOT NULL'],	# Identifiant du document dans le lot de mise en page ED_SNGL_ID
-	['ED_IDSEQPG', 'INTEGER NOT NULL'],	# Sequence Numéro de séquence de page dans le lot de mise en page
-	['ED_SEQDOC', 'INTEGER NOT NULL'],		# Numéro de séquence du document dans le lot
+	['ED_REFIDDOC','VARCHAR2(20) NOT NULL'],# identifiant dans le référentiel de document
+	['ED_IDLDOC',	'VARCHAR2(17) NOT NULL'],# Identifiant du document dans le lot de mise en page ED_SNGL_ID
+	['ED_IDSEQPG',	'INTEGER NOT NULL'],	# Sequence Numéro de séquence de page dans le lot de mise en page
+	['ED_SEQDOC',	'INTEGER NOT NULL'],	# Numéro de séquence du document dans le lot
 
-	['ED_CPDEST', 'VARCHAR2(8)'],			# Code postal Destinataire
-	['ED_VILLDEST', 'VARCHAR2(25)'],		# Ville destinataire
-	['ED_IDDEST', 'VARCHAR2(25)'],		# Identifiant du destinataire dans le système de gestion
-	['ED_NOMDEST', 'VARCHAR2(30)'],		# Nom destinataire
-	['ED_IDEMET', 'VARCHAR2(10)'],		# identifiant de l'émetteur
-	['ED_DTEDTION', 'VARCHAR2(8) NOT NULL'],# date d'édition, celle qui figure sur le document
-	['ED_TYPPROD', 'CHAR'],				# type de production associée au lot
-	['ED_PORTADR', 'CHAR'],				# indicateur de document porte adresse
-	['ED_ADRLN1', 'VARCHAR2(38)'],		# ligne d'adresse 1
-	['ED_CLEGED1', 'VARCHAR2(20)'],		# clef pour système d'archivage
-	['ED_ADRLN2', 'VARCHAR2(38)'],		# ligne d'adresse 2
-	['ED_CLEGED2', 'VARCHAR2(20)'],		# clef pour système d'archivage
-	['ED_ADRLN3', 'VARCHAR2(38)'],		# ligne d'adresse 3
-	['ED_CLEGED3', 'VARCHAR2(20)'],		# clef pour système d'archivage
-	['ED_ADRLN4', 'VARCHAR2(38)'],		# ligne d'adresse 4
-	['ED_CLEGED4', 'VARCHAR2(20)'],		# clef pour système d'archivage
-	['ED_ADRLN5', 'VARCHAR2(38)'],		# ligne d'adresse 5
-	['ED_CORP', 'VARCHAR2(20)'],			# sociét? émettrice de la page
-	['ED_DOCLIB', 'VARCHAR2(32)' ],		# merge library compuset associée ? la page
-	['ED_REFIMP', 'VARCHAR2(8)'],			# référence de pr?-imprim? ou d'imprim? ou d'encart
-	['ED_ADRLN6', 'VARCHAR2(38)'],		# ligne d'adresse 6
-	['ED_SOURCE', 'VARCHAR2(8) NOT NULL'],	# Source de l'index
-	['ED_OWNER', 'VARCHAR2(10)'],			# propriétaire du document (utilisation en gestion / archivage de documents)
-	['ED_HOST', 'VARCHAR2(32)'],			# Hostname de la machine d'ou origine cette entrée
-	['ED_IDIDX', 'VARCHAR2(7) NOT NULL'],	# identifiant de l'index
-	['ED_CATDOC', 'CHAR'],				# catégorie de document
-	['ED_CODRUPT', 'CHAR'],				# code forçage de rupture
+	['ED_CPDEST',	'VARCHAR2(8)'],		# Code postal Destinataire
+	['ED_VILLDEST','VARCHAR2(25)'],		# Ville destinataire
+	['ED_IDDEST',	'VARCHAR2(25)'],		# Identifiant du destinataire dans le système de gestion
+	['ED_NOMDEST',	'VARCHAR2(30)'],		# Nom destinataire
+	['ED_IDEMET',	'VARCHAR2(10)'],		# identifiant de l'émetteur
+	['ED_DTEDTION','VARCHAR2(8) NOT NULL'], # date d'édition, celle qui figure sur le document
+	['ED_TYPPROD',	'CHAR'],				# type de production associée au lot
+	['ED_PORTADR',	'CHAR'],				# indicateur de document porte adresse
+	['ED_ADRLN1',	'VARCHAR2(38)'],		# ligne d'adresse 1
+	['ED_CLEGED1',	'VARCHAR2(20)'],		# clef pour système d'archivage
+	['ED_ADRLN2',	'VARCHAR2(38)'],		# ligne d'adresse 2
+	['ED_CLEGED2',	'VARCHAR2(20)'],		# clef pour système d'archivage
+	['ED_ADRLN3',	'VARCHAR2(38)'],		# ligne d'adresse 3
+	['ED_CLEGED3',	'VARCHAR2(20)'],		# clef pour système d'archivage
+	['ED_ADRLN4',	'VARCHAR2(38)'],		# ligne d'adresse 4
+	['ED_CLEGED4',	'VARCHAR2(20)'],		# clef pour système d'archivage
+	['ED_ADRLN5',	'VARCHAR2(38)'],		# ligne d'adresse 5
+	['ED_CORP',	'VARCHAR2(8)  NOT NULL'],# société émettrice de la page		ALTER table edtk_index modify ED_CORP VARCHAR2(8) NOT NULL;
+	['ED_DOCLIB',	'VARCHAR2(32)' ],		# merge library compuset associée ? la page
+	['ED_REFIMP',	'VARCHAR2(8)'],		# référence de pr?-imprim? ou d'imprim? ou d'encart
+	['ED_ADRLN6',	'VARCHAR2(38)'],		# ligne d'adresse 6
+	['ED_SOURCE',	'VARCHAR2(8) NOT NULL'],	# Source de l'index
+	['ED_OWNER',	'VARCHAR2(10)'],		# propriétaire du document (utilisation en gestion / archivage de documents)
+	['ED_HOST',	'VARCHAR2(32)'],		# Hostname de la machine d'ou origine cette entrée
+	['ED_IDIDX',	'VARCHAR2(7) NOT NULL'],	# identifiant de l'index
+	['ED_CATDOC',	'CHAR'],				# catégorie de document
+	['ED_CODRUPT',	'CHAR'],				# code forçage de rupture
 
 	# SECTION LOTISSEMENT DE L'INDEX
-	['ED_IDLOT', 'VARCHAR2(6)'],			# identifiant du lot
-	['ED_SEQLOT', 'VARCHAR2(7)'],			# identifiant du lot de mise sous plis (sous-lot) ALTER table edtk_index modify ED_SEQLOT VARCHAR2(7);
-	['ED_DTLOT', 'VARCHAR2(8)'],			# date de la création du lot de mise sous plis
-	['ED_IDFILIERE', 'VARCHAR2(5)'],		# identifiant de la filière de production     	ALTER table edtk_index modify ED_IDFILIERE VARCHAR2(5);
-	['ED_SEQPGDOC', 'INTEGER'],			# numéro de séquence de page dans le document
-	['ED_NBPGDOC', 'INTEGER'],			# nombre de page (faces) du document
-	['ED_POIDSUNIT', 'INTEGER'],			# poids de l'imprim? ou de l'encart en mg
-	['ED_NBENC', 'INTEGER'],				# nombre d'encarts du doc					ALTER table edtk_index add ED_NBENC integer;
-	['ED_ENCPDS', 'INTEGER'],			# poids des encarts du doc					ALTER table edtk_index add ED_ENCPDS INTEGER;
-	['ED_BAC_INSERT', 'INTEGER'],			# Appel de bac ou d'insert
+	['ED_IDLOT',	'VARCHAR2(6)'],		# identifiant du lot
+	['ED_SEQLOT',	'VARCHAR2(7)'],		# identifiant du lot de mise sous plis (sous-lot) ALTER table edtk_index modify ED_SEQLOT VARCHAR2(7);
+	['ED_DTLOT',	'VARCHAR2(8)'],		# date de la création du lot de mise sous plis
+	['ED_IDFILIERE','VARCHAR2(5)'],		# identifiant de la filière de production     	ALTER table edtk_index modify ED_IDFILIERE VARCHAR2(5);
+	['ED_SEQPGDOC','INTEGER'],			# numéro de séquence de page dans le document
+	['ED_NBPGDOC',	'INTEGER'],			# nombre de page (faces) du document
+	['ED_POIDSUNIT','INTEGER'],			# poids de l'imprim? ou de l'encart en mg
+	['ED_NBENC',	'INTEGER'],			# nombre d'encarts du doc					ALTER table edtk_index add ED_NBENC integer;
+	['ED_ENCPDS',	'INTEGER'],			# poids des encarts du doc					ALTER table edtk_index add ED_ENCPDS INTEGER;
+	['ED_BAC_INSERT','INTEGER'],			# Appel de bac ou d'insert
 
 	# SECTION EDITION DE L'INDEX
-	['ED_TYPED', 'CHAR'],				# type d'édition
-	['ED_MODEDI', 'CHAR'],				# mode d'édition
-	['ED_FORMATP', 'VARCHAR2(2)'],		# format papier
-	['ED_PGORIEN', 'VARCHAR2(2)'],		# orientation de l'édition
-	['ED_FORMFLUX', 'VARCHAR2(3)'],		# format du flux d'édition
+	['ED_TYPED',	'CHAR'],				# type d'édition
+	['ED_MODEDI',	'CHAR'],				# mode d'édition
+	['ED_FORMATP',	'VARCHAR2(2)'],		# format papier
+	['ED_PGORIEN',	'VARCHAR2(2)'],		# orientation de l'édition
+	['ED_FORMFLUX','VARCHAR2(3)'],		# format du flux d'édition
 #	['ED_FORMDEF', 'VARCHAR2(8)'],		# Formdef AFP
 #	['ED_PAGEDEF', 'VARCHAR2(8)'],		# Pagedef AFP
-#	['ED_FORMS', 'VARCHAR2(8)'],			# Forms 
+#	['ED_FORMS',	'VARCHAR2(8)'],		# Forms 
 
 	# SECTION PLI DE L'INDEX
-	['ED_IDPLI', 'INTEGER'],				# identifiant du pli
-	['ED_NBDOCPLI', 'INTEGER NOT NULL'],	# nombre de documents du pli
-	['ED_NUMPGPLI', 'INTEGER NOT NULL'],	# numéro de la page (face) dans le pli
-	['ED_NBPGPLI', 'INTEGER'],			# nombre de pages (faces) du pli
-	['ED_NBFPLI', 'INTEGER'],			# nombre de feuillets du pli
-	['ED_LISTEREFENC', 'VARCHAR2(64)'],	# liste des encarts du pli
-	['ED_PDSPLI', 'INTEGER'],			# poids du pli en mg
-	['ED_TYPOBJ', 'CHAR'],				# type d'objet dans le pli	xxxxxx  conserver ?
-	['ED_STATUS', 'VARCHAR2(8)'],			# status de lotissement (date de remise en poste ou status en fonction des versions)  # ALTER TABLE EDTK_INDEX ADD ED_STATUS VARCHAR2(8);  # attention très lourd a éxécuter ne pas faire en prod : UPDATE EDTK_INDEX SET ED_STATUS = ED_DTPOSTE;
-	['ED_DTPOSTE', 'VARCHAR2(8)']		# à supprimer : status de lotissement (date de remise en poste ou status en fonction des versions)  ALTER TABLE edtk_index rename ED_DTPOSTE to ED_STATUS VARCHAR2(8);
+	['ED_IDPLI',	'INTEGER'],				# identifiant du pli
+	['ED_NBDOCPLI','INTEGER NOT NULL'],	# nombre de documents du pli
+	['ED_NUMPGPLI','INTEGER NOT NULL'],	# numéro de la page (face) dans le pli
+	['ED_NBPGPLI',	'INTEGER'],			# nombre de pages (faces) du pli
+	['ED_NBFPLI',	'INTEGER'],			# nombre de feuillets du pli
+	['ED_LISTEREFENC','VARCHAR2(64)'],	# liste des encarts du pli
+	['ED_PDSPLI',	'INTEGER'],			# poids du pli en mg
+	['ED_TYPOBJ',	'CHAR'],				# type d'objet dans le pli	xxxxxx  conserver ?
+	['ED_STATUS',	'VARCHAR2(8)'],			# status de lotissement (date de remise en poste ou status en fonction des versions)  # ALTER TABLE EDTK_INDEX ADD ED_STATUS VARCHAR2(8);  # attention très lourd a éxécuter ne pas faire en prod : UPDATE EDTK_INDEX SET ED_STATUS = ED_DTPOSTE;
+	['ED_DTPOSTE',	'VARCHAR2(8)']		# à supprimer : status de lotissement (date de remise en poste ou status en fonction des versions)  ALTER TABLE edtk_index rename ED_DTPOSTE to ED_STATUS VARCHAR2(8);
 
 );
 

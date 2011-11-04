@@ -16,7 +16,7 @@ use oEdtk::TexDoc;
 
 use Exporter;
 
-our $VERSION	= 0.04;
+our $VERSION	= 0.05;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 	oe_status_to_msg
@@ -106,7 +106,33 @@ sub oe_compo_run($;$) {
 		$exe = $cfg->{'EDTK_COMPO_CMD_PDF'};
 	}
 
-	my $param = $cfg->{'EDTK_DIR_SCRIPT'} . "/$app." . $cfg->{'EDTK_EXT_COMPO'};
+	# XXXXXXXXXXXXX  C'EST ICI QU'ON CHANGE LE MODE D'EXECUTION EN MODE INCLUDE
+	# Usage: pdftex [OPTION]... [TEXNAME[.tex]] [COMMANDS]
+	#    or: pdftex [OPTION]... \FIRST-LINE
+	#    or: pdftex [OPTION]... &FMT ARGS
+	#   Run pdfTeX on TEXNAME, usually creating TEXNAME.pdf.
+	#   Any remaining COMMANDS are processed as pdfTeX input, after TEXNAME is read.
+	#   If the first line of TEXNAME is %&FMT, and FMT is an existing .fmt file,
+	#   use it.  Else use `NAME.fmt', where NAME is the program invocation name,
+	#   most commonly `pdftex'.
+	# 
+	#   Alternatively, if the first non-option argument begins with a backslash,
+	#   interpret all non-option arguments as a line of pdfTeX input.
+	# 
+	#   Alternatively, if the first non-option argument begins with a &, the
+	#   next word is taken as the FMT to read, overriding all else.  Any
+	#   remaining arguments are processed as above.
+	# 
+	#   If no arguments or options are specified, prompt for input.
+
+	my $param;
+	# if (defined $cfg->{'EDTK_COMPO_INCLUDE'} && $cfg->{'EDTK_COMPO_INCLUDE'}=~/yes/i) {
+	# 	# NE FONCTIONNE PAS, À REVOIR EN FONCTION DE pdftex --help
+	# 	$param = "./$app." . $cfg->{'EDTK_EXT_WORK'};
+	# } else { 
+		$param = $cfg->{'EDTK_DIR_SCRIPT'} . "/$app." . $cfg->{'EDTK_EXT_COMPO'}; 
+	# }
+
 	# Use the \edExtra mechanism to include additional packages if needed.
 	if (defined($options->{'extrapkgs'})) {
 		my $extra = '\newcommand{\edExtra}{';
