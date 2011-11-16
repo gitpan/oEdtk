@@ -18,7 +18,7 @@ sub run() {
 	while (my $ligne=<IN> && $.<2000 ) {
 		chomp ($ligne);
 
-		if 		(trtEdtkEnr('X',$ligne,0,)){
+		if 		(oe_trt_ref_rec('X',$ligne,0,)){
 				# FIN traitement enregistrement 
 
 		} else {
@@ -39,8 +39,8 @@ sub initApp{
 	# DECLARATIONS DES VARIABLES PROPRES A L'APPLICATION
 
 	# CARTOGRAPHIE APPLICATIVE 
-	recEdtk_motif 	('X', 'A13 A35 A11 A8 A*');
-	recEdtk_process	('X', \&trtEnr);
+	oe_rec_motif 	('X', 'A13 A35 A11 A8 A*');
+	oe_rec_process	('X', \&trtEnr);
 
 1;
 }

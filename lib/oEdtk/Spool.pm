@@ -146,13 +146,13 @@ oEdtk::Spool - Helper module for parsing printer spool files
   use oEdtk::Main;
   use oEdtk::Spool;
 
-  prodEdtkOpen($ARGV[0], $ARGV[1]);
+  oe_new_job($ARGV[0], $ARGV[1]);
   my $s = oEdtk::Spool->new(\*IN, \*OUT);
   $s->parse(\&process);
 
   ...
 
-  prodEdtkClose($ARGV[0], $ARGV[1]);
+  oe_compo_link($ARGV[0], $ARGV[1]);
 
   sub process($$) {
     my ($s, $line) = @_;

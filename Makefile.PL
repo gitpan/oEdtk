@@ -46,6 +46,7 @@ WriteMakefile(
 		File::Path			=> 0,
 		List::MoreUtils		=> 0,
 		List::Util			=> 0,
+		Math::Round			=> '0.06',
 		Net::FTP				=> 0,
 		overload				=> 0,
 		Scalar::Util			=> 0,

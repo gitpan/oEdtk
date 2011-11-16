@@ -8,7 +8,7 @@ BEGIN {
 		use Term::ReadKey;
 		use oEdtk::trackEdtk	qw(env_Var_Completion);
 
-		$VERSION		= 0.0031;
+		$VERSION		= 0.0032;
 		@ISA			= qw(Exporter);
 		@EXPORT		= qw(
 						clear_Screen	start_Screen	stop_Screen
@@ -137,8 +137,7 @@ return 1;
 sub stop_Screen (){
 	print "\nPause, hit <enter> to exit or <w> to watch Doc result...\n";
 	my $key =&readKey_Wait($ENV{EDTK_WAITRUN}*100) || "";
-	my $arg =$ENV{EDTK_DOC_OUTPUT};	# $ENV{EDTK_FDATAOUT}.$ENV{EDTK_EXT_PDF}
-	#my $arg ="$ENV{EDTK_FDATAOUT}.".$ENV{EDTK_EXT_DEFAULT};
+	my $arg ="$ENV{EDTK_FDATAOUT}.".$ENV{EDTK_EXT_DEFAULT};
 
 	if	($key =~/W/i and $arg) {
 

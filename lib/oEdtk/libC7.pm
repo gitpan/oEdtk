@@ -67,9 +67,9 @@ sub c7EdtkComp () { 	# remplacé par c7_compo - PLUS UTILISÉ ? dépendance libedtk
 	my $comp_file=$ENV{EDTK_DIR_APPTMP}."/".$ENV{EDTK_PRGNAME}.".comp";
 	env_Var_Completion($comp_file);
 
-	foEdtkOpen ("$comp_file");
+	oe_open_fo_OUT ("$comp_file");
 	print OUT $comp_file_def;
-	foEdtkClose("$comp_file");
+	oe_close_fo("$comp_file");
 
 	my $commande ="$ENV{EDTK_DIR_COMSET}/system/$ENV{OSYS}/$ENV{COMPUSET} < $comp_file > $comp_log_file";
 	warn "\n$commande \n";
@@ -151,9 +151,9 @@ sub c7_compo ($$$;$$) {			# PLUS UTILISÉ ? dépendance Main.pm
 	my $comp_file=$cfg->{'EDTK_DIR_APPTMP'}."/".$cfg->{'EDTK_PRGNAME'}.".comp";
 	#env_Var_Completion($comp_file);
 
-	foEdtkOpen ("$comp_file");
+	oe_open_fo_OUT ("$comp_file");
 	print OUT $comp_file_def;
-	foEdtkClose("$comp_file");
+	oe_close_fo("$comp_file");
 
 	my $commande =$cfg->{'EDTK_DIR_COMSET'} . "/system/" . $cfg->{'OSYS'} . "/" . $cfg->{'COMPUSET'} . " < $comp_file > $comp_log_file";
 	warn "INFO : $commande \n";
@@ -250,9 +250,9 @@ sub c7_emit ($$$$;$$) { 		# PLUS UTILISÉ ? dépendance Main.pm
 
 	my $emitter_file	=$cfg->{'EDTK_DIR_APPTMP'} . "/" . $cfg->{'EDTK_PRGNAME'} . ".emit";
 	#env_Var_Completion($emitter_file);
-	foEdtkOpen ($emitter_file);
+	oe_open_fo_OUT ($emitter_file);
 	print OUT $emitter_file_def;
-	foEdtkClose($emitter_file);
+	oe_close_fo($emitter_file);
 
 	my $emit_log_file	=$cfg->{'EDTK_DIR_LOG'} . "/" . $cfg->{'EDTK_PRGNAME'} . ".emit.log";
 	my $commande 		=$cfg->{'EDTK_DIR_COMSET'} . "/system/" . $cfg->{'OSYS'} . "/" . $cfg->{$emitter} . " < $emitter_file > $emit_log_file";
@@ -319,9 +319,9 @@ sub c7EdtkEmit {	# remplacé par c7_emit - # PLUS UTILISÉ ? dépendance libEdtkDev
 	my $emitter_file="$ENV{EDTK_DIR_APPTMP}/$ENV{EDTK_PRGNAME}.emit";
 	env_Var_Completion($emitter_file);
 	my $emit_log_file="$ENV{EDTK_DIR_LOG}/$ENV{EDTK_PRGNAME}.emit.log";
-	foEdtkOpen ("$emitter_file");
+	oe_open_fo_OUT ("$emitter_file");
 	print OUT $emitter_file_def;
-	foEdtkClose("$emitter_file");
+	oe_close_fo("$emitter_file");
 
 	my $commande ="$ENV{EDTK_DIR_COMSET}/system/$ENV{OSYS}/$ENV{PSTINTX} < $emitter_file > $emit_log_file";
 	warn "\n$commande \n";
@@ -347,7 +347,7 @@ sub show_C7_event ($) {		# PLUS UTILISÉ ? dépendance interne libEdtkC7
 	my $log =shift;
 	my $ligne_count =0;
 	
-	fiEdtkOpen ($log);
+	oe_open_fi_IN ($log);
 	
 	warn "\n INFO extracted from log :\n";
 
@@ -375,7 +375,7 @@ sub c7_Control_Bal ($){		# PLUS UTILISÉ ? dépendance libEdtkDev et interne libEd
  
 	# CONTROLE D'APPARIEMENT DU FICHIER DE DONNEES BALISEES
 	warn "INFO : Analyse de l'appariement des balises dans le fichier $file.\n";
-	fiEdtkOpen ($file);
+	oe_open_fi_IN ($file);
 
 	while ($ligne=<IN>){
 		while ($ligne=~m/</g){$nbOpen++;}

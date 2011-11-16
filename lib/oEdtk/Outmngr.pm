@@ -231,6 +231,12 @@ sub _omgr_insert($$$$$) {
 	my ($dbh, $pdbh, $app, $in, $corp) = @_;
 	my $cfg = config_read('EDTK_DB');
 
+
+################################################################################
+# POUR GÉRER DYNAMIQUEMENT L'INDEX, LES OPÉRATIONS DE LECTURE CI-DESSOUS DEVRAIENT 
+# soit intégrer la boucle de lecture de l'index, soit être remplacée par des liens
+################################################################################
+#
 	# Récupération des paramètres de l'application documentaire.
 	my $doc = $pdbh->selectrow_hashref("SELECT * FROM EDTK_REFIDDOC WHERE ED_REFIDDOC = ? " .
 	    "AND (ED_CORP = ? OR ED_CORP = '%')", undef, $app, $corp);
@@ -253,7 +259,6 @@ sub _omgr_insert($$$$$) {
 	if (!defined($ps)) {
 		die "Could not find support \"$doc->{'ED_REFIMP_PS'}\" in EDTK_SUPPORTS\n";
 	}
-
 
 	# Récupération de la liste des encarts à joindre pour ce document,
 	# et en déduire le poids supplémentaire à ajouter à chaque pli
@@ -278,9 +283,13 @@ sub _omgr_insert($$$$$) {
 	}
 	my $listerefenc = join(', ', @needed) || "none"; # xxx réfléchir impact mise sous pli, en dur ou paramétrable dans table supports ?
 
+# POUR GÉRER DYNAMIQUEMENT L'INDEX, LES OPÉRATIONS DE LECTURE CI-DESSUS DEVRAIENT 
+# soit intégrer la boucle de lecture de l'index, soit être remplacée par des liens
+################################################################################
+
+
 
 	# LOOP THROUGH THE INDEX FILE, GATHERING ENTRIES AND COUNTING THE NUMBER OF PAGES, ETC...
-#	my $host = hostname();
 	my $numpgpli = 0;
 	my $seqpgdoc = 0;
 	my $idldoc = undef;
@@ -443,6 +452,8 @@ sub _omgr_lot($$$) {
 		if (defined $lot->{'ED_FILTER'} and $lot->{'ED_FILTER'}=~/\=/) {
 			$where .= " AND " . $lot->{'ED_FILTER'};
 		}
+
+# ajouter gestion des refenc / lot : AJOUT ed_refenc à ed_listrefenc
 
 		my $num 	= $dbh->do($sql . $where, undef, @values);
 		    

@@ -131,7 +131,7 @@ sub track {
 
 	# Generate SQL request.
 	my $values = {
-		ED_TSTAMP	=> nowTime(),
+		ED_TSTAMP	=> oe_now_time(),
 		ED_USER		=> $self->{'user'},
 		ED_SEQ		=> $self->{'seq'}++,
 		ED_SNGL_ID	=> $self->{'id'},

@@ -182,6 +182,7 @@ sub create_table_TRACKING {
 		$sql .= ", ED_K${i}_NAME VARCHAR2(8)";	# Name of key $i
 		$sql .= ", ED_K${i}_VAL VARCHAR2(128)";	# Value of key $i
 	}
+#	$sql .= ", PRIMARY KEY (ED_SNGL_ID, ED_JOB_EVT, ED_APP)"
 	$sql .= ")";	#, CONSTRAINT pk_$ENV{EDTK_DBI_TABLENAME} PRIMARY KEY (ED_TSTAMP, ED_PROC, ED_SEQ)";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -246,6 +247,7 @@ sub create_table_FILIERES {
 	$sql .= ", ED_SORT VARCHAR2(128) NOT NULL";
 	$sql .= ", ED_DIRECTION VARCHAR2(4) NOT NULL";
 	$sql .= ", ED_POSTCOMP VARCHAR2(8) NOT NULL";
+#	$sql .= ", PRIMARY KEY (ED_IDFILIERE, ED_IDMANUFACT, ED_PRIORITE)"
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -259,13 +261,15 @@ sub create_table_LOTS {
 	my $sql = "CREATE TABLE $table";
 	$sql .= "( ED_IDLOT VARCHAR2(8)  NOT NULL";		# rendre UNIQUE 
 	$sql .= ", ED_PRIORITE INTEGER   UNIQUE"; 		# rendre UNIQUE 	ALTER table EDTK_LOTS modify ED_PRIORITE INTEGER UNIQUE;
-	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";
+	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";	# renommer en ed_refiddoc ATTENTION cf structure index.xls
 	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
 	$sql .= ", ED_FILTER VARCHAR2(64)";			# alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
 	$sql .= ", ED_GROUPBY VARCHAR2(16)"; 
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
 	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	
+	$sql .= ", ED_REFENC VARCHAR2(20) ";			# a mettre en place pour ajouter des encarts spécifiques à certains lots (cf impact calcul lotissement) # alter table EDTK_LOTS add ED_REFENC VARCHAR2(20)
+#	$sql .= ", PRIMARY KEY (ED_IDLOT, ED_PRIORITE, ED_IDAPPDOC)"
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -291,7 +295,7 @@ sub create_table_REFIDDOC {
 	$sql .= ", ED_REFIMP_PS VARCHAR2(16)"; 
 	$sql .= ", ED_REFIMP_REFIDDOC VARCHAR2(64)"; 
 	$sql .= ", ED_MAIL_REFERENT VARCHAR2(300)";		# referent mail for doc validation
-
+#	$sql .= ", PRIMARY KEY (ED_REFIDDOC, ED_CORP, ED_CATDOC)"
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -314,6 +318,7 @@ sub create_table_SUPPORTS {
 	$sql .= ", ED_OPTCTRL VARCHAR2(8)"; 
 	$sql .= ", ED_DEBVALID VARCHAR2(8)"; 
 	$sql .= ", ED_FINVALID VARCHAR2(8)"; 
+#	$sql .= ", PRIMARY KEY (ED_REFIMP, ED_TYPIMP)"
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -353,7 +358,7 @@ our @INDEX_COLS = (
 	['ED_HOST',	'VARCHAR2(32)'],		# Hostname de la machine d'ou origine cette entrée
 	['ED_IDIDX',	'VARCHAR2(7) NOT NULL'],	# identifiant de l'index
 	['ED_CATDOC',	'CHAR'],				# catégorie de document
-	['ED_CODRUPT',	'CHAR'],				# code forçage de rupture
+	['ED_CODRUPT',	'VARCHAR2(8)'],		# code forçage de rupture	ALTER table edtk_index modify ED_CODRUPT VARCHAR2(8);
 
 	# SECTION LOTISSEMENT DE L'INDEX
 	['ED_IDLOT',	'VARCHAR2(6)'],		# identifiant du lot
@@ -383,11 +388,11 @@ our @INDEX_COLS = (
 	['ED_NUMPGPLI','INTEGER NOT NULL'],	# numéro de la page (face) dans le pli
 	['ED_NBPGPLI',	'INTEGER'],			# nombre de pages (faces) du pli
 	['ED_NBFPLI',	'INTEGER'],			# nombre de feuillets du pli
-	['ED_LISTEREFENC','VARCHAR2(64)'],	# liste des encarts du pli
+	['ED_LISTEREFENC','VARCHAR2(64)'],		# liste des encarts du pli
 	['ED_PDSPLI',	'INTEGER'],			# poids du pli en mg
 	['ED_TYPOBJ',	'CHAR'],				# type d'objet dans le pli	xxxxxx  conserver ?
-	['ED_STATUS',	'VARCHAR2(8)'],			# status de lotissement (date de remise en poste ou status en fonction des versions)  # ALTER TABLE EDTK_INDEX ADD ED_STATUS VARCHAR2(8);  # attention très lourd a éxécuter ne pas faire en prod : UPDATE EDTK_INDEX SET ED_STATUS = ED_DTPOSTE;
-	['ED_DTPOSTE',	'VARCHAR2(8)']		# à supprimer : status de lotissement (date de remise en poste ou status en fonction des versions)  ALTER TABLE edtk_index rename ED_DTPOSTE to ED_STATUS VARCHAR2(8);
+	['ED_STATUS',	'VARCHAR2(8)'],		# status de lotissement (date de remise en poste ou status en fonction des versions)  # ALTER TABLE EDTK_INDEX ADD ED_STATUS VARCHAR2(8);  # attention très lourd a éxécuter ne pas faire en prod : UPDATE EDTK_INDEX SET ED_STATUS = ED_DTPOSTE;
+	['ED_DTPOSTE',	'VARCHAR2(8)']			# à supprimer : status de lotissement (date de remise en poste ou status en fonction des versions)  ALTER TABLE edtk_index rename ED_DTPOSTE to ED_STATUS VARCHAR2(8);
 
 );
 
@@ -402,6 +407,7 @@ sub create_table_PARA {
 	$sql .= ", ED_ID INTEGER NOT NULL";			#
 	$sql .= ", ED_TSTAMP VARCHAR2(14) NOT NULL";		# Timestamp of event
 	$sql .= ", ED_TEXTBLOC VARCHAR2(512)";
+#	$sql .= ", PRIMARY KEY (ED_PARA_REFIDDOC, ED_PARA_CORP)"
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -436,6 +442,7 @@ sub create_table_ACQUIT {
 	$sql .= ", ED_DTPOST2 VARCHAR2(8)";			# date de remise en poste		
 	$sql .= ", ED_DTCHECK VARCHAR2(8)";			# date de check
 	$sql .= ", ED_STATUS VARCHAR2(4)";				# check status
+#	$sql .= ", PRIMARY KEY (ED_SEQLOT, ED_LOTNAME)"
 	$sql .= ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
@@ -445,10 +452,10 @@ sub create_table_ACQUIT {
 sub create_table_INDEX {
 	my ($dbh, $table) = @_;
 
-	my $sql = "CREATE TABLE $table (" .
-	    join(', ', map {"$$_[0] $$_[1]"} @INDEX_COLS) . ", " .
-	    "PRIMARY KEY (ED_IDLDOC, ED_SEQDOC, ED_IDSEQPG)" .
-	")";
+	my $sql	= "CREATE TABLE $table ("
+			. join(', ', map {"$$_[0] $$_[1]"} @INDEX_COLS) . ", "
+			. " PRIMARY KEY (ED_IDLDOC, ED_SEQDOC, ED_IDSEQPG)"	# rajouter ED_SEQLOT ?
+			. ")";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or warn "WARN : " . $dbh->errstr . "\n";
 }
@@ -468,6 +475,7 @@ sub create_SCHEMA {
 	create_lot_sequence($dbh);
 	create_table_INDEX($dbh, $cfg->{'EDTK_DBI_OUTMNGR'});
 	$dbh->do('CREATE INDEX ed_seqlot_idx ON EDTK_INDEX (ed_seqlot)');
+	# vérifier les propositions de clés primaires et les index (attention à ne pas faire n'importe quoi)
 	create_table_TRACKING($dbh, $cfg->{'EDTK_DBI_TRACKING'}, $cfg->{'EDTK_MAX_USER_KEY'});
 		
 	create_table_ACQUIT($dbh);
@@ -488,3 +496,44 @@ sub _sql_fixup {
 }
 
 1;
+#
+#
+#10g SOC5> SELECT *
+#  2  FROM v$version;
+# 
+#BANNER
+#----------------------------------------------------------------
+#Oracle DATABASE 10g Enterprise Edition Release 10.1.0.3.0 - Prod
+#PL/SQL Release 10.1.0.3.0 - Production
+#CORE    10.1.0.3.0      Production
+#TNS FOR 32-bit Windows: Version 10.1.0.3.0 - Production
+#NLSRTL Version 10.1.0.3.0 - Production
+# 
+#5 ligne(s) sélectionnée(s).
+# 
+#10g SOC5> DESC dvp
+# Nom                            NULL ?    Type
+# ------------------------------- -------- ----
+# COL_NUM                                  NUMBER(12)
+# 
+#10g SOC5> SELECT *
+#  2  FROM dvp;
+# 
+#   COL_NUM
+#----------
+#        10
+#        12
+#   1000000
+#   5923146
+# 
+#4 ligne(s) sélectionnée(s).
+# 
+#10g SOC5> ALTER TABLE dvp RENAME COLUMN col_num TO col_renommee;
+# 
+#TABLE modifiée.
+# 
+#10g SOC5> DESC dvp
+# Nom                            NULL ?    Type
+# ------------------------------- -------- ----
+# COL_RENOMMEE                             NUMBER(12)
+#

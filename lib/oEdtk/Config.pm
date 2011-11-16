@@ -8,7 +8,7 @@ use Sys::Hostname;
 
 use Exporter;
 
-our $VERSION		= 0.03;
+our $VERSION		= 0.04;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(config_read);
 
@@ -34,8 +34,9 @@ sub config_read(@) {
 	} else {
 		$ini = "$dir/iniEdtk/tplate.edtk.ini";
 	}
- 	my $host = hostname();
-	my $uchost = uc($host);
+ 	my $uchost= hostname();
+	$uchost	= uc($uchost);
+
 
 	my %allcfg = ();
 	for (;;) {
@@ -50,6 +51,7 @@ sub config_read(@) {
 	# Get the DEFAULT and ENVDESC sections by default, override with the optional
 	# sections that we were given, and finally with the hostname section.
 	my %cfg = ();
+	$cfg{'EDTK_HOST'} = $uchost;
 	foreach ('DEFAULT', 'ENVDESC', @$sections, $uchost) {
 		if (exists $allcfg{$_}) {
 			%cfg = (%cfg, %{$allcfg{$_}});

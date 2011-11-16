@@ -5,7 +5,7 @@ BEGIN {
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
 		use strict;
 
-		$VERSION	= 0.6111; # a.ammr a.a année d'existence, mm mois, r release 
+		$VERSION	= 0.6112; # a.ammr a.a année d'existence, mm mois, r release 
 		@ISA		= qw(Exporter);
 		@EXPORT	= qw(oEdtk_version);
 }
@@ -49,7 +49,7 @@ here.
 
     sub main() {
         # File input and output opening
-        prodEdtkOpen($ARGV[0], $ARGV[1]);
+        oe_new_job($ARGV[0], $ARGV[1]);
         
         # Application initialisation (user defined)
         &initApp();
@@ -58,7 +58,7 @@ here.
         while (my $ligne=<IN>) {
             chomp ($ligne);
             # testing if $line match pre declared records
-            if (prodEdtk_rec(0, 3, $ligne)) {
+            if (oe_process_ref_rec(0, 3, $ligne)) {
             } else {
                 # If not, record is ignored
                 warn "INFO IGNORE REC. line $.\n";
@@ -66,7 +66,7 @@ here.
         }
         
         # Closing input and output file
-        prodEdtkClose($ARGV[0], $ARGV[1]);
+        oe_compo_link($ARGV[0], $ARGV[1]);
         return 1;
     }
 
@@ -74,10 +74,10 @@ here.
         # EXAMPLE : DECLARATION OF RECORD KEYED '016'
         # structure of record '016' for spliting/extraction
         # (could be delayed in 'pre_process' procedure)
-        recEdtk_motif("016", "A67 A20 A*");
+        oe_rec_motif("016", "A67 A20 A*");
         
         # compuset output declaration (only if necessary)
-        recEdtk_output("016", "<SK>%s<#DATE=%s><SK>%s");
+        oe_rec_output("016", "<SK>%s<#DATE=%s><SK>%s");
         return 1;
     }
 
@@ -88,7 +88,7 @@ here.
 
     sub main() {
         # File input and output opening
-        prodEdtkOpen($ARGV[0], $ARGV[1]);
+        oe_new_job($ARGV[0], $ARGV[1]);
         
         # Application initialisation (user defined)
         &initApp();
@@ -97,7 +97,7 @@ here.
         while (my $ligne=<IN>) {
             chomp ($ligne);
             # Testing if $line match pre declared records
-            if (prodEdtk_rec(0, 3, $ligne)){
+            if (oe_process_ref_rec(0, 3, $ligne)){
             } else {
             	# If not, record is ignored
             	warn "INFO IGNORE REC. line $.\n";
@@ -105,7 +105,7 @@ here.
         }
         
         # Closing input and output file
-        prodEdtkClose($ARGV[0], $ARGV[1]);
+        oe_compo_link($ARGV[0], $ARGV[1]);
         return 1;
     }
 
@@ -113,19 +113,19 @@ here.
         # EXAMPLE : DECLARATION OF RECORD KEYED '016'
         # process '&initDoc' done when record '016' is found,
         # before to proceed the record
-        # (mandatory only if no recEdtk_motif declared)
-        recEdtk_pre_process("016", \&initDoc);
+        # (mandatory only if no oe_rec_motif declared)
+        oe_rec_pre_process("016", \&initDoc);
         
         # structure of record '016' for spliting/extraction
         # (could be delayed in 'pre_process' procedure)
-        recEdtk_motif("016", "A67 A20 A*");
+        oe_rec_motif("016", "A67 A20 A*");
         
         # process '&format_date' after record is read
         # (only if necessary)
-        recEdtk_process("016", \&format_date);
+        oe_rec_process("016", \&format_date);
         
         # compuset output declaration (only if necessary)
-        recEdtk_output("016", "<SK>%s<#DATE=%s><SK>%s");
+        oe_rec_output("016", "<SK>%s<#DATE=%s><SK>%s");
         
         # process after building the output
         # (only if necessary)
@@ -144,28 +144,28 @@ When a sub or a function comes from the user script it's written like this :
 
 Functions or 'methods' from perl modules are written like this :
 
-    recEdtk_motif("016", "A67 A20 A*");
+    oe_rec_motif("016", "A67 A20 A*");
 
 =head1 INTERFACE
 
-=head2 prodEdtkOpen
+=head2 oe_new_job
 
-prodEdtkOpen( input_file, output_file, [single_job_id] )
+oe_new_job( input_file, output_file, [single_job_id] )
 
 This function opens and shares the main filehandles IN and OUT.  The parameter
 'single_job_id' is optional.  It is used to send the job id to the document
 builder application.
 
-=head2 prodEdtkClose
+=head2 oe_compo_link
 
-prodEdtkClose( input_file, output_file )
+oe_compo_link( input_file, output_file )
 
 This function closes the main filehandles IN and OUT.  Filenames in parameters
 are used for information, but they are mandatory.
 
-=head2 prodEdtk_rec
+=head2 oe_process_ref_rec
 
-prodEdtk_rec( offset_Key, key_Length, Record_Line, [offset_of_Rec, Record_length] )
+oe_process_ref_rec( offset_Key, key_Length, Record_Line, [offset_of_Rec, Record_length] )
 
 This function process the record line referenced in parameters as described with
 'recEdtk_' tools (see below). It's made for fixed size records.
@@ -185,7 +185,7 @@ Mandatory parameters:
 =item *
 
 'Record_Line' is a reference to the record line you are working on
-(C<prodEdtk_rec> uses the reference of the line)
+(C<oe_process_ref_rec> uses the reference of the line)
 
 =back
 
@@ -204,7 +204,7 @@ the line (if you want to cut down the begging of the line)
 
 =back
 
-The C<prodEdtk_rec> function works by ordered key size, from the left to the
+The C<oe_process_ref_rec> function works by ordered key size, from the left to the
 right.  You should use it by working first with the biggest record to the
 smallest one.
 
@@ -217,21 +217,21 @@ Examples :
  	record '600'  :	***600-value_A4 value_B5 value_C6
 
 	record definitions (in fact, the order is not important here) :
-		recEdtk_motif	("zzza","A4 A2 A8  A8 A7 A*");
-		recEdtk_motif	("ywba","A4 A2 A16 A7 A*");
-		recEdtk_motif	("abc", "A3 A8 A8  A7 A*");
-		recEdtk_motif	("016", "A3 A3 A1  A9 A9 A7 A*");
-		recEdtk_motif	("600", "A3 A1 A9  A9 A7 A*");
+		oe_rec_motif	("zzza","A4 A2 A8  A8 A7 A*");
+		oe_rec_motif	("ywba","A4 A2 A16 A7 A*");
+		oe_rec_motif	("abc", "A3 A8 A8  A7 A*");
+		oe_rec_motif	("016", "A3 A3 A1  A9 A9 A7 A*");
+		oe_rec_motif	("600", "A3 A1 A9  A9 A7 A*");
 
 	you will process from left to right, from bigest to smallest :
-		if (prodEdtk_rec(0, 4, $ligne)) {
+		if (oe_process_ref_rec(0, 4, $ligne)) {
 			# this will process both records 'zzza' and 'ywba' .
 
-		} elsif (prodEdtk_rec(0, 3, $ligne, 3)) {
+		} elsif (oe_process_ref_rec(0, 3, $ligne, 3)) {
 			# this will process records 'abc'
 			# (and cut away first 3 caracters of the record line).
 
-		} elsif (prodEdtk_rec(3, 3, $ligne, 6)) {
+		} elsif (oe_process_ref_rec(3, 3, $ligne, 6)) {
 			# this will process both records '016' and '600'
 			# (and cut away first 6 caracters of the record line).
 			
@@ -240,12 +240,12 @@ Examples :
 			warn "INFO IGNORE REC. line $.\n";
 		}
 
-The C<prodEdtk_rec> function returns 1 when it recognizes and processes the
-record (including the output if C<recEdtk_output> is defined). Values extracted
+The C<oe_process_ref_rec> function returns 1 when it recognizes and processes the
+record (including the output if C<oe_rec_output> is defined). Values extracted
 from the record are split into the C<@DATATAB> oEdtk global array.
-C<prodEdtk_rec> returns 0 when it could not recognize the record.
+C<oe_process_ref_rec> returns 0 when it could not recognize the record.
 
-The C<prodEdtk_rec> function makes these differents steps :
+The C<oe_process_ref_rec> function makes these differents steps :
 
 =over 4
 
@@ -255,19 +255,19 @@ look if there is a record key corresponding
 
 =item 2.
 
-run the pre-process function if defined (see L</recEdtk_pre_process>)
+run the pre-process function if defined (see L</oe_rec_pre_process>)
 
 =item 3.
 
-unpack the record according to recEdtk_motif definition into C<@DATATAB>
+unpack the record according to oe_rec_motif definition into C<@DATATAB>
 
 =item 4.
 
-run the process function if defined (see L</recEdtk_process>)
+run the process function if defined (see L</oe_rec_process>)
 
 =item 5.
 
-build output if recEdtk_output is defined
+build output if oe_rec_output is defined
 
 =item 6.
 
@@ -275,48 +275,48 @@ run the post-process function if defined (see L</recEdtk_post_process>)
 
 =back
 
-=head2 recEdtk_motif
+=head2 oe_rec_motif
 
-recEdtk_motif( Record_Key_ID, Record_Template )
+oe_rec_motif( Record_Key_ID, Record_Template )
 
 Create a record with the 'Record_Key_ID' identifier or type.  This key
 identifier should be in the record.  This function defines the 'Record_Template'
 used to expand / extract the record (see L<unpack|perlfunc/unpack> for template
 description).  This function is mandatory, but cannot be defined after
-C<recEdtk_pre_process>.
+C<oe_rec_pre_process>.
 
 Example :
 
-    recEdtk_motif("016", "A2 A10 A15 A10 A15 A*");
+    oe_rec_motif("016", "A2 A10 A15 A10 A15 A*");
 
 It is recommended to add 'A*' at the end of the template to cut away any
 unexpected data that will remain at the end of the record.
 
-=head2 recEdtk_process
+=head2 oe_rec_process
 
-recEdtk_process( Record_Key_ID, \&user_sub_reference )
+oe_rec_process( Record_Key_ID, \&user_sub_reference )
 
 This function links the record 'Record_Key_ID' with a process sub. This sub is
 called after the extraction / expanding of the record.  When this process is
 defined, it's called before the building of the output (if defined, see
-L</recEdtk_output>).  You can access the expanded data by reading/writing global
+L</oe_rec_output>).  You can access the expanded data by reading/writing global
 tab C<@DATATAB>.  This function is optional.
 
-=head2 recEdtk_output
+=head2 oe_rec_output
 
-recEdtk_output( Record_Key_ID, Output_Template )
+oe_rec_output( Record_Key_ID, Output_Template )
 
 This function defines an 'Output_Template' for the record 'Record_Key_ID'. This
 template is used to build the output file (see L<sprintf|perlfunc/sprintf> for
 the template description).  The output is built after the record process
-(L</recEdtk_process> if this one is defined).  You can access the expanded data
+(L</oe_rec_process> if this one is defined).  You can access the expanded data
 by reading/writing global tab C<@DATATAB>.  This function is optional.  If no
-C<recEdtk_output> is defined for the 'Record_Key_ID', the record would be erased
+C<oe_rec_output> is defined for the 'Record_Key_ID', the record would be erased
 at the next record process.
 
 Example :
 
-    recEdtk_output("016", "<SK>%s<#DATE=%s><SK>%s");
+    oe_rec_output("016", "<SK>%s<#DATE=%s><SK>%s");
 
 =head2 recEdtk_post_process
 

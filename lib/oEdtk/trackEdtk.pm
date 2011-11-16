@@ -178,14 +178,14 @@ sub prepare_Tracking_Env() {
 	my $iniEdtk	=ini_Edtk_Conf();
 	conf_To_Env($iniEdtk, 'ENVDESC');
 	conf_To_Env($iniEdtk, 'EDTK_DB');
-	maj_sans_accents($ENV{EDTK_TRACK_MODE});
+	oe_uc_sans_accents($ENV{EDTK_TRACK_MODE});
 
 1;
 }
 
 sub open_Tracking_Env(){
 	if ($ENV{EDTK_TRACK_MODE} =~/FDB/i){
-		# DB FILE NOWTIME/PROCESS
+		# DB FILE oe_now_time/PROCESS
 		$ENV{EDTK_DBI_DNS}=~s/(.+)\.(\w+)$/$1\.$ED_TSTAMP\.$ED_PROC\.$2/;
 		warn "INFO tracking to $ENV{EDTK_DBI_DSN}\n";
 		create_Track_Table($ENV{EDTK_DBI_DSN});
@@ -236,7 +236,7 @@ sub init_Tracking(;@){
 	define_Job_Evt ($Typ_Job);	# S(pool) by default
 	define_Job_User($Job_User);	# user job request, by default 'None'
 	$ED_HOST	=hostname();
-	$ED_TSTAMP	=nowTime();
+	$ED_TSTAMP	=oe_now_time();
 	$ED_PROC	=$$;
 	$ED_SEQ		=0;			# (dynamic, private)
 	$ED_SNGL_ID	= md5_base64($ED_HOST.$ED_TSTAMP.$ED_PROC);
@@ -273,7 +273,7 @@ sub track_Obj (;@){
 	@ED_K_VAL =@_;
 
 	undef @TRACKED_OBJ;
-	push (@TRACKED_OBJ, nowTime());
+	push (@TRACKED_OBJ, oe_now_time());
 	push (@TRACKED_OBJ, $ED_USER);
 	push (@TRACKED_OBJ, $ED_SEQ);
 	push (@TRACKED_OBJ, $ED_SNGL_ID);
@@ -360,7 +360,7 @@ sub define_Track_Key ($;$) {
 	if ($value) { $ED_K_NAME[$indice] =$value; }
 
 	$ED_K_NAME[$indice] =~ s/\s/\_/g;
-	maj_sans_accents($ED_K_NAME[$indice]);
+	oe_uc_sans_accents($ED_K_NAME[$indice]);
 
 return $ED_K_NAME[$indice];
 }

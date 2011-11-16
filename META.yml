@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               oEdtk
-version:            0.6111
+version:            0.6112
 abstract:           ~
 author:
     - oEdtk group <oedtk@free.fr>
@@ -26,6 +26,7 @@ requires:
     File::Path:           0
     List::MoreUtils:      0
     List::Util:           0
+    Math::Round:          0.06
     Net::FTP:             0
     overload:             0
     Scalar::Util:         0

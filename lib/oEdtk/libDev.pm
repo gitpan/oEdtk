@@ -20,7 +20,7 @@ BEGIN {
 		use strict;
 		use warnings;
 
-		$VERSION	= 0.314;
+		$VERSION	= 0.316;
 		@ISA		= qw(Exporter);
 		@EXPORT		= qw(
 					$NOK
@@ -105,7 +105,7 @@ sub run_Edtk_dev() {
 	my $styleApp=$ENV{EDTK_DIR_SCRIPT}."/".$ENV{EDTK_PRGNAME};
 	env_Var_Completion($styleApp);
 	env_Var_Completion($ENV{EDTK_DIR_APPTMP});
-	warn "INFO : ".nowTime()." -START- \n";
+	warn "INFO : ".oe_now_time()." -START- \n";
 
 	my $doclean = 1;
 	if (-e "$styleApp.".$ENV{EDTK_EXT_COMSET}) {
@@ -115,7 +115,7 @@ sub run_Edtk_dev() {
 				
 		&conf_To_Env($iniEdtk, 'COMSET');
 		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}); #, $work_file); #
-		warn "INFO : ".nowTime()." -END Perl- \n";
+		warn "INFO : ".oe_now_time()." -END Perl- \n";
 		
 		if ($ctrl eq $NOK) {
 			warn "ERROR : return $? in prep_Edtk_Data\n";
@@ -159,12 +159,13 @@ sub run_Edtk_dev() {
 		# Cas LaTeX
 		$doclean = 0;
 		$ENV{EDTK_DOC_OUTPUT}= "$ENV{EDTK_FDATAOUT}.$ENV{EDTK_EXT_WORK}";
-		$ENV{EDTK_EXT_DEFAULT}=$ENV{EDTK_EXT_WORK};
+# xxxxxxxx vérifier mais on en a pluls besoin maintenant que c'est rodé (plus la peine de vérifier les intermédiaires)
+#		$ENV{EDTK_EXT_DEFAULT}=$ENV{EDTK_EXT_WORK};
 
 		chdir($ENV{EDTK_DIR_APPTMP})
 		    or die "Cannot change current directory: $!\n";
 		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}); #, $ENV{EDTK_DOC_OUTPUT});	
-		warn "INFO : ".nowTime()." -END Extract- \n";
+		warn "INFO : ".oe_now_time()." -END Extract- \n";
 		
 		if ($ctrl eq $NOK) {
 			warn "ERROR : return $? in prep_Edtk_Data\n";
@@ -176,7 +177,7 @@ sub run_Edtk_dev() {
 		}
 	}
 
-	warn "INFO : ".nowTime()." -END- \n";
+	warn "INFO : ".oe_now_time()." -END- \n";
 
 	# si tout c correctement deroulé, vidage des tmp
 	# $| = 1; # autoflush
@@ -300,7 +301,7 @@ sub lastLong($) {
 	my $chaine =shift;
 	$chaine =~s/-/ /g;
 	$chaine =~s/_/ /g;
-	trimSP($chaine);
+	oe_trimp_space($chaine);
 
 	# Si MOTIF contient des parenthèses (et donc des sous-motifs), un élément supplémentaire est créé 
 	# dans le tableau résultat pour chaque chaîne reconnue par le sous-motif.
@@ -328,7 +329,7 @@ sub lastCourt ($) {
 	my $chaine =shift;
 	$chaine=~s/-/ /g;
 	$chaine=~s/_/ /g;
-	trimSP($chaine);
+	oe_trimp_space($chaine);
 	my @mots =split(" ",$chaine); 
 	my ($mot, $motCourt);
 	my $taille=1000;
