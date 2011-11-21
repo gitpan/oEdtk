@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.26;
+our $VERSION	= 0.27;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -159,12 +159,7 @@ sub omgr_track_folds ($;$){
 
 	my $fmt = "%-20s %-20s %-10s %9s %9s %7s %9s %8s %8s";
 	my @head= ("REFIDDOC", "CORP", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
-	foreach my $row (@$rows) {
-		for (my $i=0; $i<=$#$row ; $i++){
-			$$row[$i] = $$row[$i] || ""; # DANS LE CAS DE SEQLOT IL PEUT ARRIVER QU'IL NE SOIT PAS ENCORE RENSEIGNE	
-		}
-		# push (@tlist, printf ("%-16s %9s %9s %9s %8s %8s %7s %-10s %s\n", @$row));
-	}
+	_filled_rows($rows);
 
 	# return @tlist;
 	@$rows = (\$fmt, \@head, @$rows);
@@ -951,8 +946,8 @@ sub _omgr_purge_db($$) {
 }
 
 
-sub omgr_check_seqlot_ref ($$){
-	my ($dbh, $value) = @_;
+sub omgr_check_seqlot_ref ($$;$){
+	my ($dbh, $value, $idseqpg) = @_;
 	my $cfg = config_read('EDTK_STATS');
 	my $type = "SEQLOT";
 	my $sql;
@@ -961,7 +956,8 @@ sub omgr_check_seqlot_ref ($$){
 		. " COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_IDSEQPG,'FM0000000')) AS NBPGS,"
 		. " A.ED_SEQLOT,"
 		. " COUNT (DISTINCT A.ED_IDLDOC||A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NBPLIS,"
-		. " NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS"
+		. " NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS,"
+		. " B.ED_DTPOST AS DTPOST, B.ED_DTPOST2 AS DTPOST2"
 		. " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B"
 		. " WHERE A.ED_SEQLOT=B.ED_SEQLOT (+)";
 
@@ -969,26 +965,39 @@ sub omgr_check_seqlot_ref ($$){
 	if ($value =~/^\d{6,7}$/) { # 381123 or 1381123
 		$type = "SEQLOT";
 		$sql .=" AND A.ED_SEQLOT = ?"
-			. " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_STATUS";
+			. " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_STATUS, B.ED_DTPOST, B.ED_DTPOST2 ";
+		$idseqpg=0;
 
 	} elsif ($value =~/^\d{16}$/) { # 1282152443057128
 		$type = "IDLDOC";
-		$sql .=" AND A.ED_IDLDOC = ?"
-			. " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_STATUS";
+		$sql .=" AND A.ED_IDLDOC = ?";
+		if (defined $idseqpg && $idseqpg>0) {
+			$sql .=" AND A.ED_IDSEQPG = ?";
+		}
+		$sql .=" GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC, A.ED_SEQLOT, B.ED_STATUS, A.ED_STATUS, B.ED_DTPOST, B.ED_DTPOST2 ";
 	
 	} else {
 		die "ERROR: $value doesn't seem to be SEQLOT OR IDLDOC\n";	
 	}
 
 	my $sth = $dbh->prepare($sql);
-	$sth->execute($value);
+	if (defined $idseqpg && $idseqpg>0) {
+		$sth->execute($value, $idseqpg);
+	} else {
+		$sth->execute($value);
+	}
 
 	my $rows = $sth->fetchall_arrayref();
 	if ($#$rows<0) {
 		warn "INFO : pas de donnees associees.\n";
 		exit;
 	}
-	warn sprintf "INFO : %-7s %-16s %-16s %9s %-7s %9s %10s\n", "NB_DOCS", "REFIDDOC", "IDLDOC", "NB_PG", "SEQLOT", "NB_PLIS", "STATUS";
+	my $fmt = "%10s %-16s %-16s %9s %-7s %9s %10s %8s %8s";
+	my @head= ("NB_DOCS", "REFIDDOC", "IDLDOC", "NB_PG", "SEQLOT", "NB_PLIS", "STATUS", "DTPOST", "DTPOST2");
+
+	#warn sprintf "INFO : %-7s %-16s %-16s %9s %-7s %9s %10s %8s %8s\n", "NB_DOCS", "REFIDDOC", "IDLDOC", "NB_PG", "SEQLOT", "NB_PLIS", "STATUS", "DTPOST", "DTPOST2";
+	_filled_rows($rows);
+	@$rows  = (\$fmt, \@head, @$rows);
 
 return $rows;
 }
@@ -1173,6 +1182,20 @@ sub _get_seqlot {
 	}
 	my ($seqlot) = $dbh->selectrow_array($sql);
 	return $seqlot;
+}
+
+
+sub _filled_rows(\@){
+	# pour s'assurer que chaque cellule contient au moins un blanc et éviter les warning de printf en cas de fusion avec une cellule non définie
+	my $refRows  =shift;
+
+	foreach my $row (@$refRows) {
+		for (my $i=0; $i<=$#$row ; $i++){
+			$$row[$i] = $$row[$i] || ""; # DANS LE CAS DE SEQLOT IL PEUT ARRIVER QU'IL NE SOIT PAS ENCORE RENSEIGNE	
+		}
+	}
+
+return @{$refRows};
 }
 
 

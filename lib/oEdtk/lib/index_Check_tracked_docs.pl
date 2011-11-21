@@ -55,16 +55,17 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	$idldocKey .="%"; # étrangement pour les cas week et \d2 on a le message suivant si on met % dans le sprintf : Invalid conversion in sprintf: end of string at C:\Sources\edtk_MNT\lib\index_Check_docs_omgr.pl line 44. 
 	push (@sql_values, $idldocKey);
 
-	$select	= "SELECT COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS, A.ED_REFIDDOC, A.ED_IDLDOC "; 
+	$select	= "SELECT COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS, B.ED_APP, B.ED_SNGL_ID "; 
 	$sql		= " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, " . $cfg->{'EDTK_STATS_TRACKING'} . " B "
-				. " WHERE A.ED_IDLDOC=B.ED_SNGL_ID AND B.ED_JOB_EVT='J' AND  A.ED_IDLDOC LIKE ? ";
+				. " WHERE B.ED_SNGL_ID=A.ED_IDLDOC (+) AND B.ED_JOB_EVT='J' AND  B.ED_SNGL_ID LIKE ? ";
+#				. " AND ROWNUM<1000 "; # le probleme c'est que ROWNUM contient le détail des lignes avant regroupement par lot
 #				. " WHERE A.ED_IDLDOC=B.ED_SNGL_ID AND B.ED_JOB_EVT='J' AND A.ED_SEQLOT != 'ANO' AND A.ED_SEQLOT LIKE ? ";
-	$groupby  = " GROUP BY A.ED_REFIDDOC, A.ED_IDLDOC ";
-	$orderby	= " ORDER BY A.ED_REFIDDOC, A.ED_IDLDOC ";
+	$groupby  = " GROUP BY B.ED_APP, B.ED_SNGL_ID ";
+	$orderby	= " ORDER BY B.ED_APP, NB_DOCS, B.ED_SNGL_ID ASC";
 
 	my $col = "";
 	if 		($refiddoc) { 
-		$sql .= " AND ED_REFIDDOC = ? ";
+		$sql .= " AND B.ED_APP = ? ";
 		push (@sql_values, $refiddoc);
 	}
 
@@ -90,10 +91,19 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 
 	$sql = $select . $sql . $groupby . $orderby;
 
+#warn "\nINFO : $sql\n\n";
+
 	my $sth = $dbh->prepare($sql);
 	$sth->execute(@sql_values);
 
 	my $rows= $sth->fetchall_arrayref();
+		foreach my $row (@$rows) {
+		for (my $i=0; $i<=$#$row ; $i++){
+			$$row[$i] = $$row[$i] || ""; # DANS LE CAS DE SEQLOT IL PEUT ARRIVER QU'IL NE SOIT PAS ENCORE RENSEIGNE	
+		}
+		# push (@tlist, printf ("%-16s %9s %9s %9s %8s %8s %7s %-10s %s\n", @$row));
+	}
+
 	warn sprintf "INFO : %6s %-15s %-16s %s  from EDTK_STATS_OUTMNGR\n", "NB_DOCS", "REFIDDOC", "IDLDOC", $col;
 
 ################################################################################
@@ -108,5 +118,5 @@ foreach my $row (@$rows) {
 		for (my $i=0; $i<=$#$row ; $i++){
 			$$row[$i] = $$row[$i] || ""; # CERTAINES VALEURS PEUVENT NE PAS ÊTRE RENSEIGNÉES DANS CERTAINS CAS	
 		}
-	printf "%14d %-15s %16s %s \n", @$row, ""; # 1391152325098839
+	printf "%14s %-15s %16s %s \n", @$row, ""; # 1391152325098839
 }
