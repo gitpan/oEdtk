@@ -112,8 +112,8 @@ sub oe_define_TeX_output(){
 	# \long\gdef\PRENOM{MIREILLE}\long\gdef\DATE{01/08/2009}\long\gdef\NICY{10}\STARTGAR
 	$TAG_OPEN	= "\\";		# une ouverture de balise (open)
 	$TAG_CLOSE	= "";		# une fermeture de balise (close)
-	$TAG_MARKER	= "";		# un marqueur de début de balise 
-	$TAG_ASSIGN	= "long\\gdef\\\{";	# un marqueur d'attribution de valeur 
+	$TAG_MARKER	= "";		# un marqueur de début de balise
+	$TAG_ASSIGN	= "long\\gdef\\\{";	# un marqueur d'attribution de valeur
 	$TAG_ASSIGN_CLOS= "\}"; 	# un marqueur fermeture d'attribution de valeur
 	$TAG_COMMENT	= "%";		# un commentaire (rem)
 	$TAG_L_SET	= "";		# attribution de variable : partie gauche
@@ -136,7 +136,7 @@ oe_define_TeX_output();		# valeurs par défaut
 		# 	oe_rec_motif ($keyRec, "A2 A10 A15 A10 A15 A*");
 		my $keyRec=shift;
 		my $motif =shift;
-		$motifs{$keyRec}=$motif;	
+		$motifs{$keyRec}=$motif;
 	1;
 	}
 
@@ -145,13 +145,13 @@ oe_define_TeX_output();		# valeurs par défaut
 		#  ce traitement est effectué avant le chargement de l'enregistrement dans DATATAB
 		#  le contenu de l'enregistrement précédent est toujours disponible dans DATATAB
 		#  le type de l'enregistrement courant est connu dans le contexte d'execution
-		# 
+		#
 		#  appel :
 		# 	oe_rec_pre_process ($keyRec, \&fonction);
 		my $keyRec=shift;
 		my $refFonction=shift;
 		$evalSsTrt{$keyRec}[0]=$refFonction;
-	1;	
+	1;
 	}
 
 	sub oe_rec_output ($$){		# migrer oe_rec_output
@@ -161,7 +161,7 @@ oe_define_TeX_output();		# valeurs par défaut
 		# 	oe_rec_output ($keyRec, "<#GESTION=%s><#PENOCOD=%s><#LICCODC=%s><SK>%s");
 		my $keyRec=shift;
 		my $format=shift;
-		$ouTags{$keyRec}=$format;	
+		$ouTags{$keyRec}=$format;
 	1;
 	}
 
@@ -175,8 +175,8 @@ sub oe_define_Compuset_output(){
 	$TAG_MODE	= 'C7';
 	$TAG_OPEN	= '<';		# une ouverture de balise (open)
 	$TAG_CLOSE	= '>';		# une fermeture de balise (close)
-	$TAG_MARKER	= '#';		# un marqueur de début de balise 
-	$TAG_ASSIGN	= '=';		# un marqueur d'attribution de valeur 
+	$TAG_MARKER	= '#';		# un marqueur de début de balise
+	$TAG_ASSIGN	= '=';		# un marqueur d'attribution de valeur
 	$TAG_ASSIGN_CLOS= ''; 		# un marqueur fermeture d'attribution de valeur
 	$TAG_COMMENT	= '<SK>';	# un commentaire (rem)
 	$TAG_L_SET	= '<SET>';	# attribution de variable : partie gauche
@@ -206,7 +206,7 @@ sub fmt_monetary($) {	# cf oe_num2txt_us / oe_compo_set_value
 	return $mnt;
 }
 
-sub fmt_address(@) {		# migrer c7_oe_fmt_adr 
+sub fmt_address(@) {		# migrer c7_oe_fmt_adr
 	my @addr = map { oe_clean_addr_line($_) } @_;
 	return reduce { "$a<nlIF>$b" } @addr;
 }
@@ -257,8 +257,8 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 		# 	recEdtk_erase ($keyRec);
 		my $keyRec=shift;
 		$evalSsTrt{$keyRec}[0]="";
-		$evalSsTrt{$keyRec}[1]="";	
-		$evalSsTrt{$keyRec}[2]="";	
+		$evalSsTrt{$keyRec}[1]="";
+		$evalSsTrt{$keyRec}[2]="";
 		$motifs{$keyRec}="";
 		$ouTags{$keyRec}="-1";
 	1;
@@ -290,7 +290,7 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 		$motif	||="A*";
 		my $output=shift;
 		$output	||="%s";
-		$motifs{$keyRec}.=$motif;	
+		$motifs{$keyRec}.=$motif;
 		$ouTags{$keyRec}.=$output;
 		$ouTags{$keyRec}=~s/^\-1//; # lorsque recEdtk_join_tmplte est utilisé pour définir ouTags dynamiquement en cours de oe_trt_ref_rec, la valeur par défaut de ouTags = '-1' (pas de traitement) => on le retire pour ne pas polluer la sortie
 	1;
@@ -305,7 +305,7 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 		# 	oe_rec_process ($keyRec, \&fonction);
 		my $keyRec=shift;
 		my $refFonction=shift;
-		$evalSsTrt{$keyRec}[1]=$refFonction;	
+		$evalSsTrt{$keyRec}[1]=$refFonction;
 	1;
 	}
 
@@ -318,7 +318,7 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 		# 	recEdtk_post_process ($keyRec, \&fonction);
 		my $keyRec=shift;
 		my $refFonction=shift;
-		$evalSsTrt{$keyRec}[2]=$refFonction;	
+		$evalSsTrt{$keyRec}[2]=$refFonction;
 	1;
 	}
 
@@ -343,7 +343,7 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 
 		if (${$refLigne}=~m/^.{$offsetKey}(\w{$lenKey})/s && oe_trt_ref_rec($1,$refLigne,$offsetRec,$lenRec)){
 			# l'enregistrement a été identifié et traité
-			# on édite l'enregistrement 
+			# on édite l'enregistrement
 			print OUT ${$refLigne};
 			return 1;
 		}
@@ -363,7 +363,7 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 		my $offsetRec	=shift;		# OFFSET OPTIONNEL DE DONNÉES À SUPPRIMER EN TÊTE DE LIGNE
 		my $lenRec	=shift;		# LONGUEUR ÉVENTUELLE DE DONNÉEES À TRAITER
 		# VALEURS PAR DÉFAUT
-		$ouTags{$Rec_ID} 	||="-1"; 
+		$ouTags{$Rec_ID} 	||="-1";
 		$motifs{$Rec_ID} 	||="";
 		$offsetRec 		||=0;
 		$lenRec			||="";
@@ -384,40 +384,40 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 
 		$PREVIOUS_REC	=$CURRENT_REC;
 		$CURRENT_REC	=$Rec_ID;
-	
+
 		# STEP 0 : EVAL PRE TRAITEMENT de $refLigne
 		&{$evalSsTrt{$Rec_ID}[0]}($refLigne) if $evalSsTrt{$Rec_ID}[0];
-		
+
 		# ON S'ASSURE DE BIEN VIDER LE TABLEAU DE LECTURE DE L'ENREGISTREMENT PRECEDENT
 		undef @DATATAB;
 
 		# EVENTUELLEMENT SUPPRESSION DES DONNEES NON UTILES (OFFSET ET HORS DATA UTILES (lenData))
 		${$refLigne}=~s/^.{$offsetRec}(.{1,$lenRec}).*/$1/ if ($offsetRec > 0);
-		
+
 		# ECLATEMENT DE L'ENREGISTREMENT EN CHAMPS
-		@DATATAB =unpack ($motifs{$Rec_ID},${$refLigne}) 
+		@DATATAB =unpack ($motifs{$Rec_ID},${$refLigne})
 				or die "ERROR: oe_trt_ref_rec() > LIGNE $. typEnr >$Rec_ID< motif >$motifs{$Rec_ID}< UNKNOWN\n";
-		
+
 		# STEP 1 : EVAL TRAITEMENT CHAMPS
 		&{$evalSsTrt{$Rec_ID}[1]} if $evalSsTrt{$Rec_ID}[1];
-		
+
 		# STRUCTURATION DE L'ENREGISTREMENT POUR SORTIE
 		if ($ouTags{$Rec_ID} ne "-1"){
 			${$refLigne}  ="${TAG_OPEN}a${Rec_ID}${TAG_CLOSE}";
-			${$refLigne} .=sprintf ($ouTags{$Rec_ID},@DATATAB) 
+			${$refLigne} .=sprintf ($ouTags{$Rec_ID},@DATATAB)
 						or die "ERROR: oe_trt_ref_rec() > LIGNE $. typEnr >$Rec_ID< ouTags >$ouTags{$Rec_ID}<\n";
 			${$refLigne} .="${TAG_OPEN}e${Rec_ID}${TAG_CLOSE}\n";
 		} else {
 			${$refLigne}="";
 		}
 		$LAST_ENR=$Rec_ID;
-		
+
 		# STEP 2 : EVAL POST TRAITEMENT
 		&{$evalSsTrt{$Rec_ID}[2]} if $evalSsTrt{$Rec_ID}[2];
-	
-		# ÉVENTUELLEMENT AJOUT DE DONNÉES COMPLÉMENTAIRES 
+
+		# ÉVENTUELLEMENT AJOUT DE DONNÉES COMPLÉMENTAIRES
 		${$refLigne} .=$PUSH_VALUE;
-		$PUSH_VALUE ="";	
+		$PUSH_VALUE ="";
 		${$refLigne} =~s/\s{2,}/ /g;	#	CONCATÉNATION DES BLANCS
 		#$LAST_ENR=$Rec_ID;
 
@@ -432,7 +432,7 @@ sub c7Flux(\$) {		# migrer c7_oe_ref_norm_flux
 	sub prodEdtk_Previous_Rec () {		# migrer oe_previous_rec
 		return $PREVIOUS_REC;
 	}
-	
+
 	sub prodEdtk_Current_Rec () {		# migrer oe_current_rec
 		return $CURRENT_REC;
 	}
@@ -448,7 +448,7 @@ sub oe_round ($;$){
 	my $value	=	shift;
 	my $multiple=	shift;
 	my $decimal;#=	shift;
-	
+
 	#if (!(defined $decimal)){$decimal = 2;}	# decimal peut valoir 0 (decimal converti en entier)
 	if (!(defined $multiple)){$multiple = .01;}	# $multiple peut valoir 0 (decimal converti en entier)
 	if ($multiple=~/^0\./){
@@ -511,7 +511,7 @@ return ${$refMontant};
 
 
 sub date2time ($){		# migrer oe_date_to_time
-	# FONCTION DÉPRÉCIÉE, 
+	# FONCTION DÉPRÉCIÉE,
 	# UTILISER LA BIBLIOTHÈQUE SPÉCIALISÉE : Date::Calc
 	my $date=shift; # une date au format AAAAMMJJ
 
@@ -544,7 +544,7 @@ return ($time+($decalage*$jours*86400)), ($decalage*$jours);
 
 
 sub oe_now_time(){			# migrer oe_now_time
-	# FONCTION DÉPRÉCIÉE, 
+	# FONCTION DÉPRÉCIÉE,
 	# UTILISER LA BIBLIOTHÈQUE SPÉCIALISÉE : Date::Calc -> Today
 
 	my $time =time;
@@ -552,7 +552,7 @@ sub oe_now_time(){			# migrer oe_now_time
 		gmtime($time);
 	$time =sprintf ("%4.0f%02.0f%02.0f%02.0f%02.0f%02.0f", $year+1900, $mon+1, $mday, $hour, $min, $sec);
 
-return $time;	
+return $time;
 }
 
 
@@ -573,7 +573,7 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 
 	chomp($$rLine);	# pour être sûr de ne pas avoir de retour à la ligne en fin de champ
 	oe_trimp_space($rLine);
-	
+
 	# à faire : une expression régulière qui traite tout ce qui n'est pas 0-9\-\°\w par des blancs...
 	#      ===> externaliser la liste des caractères à modifier
 	$$rLine =~ s/\./ /g;	# on remplace les points
@@ -588,7 +588,7 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	$$rLine =~ s/\]/ /g;	# on remplace les ']' (touche alpha num °)
 	$$rLine =~ s/\[/ /g;	# on remplace les ']' (pas d'explication...)
 	$$rLine =~ s/\¨/ /g;	# on remplace les '¨' (pas d'explication...)
-	
+
 	$$rLine =~ s/^\s+//;	# on supprime les blancs consécutifs en début de chaîne (on a fait un oe_trimp_space en premier...) TRIM gauche
 	$$rLine =~ s/\s+$//;	# on supprime les blancs consécutifs en fin de chaîne (...) TRIM droite
 	$$rLine =~ s/^0\s+//;	# on supprime les zéros tout seul en début de chaine (on le passe en dernier, après les TRIM gauche)
@@ -613,7 +613,7 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	return $$rLine;
 }
 
-sub oe_oe_uc_sans_accents (\$) {	
+sub oe_oe_uc_sans_accents (\$) {
 	# CETTE FONCTION CONVERTIT LES CARACTÈRES ACCENTUÉS MAJUSCULES EN CARACTÈRES NON ACCENTUÉS MAJ
 	# l'utilisation de la localisation provoque un bug dans la commande "sort".
 	# On ne s'appuie pas sur la possibilité de rétablir le comportement par défaut par échappement
@@ -624,7 +624,7 @@ sub oe_oe_uc_sans_accents (\$) {
 	#
 	# l'appel de la fonction se fait par passage de référence implicite
 	#	oe_char_no_accents($chaine);
-	
+
 	my $refChaine  =shift;
 	${$refChaine}||="";
 	${$refChaine}=~s/[ÀÂÄ]/A/g;
@@ -636,7 +636,7 @@ sub oe_oe_uc_sans_accents (\$) {
 	# on ne reprend pas la commande uc qui peut être faite avant appel à oe_oe_uc_sans_accents
 	# - soit on veut garder les minuscules accentuées, soit on veut tout capitaliser
 	## ${$refChaine}= uc ${$refChaine};
-	
+
 return ${$refChaine};
 }
 
@@ -651,7 +651,7 @@ sub oe_uc_sans_accents (\$) {	# migrer oe_uc_sans_accents
 	#
 	# l'appel de la fonction se fait par passage de référence implicite
 	#	oe_uc_sans_accents($chaine);
-	
+
 	my $refChaine  =shift;
 	${$refChaine}||="";
 	${$refChaine}=~s/[àâä]/a/ig;
@@ -661,7 +661,7 @@ sub oe_uc_sans_accents (\$) {	# migrer oe_uc_sans_accents
 	${$refChaine}=~s/[úùûü]/u/ig;
 	${$refChaine}=~s/ç/c/ig;
 	${$refChaine}= uc ${$refChaine};
-	
+
 return ${$refChaine};
 }
 
@@ -673,7 +673,7 @@ sub oe_trimp_space(\$) {		# migrer oe_trimp_space
 	my $rChaine  =shift;
 	${$rChaine}||="";
 	${$rChaine} =~s/\s{2,}/ /go;
-	
+
 return ${$rChaine};
 }
 
@@ -696,7 +696,7 @@ sub oe_open_fo_OUT ($){ 		# GESTION DE BASE OUTPUT FILE
 
 sub oe_close_fo ($) {	# migrer oe_close_fo
 	my $f =shift;
-	
+
 	close (OUT) or die "ERROR: fermeture $f - code retour $!\n";
 1;
 }
@@ -736,18 +736,18 @@ sub oe_date_compare {
 
 	if ($date1 eq '') {
 		$date1=$date2;
-	} 
+	}
 
 	my $wdate1 = oe_date_convert($date1);
 	my $wdate2 = oe_date_convert($date1);
 
 	if (!defined($wdate1)) {
 		warn "INFO : Unexpected date format: \"$date1\" should be dd/mm/yyyy. Date ignored\n";
-		return 1;	
+		return 1;
 	}
 	if (!defined($wdate2)) {
 		warn "INFO : Unexpected date format: \"$date2\" should be dd/mm/yyyy. Date ignored\n";
-		return -1;	
+		return -1;
 	}
 	return $wdate1 <=> $wdate2;
 }
@@ -779,8 +779,8 @@ sub oe_date_biggest($$) {
 #	# le séparateur de millier "." ou " " est supprimé
 #	# recoit : une variable alphanumerique formattée pour l'affichage
 #	# 		oe_num2txt_us($value);
-#	
-#	my $refMontant  =shift;	
+#
+#	my $refMontant  =shift;
 #	${$refMontant}||="";
 #
 #	if (${$refMontant}){
@@ -790,7 +790,7 @@ sub oe_date_biggest($$) {
 #		${$refMontant}=~s/(.*)(\-)$/$2$1/;# éventuellement on met le signe négatif devant
 #	} else {
 #		${$refMontant}=0;
-#	}			
+#	}
 #
 #return ${$refMontant};
 #}
@@ -802,10 +802,10 @@ sub oe_num2txt_us(\$) {
 	# le séparateur de millier "." ou " " est supprimé
 	# recoit : une variable alphanumerique formattée pour l'affichage
 	# 		$value = oe_num2txt_us($value);
-	# ou par référence 
+	# ou par référence
 	# 		oe_num2txt_us($value);
-	
-	my $refValue  = shift;	
+
+	my $refValue  = shift;
 	${$refValue}||="";
 
 	if (${$refValue}){
@@ -816,20 +816,20 @@ sub oe_num2txt_us(\$) {
 
 	} else {
 		${$refValue}=0;
-	}			
+	}
 
 return ${$refValue};
 }
 
 
 # NE SERT PLUS À RIEN DANS LE CONTEXTE LaTeX
-sub oe_compo_set_value ($;$){	# oe_cdata_set 
+sub oe_compo_set_value ($;$){	# oe_cdata_set
 	my ($value, $noedit) = @_;
-	
-	# A RETIRER : CERTAINS NUM SONT DÉJÀ US 
+
+	# A RETIRER : CERTAINS NUM SONT DÉJÀ US
 	# -> oe_compo_set_value($value) => oe_compo_set_value(oe_num2txt_us($value))
-	my $result = $TAG_L_SET . oe_num2txt_us($value); 
-	
+	my $result = $TAG_L_SET . oe_num2txt_us($value);
+
 	if (!$noedit) {
 		$result .= $TAG_R_SET;
 	}
@@ -854,7 +854,7 @@ return $cdata;
 sub oe_include_build ($$){ # dans le cadre nettoyage code C7 il faudra raccourcir ces appels
 	my ($name, $path)= @_;
 	#import oEdtk::TexDoc;
-	
+
 	my $tag = oEdtk::TexDoc->new();
 	$tag->include($name, $path);
 	return $tag;
@@ -876,10 +876,10 @@ sub oe_data_build($;$) {	#oe_xdata_build
 	if 	(defined $val) {
 		# s'il s'agit d'une variable numérique
 		if ($val =~ /^[\d\.]+$/) {
-			$data = $TAG_OPEN . $TAG_MARKER . $name . $TAG_ASSIGN . $TAG_L_SET . 
-				$val . $TAG_ASSIGN_CLOS . $TAG_CLOSE;		
+			$data = $TAG_OPEN . $TAG_MARKER . $name . $TAG_ASSIGN . $TAG_L_SET .
+				$val . $TAG_ASSIGN_CLOS . $TAG_CLOSE;
 		} else {
-			$data = $TAG_OPEN . $TAG_MARKER . $name . $TAG_ASSIGN . 
+			$data = $TAG_OPEN . $TAG_MARKER . $name . $TAG_ASSIGN .
 				$val . $TAG_ASSIGN_CLOS . $TAG_CLOSE;
 		}
 	} elsif	(defined $name) {
@@ -956,6 +956,8 @@ sub oe_new_job(@) {	# migrer oe_open_files / oe_open / oe_new_job
 	my $async = $cfg->{'EDTK_COMPO_ASYNC'};
 	if (defined($async) && $async =~ /^yes$/i) {
 		$params->{'fifo'} = 1;
+	} elsif (defined($async) && $async =~ /^no$/i){
+		$params->{'fifo'} = 0;
 	}
 
 	my $fo = $cfg->{'EDTK_PRGNAME'}.".txt";	# devrait être lié à TexMode
@@ -981,7 +983,7 @@ sub oe_new_job(@) {	# migrer oe_open_files / oe_open / oe_new_job
 
 	if ($params->{'fifo'}) {
 		warn "INFO : Creating FIFO for output data file ($fo)\n";
-		mkfifo($fo, 0700) or die "Could not create fifo: $!\n";
+		mkfifo($fo, 0700) or die "Could not create fifo : $!\n";
 		my $pid = oe_compo_run($cfg->{'EDTK_PRGNAME'}, $params);
 		$params->{'pid'} = $pid;
 	}
@@ -1031,13 +1033,13 @@ sub oe_csv2data_handles () {
 	c7Flux($ligne);
 	@DATATAB 	= split (/,/, $ligne);
 	my $motif	= "";
-	
-	
-	# TRANSFORME UN FICHIER CSV EN FICHIER DATA 
+
+
+	# TRANSFORME UN FICHIER CSV EN FICHIER DATA
 	# LA PREMIÈRE LIGNE DÉFINIT LES COLONNES ET LES NOMS DE BALISE
 	# une balise d'exécution est ajoutée en fin de ligne = xFLigne
 	# au final une balise de fin de flux est ajoutée = xFinFlux
-	
+
 	for (my $i=0; $i<=$#DATATAB; $i++){
 		$DATATAB[$i] ="vide$i" if ($DATATAB[$i] eq '');
 		$DATATAB[$i] =~s/\_//g;
@@ -1050,7 +1052,7 @@ sub oe_csv2data_handles () {
 	$motif .= $TAG_OPEN . "xFLigne" . $TAG_CLOSE;
 	$motif =~s/\s//g;
 	# warn $motif . "\n";
-	
+
 	while ($ligne = <IN>) {
 		@DATATAB = ();
 		chomp ($ligne);
@@ -1086,7 +1088,7 @@ sub oe_outmngr_compo_run ($;$){
 	import oEdtk::libC7 qw();
 	use Fcntl		qw(:flock);
 	use File::Copy;
-	
+
 	my $cfg 	=config_read('COMSET');
 	my $script_compo=$cfg->{'EDTK_DIR_SCRIPT'} . "/" . $cfg->{'EDTK_PRGNAME'} . "." . $cfg->{'EDTK_EXT_COMP_OMGR'};
 #	my $script_compo=$cfg->{'EDTK_DIR_SCRIPT'} . "/" . $cfg->{'EDTK_PRGNAME'} . $cfg->{'EDTK_TYP_ENVIRO'} . "." . $cfg->{'EDTK_EXT_COMP_OMGR'};
@@ -1122,7 +1124,7 @@ sub oe_outmngr_compo_run ($;$){
 
 	my $idx1 	=$cfg->{'EDTK_DIR_OUTMNGR'} . "/" . $cfg->{'EDTK_PRGNAME'} . ".idx1";
 
-	#	warn 
+	#	warn
 	#	"INFO : OM EDTK_PRGNAME = "
 	#	. $cfg->{'EDTK_PRGNAME'}
 	#	. " EDTK_FTYP_DFLT = "
@@ -1137,15 +1139,15 @@ sub oe_outmngr_compo_run ($;$){
 
 	if ($xTypTrt!~/D/) {
 		unlink ($idx1);
-		unlink ($input_fdatwork); 	
+		unlink ($input_fdatwork);
 	}
-		
+
 	print "$cfg->{'EDTK_FDATAOUT'}.$output_format\n";
 1;
 }
 
 sub oe_outmngr_output_run (;$){
-	# le paramètre optionnel permet de fixer le type de traitement pour 
+	# le paramètre optionnel permet de fixer le type de traitement pour
 	# permettre à l'exploitation de lancer le output_run à intervalle régulier
 	my $xTypTrt = _app_typ_trt(shift);
 
@@ -1167,7 +1169,7 @@ sub oe_outmngr_output_run (;$){
 	my (@tProcessed_Dclib);
 	my $lockfile = $cfg->{'EDTK_DOCLIB_LOCK'};
 	open(my $lock, '>', $lockfile) or die "ERROR: Cannot open lock file: $!\n";
-	
+
 	foreach (@lots) {
 		my ($SsLot, $numpgs, @tDclib) = @$_;
 
@@ -1179,7 +1181,7 @@ sub oe_outmngr_output_run (;$){
 		oe_open_fo_OUT ($SsLot_output_txt);
 		oe_open_fi_IN ($cfg->{'EDTK_DIR_OUTMNGR'} . "/" . $SsLot . ".job");
 		oe_csv2data_handles ();
-		
+
 		print OUT oe_data_build ("xIniPBAN");
 
 		warn "INFO : Preparation de l'index $cfg->{'EDTK_DIR_OUTMNGR'} $SsLot pour compo\n";
@@ -1194,7 +1196,7 @@ sub oe_outmngr_output_run (;$){
 		warn "INFO : Successfully acquired lock.\n";
 		eval {
 			if (defined $cfg->{'EDTK_TESTDATE'}) { oe_set_sys_date($cfg->{'EDTK_TESTDATE'}) };
-			c7_compo ("PDF", $lib_filieres, $SsLot_output_txt, "OMGR", @tDclib); 
+			c7_compo ("PDF", $lib_filieres, $SsLot_output_txt, "OMGR", @tDclib);
 			c7_emit  ("PDF", $lib_filieres, $SsLot_output_txt, $SsLot_output_opf, "OMGR", @tDclib);
 		};
 		flock($lock, LOCK_UN);
@@ -1323,7 +1325,7 @@ sub oe_ID_LDOC() {
 		if (length $pid > 5) {
 			$pid = $pid/(10**((length $pid)-5));
 		}
-	
+
 		$_ID_LDOC =sprintf ("%1d%02d%1d%02d%02d%02d%05d%1d", $year % 10, $week, $dow, $hour, $min, $sec, $pid, $rnd );
 
 	}
@@ -1333,7 +1335,7 @@ return $_ID_LDOC;
 
 
 {
- my $_app_typ_trt;	# type de traitement de lotissement, 
+ my $_app_typ_trt;	# type de traitement de lotissement,
  			# valeur accessible uniquement par la méthode _app_typ_trt
 
 	sub _app_typ_trt (;$){
@@ -1361,7 +1363,7 @@ return $_ID_LDOC;
 
 
 		# Nouvelle gestion d'exécution à partir de EDTK_TYPE_ENV :
-		# EDTK_TYPE_ENV = Production	-> cleanup, si mode indexé : détermination des trt à partir de EDTK_REFIDDOC 
+		# EDTK_TYPE_ENV = Production	-> cleanup, si mode indexé : détermination des trt à partir de EDTK_REFIDDOC
 		# EDTK_TYPE_ENV = Integration	-> cleanup, bandeau, si mode indexé : détermination des trt à partir de EDTK_REFIDDOC
 		# EDTK_TYPE_ENV = Test		-> bandeau, si mode indexé : détermination des trt à partir de EDTK_REFIDDOC
 		# EDTK_TYPE_ENV = Development	-> cleanup, bandeau, traitement 'court'
@@ -1369,29 +1371,29 @@ return $_ID_LDOC;
 		my $xTypTrt	= shift || '';
 		if (defined $_app_typ_trt && $xTypTrt!~/^[TD]/i) {return $_app_typ_trt ;}
 		# seules les types Test et Debug permettent de changer $_app_typ_trt s'il est déjà défini
-	
+
 		if ($xTypTrt !~ /^([MGLHTDU])/i){
-			$_app_typ_trt='U';	
-	
+			$_app_typ_trt='U';
+
 		} elsif ($xTypTrt =~ /^([MGL])/i) {
 			$_app_typ_trt=$1;
 
 		} elsif ($xTypTrt =~ /^([HTD])/i) {
 			$_app_typ_trt=$1;
 		}
-	
+
 	warn "INFO : type de traitement OM = $_app_typ_trt (Mass/Grouped/Local/Homol/Test/Debug/Undef)\n";
 	return $_app_typ_trt;
 	}
 }
 
 {
- my $_DOCLIB;	# DESIGNATION DE LA DCLIB pour le lotissement 
+ my $_DOCLIB;	# DESIGNATION DE LA DCLIB pour le lotissement
  			# valeur accessible uniquement par la méthode _omngr_doclib
 
 	sub _omngr_doclib (;$$){
 		if (defined $_DOCLIB) { return $_DOCLIB ; }
-	
+
 		my $doclib	=shift;
 		if (!defined $doclib){
 			my $cfg = config_read('ENVDESC');
@@ -1401,7 +1403,7 @@ return $_ID_LDOC;
 		} else {
 			$_DOCLIB=$doclib;
 		}
-	
+
 	return $_DOCLIB;
 	}
 }
@@ -1449,10 +1451,10 @@ sub oe_corporation_get() {
 		}
 
 		$entity = $_DICT->translate($entity, 1);
-		
+
 		if (defined ($entity)) {
 			# si la valeur a été trouvée dans le dictionnaire
-			$_xCORPOR = $entity;		
+			$_xCORPOR = $entity;
 		}
 
 		# warn "\$entity $entity \$_xCORPOR $_xCORPOR\n";
@@ -1523,10 +1525,10 @@ my $_backup_date ;
 		my $time = time;
 		my ($year,$month,$day, $hour,$min,$sec, $doy,$dow,$dst) =
 			Gmtime($time);
-	
+
 		my $commande = sprintf ("date %s", $requested_date);
 		warn "INFO : $commande\n";
-				
+
 		eval {
 			system($commande);
 		};
@@ -1535,13 +1537,13 @@ my $_backup_date ;
 			warn "ERROR: echec commande $commande\n";
 			return -1;
 		}
-		
+
 		if (!defined $_backup_date) {
 			$_backup_date = sprintf ("%02s-%02s-%02s", $day, $month, $year);
 		}
 	return $_backup_date;
 	}
-	
+
 	sub _restore_sys_date {
 		oe_set_sys_date($_backup_date) if (defined $_backup_date);
 	1;

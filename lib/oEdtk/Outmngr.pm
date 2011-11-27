@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.27;
+our $VERSION	= 0.28;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -137,7 +137,7 @@ sub omgr_track_folds ($;$){
 	#  ORDER BY C.ED_MAIL_REFERENT, A.ED_REFIDDOC, A.ED_DTEDTION;
 
 
-	$sql = "SELECT A.ED_REFIDDOC, A.ED_CORP,"
+	$sql = "SELECT A.ED_CORP, A.ED_REFIDDOC,"
 		. " NVL(B.ED_STATUS, NVL(A.ED_STATUS, 'PENDING...')) AS STATUS,"
 		. " COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS,"
 		. " A.ED_DTEDTION, "
@@ -157,8 +157,8 @@ sub omgr_track_folds ($;$){
 
 	my $rows	= $sth->fetchall_arrayref();
 
-	my $fmt = "%-20s %-20s %-10s %9s %9s %7s %9s %8s %8s";
-	my @head= ("REFIDDOC", "CORP", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
+	my $fmt = "%10s %-20s %-10s %9s %9s %7s %9s %8s %8s";
+	my @head= ("CORP", "REFIDDOC", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
 	_filled_rows($rows);
 
 	# return @tlist;
@@ -182,7 +182,7 @@ sub omgr_check_acquit($;$){
 #  COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS, B.ED_NBPLIS,
 #  FROM EDTK_INDEX A, EDTK_ACQ B
 #  WHERE A.ED_SEQLOT=B.ED_SEQLOT 
-#    AND ((B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-20, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))
+#    AND ((B.ED_DTCHECK IS NULL OR B.ED_DTPRINT > TO_CHAR(SYSDATE-20, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))
 #  GROUP BY A.ED_SEQLOT, A.ED_MODEDI, B.ED_NBPLIS;
 	my ($sql, $num);
 	$sql = "SELECT A.ED_SEQLOT, "
@@ -193,8 +193,8 @@ sub omgr_check_acquit($;$){
 	#	. ", COUNT (DISTINCT A.ED_SEQLOT||A.ED_IDLDOC||TO_CHAR(A.ED_IDSEQPG,'FM0000000')) AS NB_PAGES, B.ED_NBPAGES"
 		. " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B"
 		. " WHERE A.ED_SEQLOT=B.ED_SEQLOT"
-		. "   AND (B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-?, 'IYYYMMDD'))"
-	#	. "   AND ((B.ED_DTCHECK IS NULL OR B.ED_DTCHECK > TO_CHAR(SYSDATE-?, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))"
+		. "   AND (B.ED_DTCHECK IS NULL OR B.ED_DTPRINT > TO_CHAR(SYSDATE-?, 'IYYYMMDD'))"
+	#	. "   AND ((B.ED_DTCHECK IS NULL OR B.ED_DTPRINT > TO_CHAR(SYSDATE-?, 'IYYYMMDD')) AND (B.ED_STATUS IS NULL OR B.ED_STATUS != 'SENT'))"
 		. " GROUP BY A.ED_SEQLOT, A.ED_MODEDI, B.ED_NBPLIS"
 		;
 	my $sth = $dbh->prepare($sql);
