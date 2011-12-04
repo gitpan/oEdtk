@@ -17,8 +17,8 @@ my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
     { AutoCommit => 1, RaiseError => 1 });
 
 csv_import($dbh, "EDTK_ACQ", $ARGV[0], 
-			{ mode => 'merge', 
-			header => 'ED_SEQLOT,ED_LOTNAME,ED_DTPRINT,ED_DTPOST,ED_NBFACES,ED_NBPLIS,ED_DTPOST2' }
-			);
+			{ 	mode => 'merge', 
+				header => 'ED_SEQLOT,ED_LOTNAME,ED_DTPRINT,ED_DTPOST,ED_NBFACES,ED_NBPLIS,ED_DTPOST2' 
+			});
 
 1;

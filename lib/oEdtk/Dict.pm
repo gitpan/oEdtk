@@ -5,7 +5,7 @@ use warnings;
 use Config::IniFiles;
 
 use Exporter;
-our $VERSION		= 0.05;
+our $VERSION		= 0.06;
 our @ISA		= qw(Exporter);
 
 # Création d'un dictionnaire à partir d'un fichier INI.
@@ -61,6 +61,17 @@ sub translate {
 		$val = $word;
 	}
 	return $val;
+}
+
+sub substitue_char {
+	my ($self, $line) = shift;
+
+	# valeur par défaut dans le cas où le champs serait undef
+	if (!defined($line) || length($line) == 0) {
+		$line = '';
+		return $line ;
+	}
+
 }
 
 1;

@@ -330,13 +330,13 @@ sub oe_outmngr_output_run_tex($;$) {
 
 		my $lotdir = "$basedir/$lot";
 		chdir($lotdir) or die "Cannot change directory to \"$lotdir\": $!\n";
-		warn "INFO : Preparation job ticket $lot for compo (doclibs = @doclibs)\n";
+		warn "INFO : Preparing job ticket $lot for compo (doclibs = @doclibs)\n";
 
 		# Création du flux intermédiaire.
 		my $doc = oEdtk::TexDoc->new;
 		$doc->append(oe_csv_to_doc("$lot.job", 'edStartPg'));
 
-		warn "INFO : Preparation de l'index $lot for compo\n";
+		warn "INFO : Preparing index $lot for compo\n";
 		$doc->append(oe_csv_to_doc("$lot.idx", 'xFLigne'));
 		$doc->append('edEndPg');
 		$doc->append('xFinFlux');
@@ -345,7 +345,7 @@ sub oe_outmngr_output_run_tex($;$) {
 		print $txt "$doc";
 		close($txt);
 
-		warn "INFO : Composition $lot dans $basedir/$lotdir\n";
+		warn "INFO : Composition $lot in $basedir/$lotdir\n";
 		my $options = {
 			jobname => $lot,
 			incdirs => [$cfg->{'EDTK_DIR_DOCLIB'}]

@@ -16,7 +16,7 @@
 	documents with these data.
 	
 	This module is a toolkit for developping parsing application
-	dedicated to DSC Compuset or Excel (and Latex in the future). 
+	dedicated to DSC Compuset or Excel and Latex. 
 	You would create application by loading stream documentation (such as
 	Cobol CopyBooks). Developpers will customize their application. 
 	Then the core (basics functions) of this module is used by the 
@@ -26,8 +26,6 @@
 	In the future, we would like to add a user interface.
 	You can contact us at 
 		edtk at free.fr
-	 	or
-		daunay at users.sourceforge.net
 	https://sourceforge.net/projects/oedtk/
 	
 	
@@ -46,10 +44,10 @@
 	make clean
 	
 
-	in case of troubles for libxml2 setup, you should rather use
+	IN CASE OF TROUBLES FOR libxml2 SETUP, YOU SHOULD RATHER USE
 		perl Makefile.PL LIBS='-L/usr/lib' INC='-I/usr/include/libxml2'
 			where your paths should point whereis your libxml2
-		or simply install libxml-libxml-perl with Synaptic
+		or simply install libxml-libxml-perl (with apt for exemple)
 
 
 	
@@ -60,8 +58,8 @@
 	 of this license document, but changing it is not allowed.
 	You can use these modules as you want without any warranty.
 
-	You can contact us at edtk at free.fr 	or  daunay at users.sourceforge.net
-	https://sourceforge.net/projects/oedtk/
+	You can contact us at edtk at free.fr
+	reference site is cpan.org 
 
 
 	AUTHORS

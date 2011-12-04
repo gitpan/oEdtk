@@ -6,12 +6,15 @@ use warnings;
 use oEdtk::Main;
 use oEdtk::Config 		qw(config_read);
 use oEdtk::DBAdmin 		qw(db_connect);
-use oEdtk::Outmngr 	0.07	qw(omgr_stats);
+use oEdtk::Outmngr 	0.28	qw(omgr_stats);
 #use Text::CSV;
 
 if (@ARGV < 1) {
-	die "Usage: $0 <today|week|yweek_value|ALL> [refiddoc] [seqlot|source|source_name]\n"
-		."\t yweek_value : number of week in the year as YWW \n\t source_name : job name in tracking\n\n"
+	die "Usage: $0 <today|week|yweek_value|idldoc|ALL> [refiddoc] [SEQLOT|SOURCE|source_name]\n"
+		."\t week\t\t: number of week in the year \n"
+		."\t yweek_value\t: number of week in the year as YWW \n"
+		."\t idldoc\t\t: unique id doc lot (4 - 16 digits)\n" 
+		."\t source_name\t: job name in tracking\n\n"
 		." check references for tracked sources\n";
 }
 
@@ -40,7 +43,7 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 		
 	} elsif ($period=~ /^all$/i){
 		
-	} elsif ($period=~ /^(\d{3})$/){		# références au format YWW...
+	} elsif ($period=~ /^(\d{3,15})$/){	# références au format YWW ou idldoc...
 		$idldocKey = sprintf("%d",$1 );
 
 	} elsif ($period=~ /^(\d{1,2})$/){ 	# références au format WW...
@@ -55,13 +58,16 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	$idldocKey .="%"; # étrangement pour les cas week et \d2 on a le message suivant si on met % dans le sprintf : Invalid conversion in sprintf: end of string at C:\Sources\edtk_MNT\lib\index_Check_docs_omgr.pl line 44. 
 	push (@sql_values, $idldocKey);
 
-	$select	= "SELECT COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS, B.ED_APP, B.ED_SNGL_ID "; 
-	$sql		= " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, " . $cfg->{'EDTK_STATS_TRACKING'} . " B "
-				. " WHERE B.ED_SNGL_ID=A.ED_IDLDOC (+) AND B.ED_JOB_EVT='J' AND  B.ED_SNGL_ID LIKE ? ";
+	$select	= "SELECT COUNT (DISTINCT A.ED_IDLDOC||TO_CHAR(A.ED_SEQDOC,'FM0000000')) AS NB_DOCS, "
+				. " NVL(C.ED_STATUS, NVL(A.ED_STATUS, 'NONE')) AS STATUS,"
+				. " B.ED_APP, B.ED_SNGL_ID "; 
+	$sql		= " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, " . $cfg->{'EDTK_STATS_TRACKING'} . " B, EDTK_ACQ C "
+				. " WHERE B.ED_SNGL_ID=A.ED_IDLDOC (+) AND B.ED_JOB_EVT='J' AND  B.ED_SNGL_ID LIKE ? "
+				. " AND A.ED_SEQLOT = C.ED_SEQLOT (+)";
 #				. " AND ROWNUM<1000 "; # le probleme c'est que ROWNUM contient le détail des lignes avant regroupement par lot
 #				. " WHERE A.ED_IDLDOC=B.ED_SNGL_ID AND B.ED_JOB_EVT='J' AND A.ED_SEQLOT != 'ANO' AND A.ED_SEQLOT LIKE ? ";
-	$groupby  = " GROUP BY B.ED_APP, B.ED_SNGL_ID ";
-	$orderby	= " ORDER BY B.ED_APP, NB_DOCS, B.ED_SNGL_ID ASC";
+	$groupby  = " GROUP BY B.ED_APP, B.ED_SNGL_ID, A.ED_STATUS, C.ED_STATUS ";
+	$orderby	= " ORDER BY B.ED_APP, NB_DOCS, B.ED_SNGL_ID, A.ED_STATUS, C.ED_STATUS ASC";
 
 	my $col = "";
 	if 		($refiddoc) { 
@@ -69,13 +75,13 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 		push (@sql_values, $refiddoc);
 	}
 
-	if		($lot eq "seqlot") { 
+	if		($lot =~/^SEQLOT$/i) { 
 		$select	.=", A.ED_SEQLOT ";
 		$groupby 	.=", A.ED_SEQLOT ";
 		$orderby	= ", A.ED_SEQLOT ";
 		$col = uc ($lot);
 
-	} elsif	($lot eq "source") { 
+	} elsif	($lot =~/^SOURCE$/i) { 
 		$select	.=", B.ED_SOURCE ";
 		$groupby 	.=", B.ED_SOURCE ";
 		$orderby	= ", B.ED_SOURCE ";
@@ -104,7 +110,7 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 		# push (@tlist, printf ("%-16s %9s %9s %9s %8s %8s %7s %-10s %s\n", @$row));
 	}
 
-	warn sprintf "INFO : %6s %-15s %-16s %s  from EDTK_STATS_OUTMNGR\n", "NB_DOCS", "REFIDDOC", "IDLDOC", $col;
+	warn sprintf "%9s %-7s %-15s %-16s %s  from EDTK_STATS_OUTMNGR\n", "NB_DOCS", "STATUS", "REFIDDOC", "IDLDOC", $col;
 
 ################################################################################
 
@@ -118,5 +124,5 @@ foreach my $row (@$rows) {
 		for (my $i=0; $i<=$#$row ; $i++){
 			$$row[$i] = $$row[$i] || ""; # CERTAINES VALEURS PEUVENT NE PAS ÊTRE RENSEIGNÉES DANS CERTAINS CAS	
 		}
-	printf "%14s %-15s %16s %s \n", @$row, ""; # 1391152325098839
+	printf "%9s %7s %-15s %-16s %s \n", @$row, ""; # 1391152325098839
 }

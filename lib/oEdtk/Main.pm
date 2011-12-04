@@ -580,7 +580,7 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	$$rLine =~ s/\,/ /g;	# on remplace les virgules
 	$$rLine =~ s/\:/ /g;	# on remplace les points virgules
 	$$rLine =~ s/\;/ /g;	# on remplace les points virgules
-	$$rLine =~ s/\// \/ /g;	# on ajoute des espaces autour de '/' dans les adresses
+	#$$rLine =~ s/\// \/ /g;	# on ajoute des espaces autour de '/' dans les adresses
 	$$rLine =~ s/\(/ /g;	# on remplace les parenthèses ouvrantes
 	$$rLine =~ s/\)/ /g;	# on remplace les parenthèses fermantes
 	$$rLine =~ s/\²/ /g;	# on remplace les '²' (touche au-dessus de TAB)
@@ -588,7 +588,8 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	$$rLine =~ s/\]/ /g;	# on remplace les ']' (touche alpha num °)
 	$$rLine =~ s/\[/ /g;	# on remplace les ']' (pas d'explication...)
 	$$rLine =~ s/\¨/ /g;	# on remplace les '¨' (pas d'explication...)
-
+	$$rLine =~ s/\{/ /g;	# on remplace les '}' (touche alpha num °)
+	$$rLine =~ s/\}/ /g;	# on remplace les '}' (touche alpha num °)
 	$$rLine =~ s/^\s+//;	# on supprime les blancs consécutifs en début de chaîne (on a fait un oe_trimp_space en premier...) TRIM gauche
 	$$rLine =~ s/\s+$//;	# on supprime les blancs consécutifs en fin de chaîne (...) TRIM droite
 	$$rLine =~ s/^0\s+//;	# on supprime les zéros tout seul en début de chaine (on le passe en dernier, après les TRIM gauche)
@@ -1553,5 +1554,6 @@ my $_backup_date ;
 
 END {
 	_restore_sys_date;
+	warn "oEdtk::Main v$VERSION - (c) 2005-2011 edtk\@free.fr\n"
 }
 1;

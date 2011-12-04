@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.28;
+our $VERSION	= 0.31;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -29,6 +29,7 @@ our @EXPORT_OK	= qw(
 			omgr_stats 
 			omgr_stats_referent 
 			omgr_track_folds
+			omgr_track_report
 		);
 
 # Le lot par défaut.
@@ -97,6 +98,7 @@ sub omgr_import($$$) {
 	if ($@) {
 		warn "ERROR: $@\n";
 		eval { $dbh->rollback };
+		die "ERROR: rollback done before dying in omgr_import\n";
 	}
 
 	$dbh->disconnect;
@@ -157,8 +159,45 @@ sub omgr_track_folds ($;$){
 
 	my $rows	= $sth->fetchall_arrayref();
 
-	my $fmt = "%10s %-20s %-10s %9s %9s %7s %9s %8s %8s";
+	my $fmt = "%10s %-20s %-10s %6s %9s %7s %7s %8s %8s";
 	my @head= ("CORP", "REFIDDOC", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
+	_filled_rows($rows);
+
+	# return @tlist;
+	@$rows = (\$fmt, \@head, @$rows);
+	return $rows;
+}
+
+
+sub omgr_track_report {
+	my $dbh = shift;
+	my $cfg = config_read('EDTK_DB', 'EDTK_STATS');
+
+	my ($sql);
+#select A.ED_REFIDDOC, 
+#        (CASE A.ED_MODEDI WHEN 'R' THEN 2 ELSE 1 END * SUM(A.ED_NBFPLI)) AS NB_FACES,
+#        COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS_SENT,
+#        B.ED_STATUS, B.ED_LOTNAME, A.ED_SEQLOT, C.ED_IDMANUFACT, 
+#        B.ED_NBFACES AS NB_FACES_MANUFACT, B.ED_NBPLIS AS NB_PLIS_MANUFACT, B.ED_DTPOST 
+#        FROM EDTK_INDEX A, EDTK_ACQ B, EDTK_LOTS C
+#        WHERE A.ED_SEQLOT = B.ED_SEQLOT AND B.ED_STATUS != 'SENT' AND A.ED_IDLOT = C.ED_IDLOT (+)
+#        GROUP BY C.ED_IDMANUFACT, A.ED_REFIDDOC, A.ED_SEQLOT, A.ED_MODEDI, B.ED_STATUS, B.ED_DTPOST, B.ED_LOTNAME, B.ED_NBFACES, B.ED_NBPLIS;
+	$sql = "SELECT A.ED_REFIDDOC, "
+		. " (CASE A.ED_MODEDI WHEN 'R' THEN 2 ELSE 1 END * SUM(A.ED_NBFPLI)) AS NB_FACES, "
+		. " COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS, "
+		. " B.ED_STATUS, B.ED_LOTNAME, A.ED_SEQLOT, C.ED_IDMANUFACT, "
+		. " B.ED_NBFACES AS NB_FACES_MANUFACT, B.ED_NBPLIS AS NB_PLIS_MANUFACT, B.ED_DTPOST "
+		. "FROM EDTK_INDEX A, EDTK_ACQ B, EDTK_LOTS C "
+		. "WHERE A.ED_SEQLOT = B.ED_SEQLOT AND B.ED_STATUS != 'SENT' AND A.ED_IDLOT = C.ED_IDLOT (+) "
+		. "GROUP BY C.ED_IDMANUFACT, A.ED_REFIDDOC, A.ED_SEQLOT, A.ED_MODEDI, B.ED_STATUS, B.ED_DTPOST, B.ED_LOTNAME, B.ED_NBFACES, B.ED_NBPLIS ";
+
+	my $sth = $dbh->prepare($sql);
+	$sth->execute();
+
+	my $rows	= $sth->fetchall_arrayref();
+
+	my $fmt = "%15s %6s %6s %7s %16s %7s %16s %14s %14s %8s %s";
+	my @head= ("REFIDDOC", "FACES", "PLIS", "STATUS", "LOTNAME", "SEQLOT", "MANUFACTURER", "MANUFACT_FACES", "MANUFACT_PLIS", "DTPOST");
 	_filled_rows($rows);
 
 	# return @tlist;
@@ -188,9 +227,7 @@ sub omgr_check_acquit($;$){
 	$sql = "SELECT A.ED_SEQLOT, "
 		. " COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS, B.ED_NBPLIS"
 	# cf $sqlnbfpli
-	#	. ", (CASE A.ED_MODEDI WHEN 'R' THEN 1 ELSE 2 END * SUM(A.ED_NBFPLI)) AS NB_FACES, B.ED_NBFACES"
-	#	. ", SUM(A.ED_NBFPLI) * (CASE A.ED_MODEDI WHEN 'R' THEN 1 ELSE 2 END) AS NB_FACES, B.ED_NBFACES" 
-	#	. ", COUNT (DISTINCT A.ED_SEQLOT||A.ED_IDLDOC||TO_CHAR(A.ED_IDSEQPG,'FM0000000')) AS NB_PAGES, B.ED_NBPAGES"
+	#	. ", (CASE A.ED_MODEDI WHEN 'R' THEN 2 ELSE 1 END * SUM(A.ED_NBFPLI)) AS NB_FACES, B.ED_NBFACES"
 		. " FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B"
 		. " WHERE A.ED_SEQLOT=B.ED_SEQLOT"
 		. "   AND (B.ED_DTCHECK IS NULL OR B.ED_DTPRINT > TO_CHAR(SYSDATE-?, 'IYYYMMDD'))"
@@ -235,24 +272,24 @@ sub _omgr_insert($$$$$) {
 	# Récupération des paramètres de l'application documentaire.
 	my $doc = $pdbh->selectrow_hashref("SELECT * FROM EDTK_REFIDDOC WHERE ED_REFIDDOC = ? " .
 	    "AND (ED_CORP = ? OR ED_CORP = '%')", undef, $app, $corp);
-	die $pdbh->errstr if $pdbh->err;
+	die ("ERROR: die in _omgr_insert, message is " . $pdbh->errstr . "\n") if $pdbh->err;
 	if (!defined($doc)) {
-		die "Could not find document \"$app\" in EDTK_REFIDDOC\n";
+		die "ERROR: Could not find document \"$app\" in EDTK_REFIDDOC\n";
 	}
 
 	# Récupération du support pour la première page et les suivantes.
 	my $p1 = $pdbh->selectrow_hashref('SELECT * FROM EDTK_SUPPORTS WHERE ED_REFIMP = ?',
 	    undef, $doc->{'ED_REFIMP_P1'});
-	die $pdbh->errstr if $pdbh->err;
+	die ("ERROR: die in _omgr_insert, message is " . $pdbh->errstr . "\n") if $pdbh->err;
 	if (!defined($p1)) {
-		die "Could not find support \"$doc->{'ED_REFIMP_P1'}\" in EDTK_SUPPORTS\n";
+		die "ERROR: Could not find support \"$doc->{'ED_REFIMP_P1'}\" in EDTK_SUPPORTS\n";
 	}
 
 	my $ps = $pdbh->selectrow_hashref('SELECT * FROM EDTK_SUPPORTS WHERE ED_REFIMP = ?',
 	    undef, $doc->{'ED_REFIMP_PS'});
-	die $pdbh->errstr if $pdbh->err;
+	die ("ERROR: die in _omgr_insert, message is " . $pdbh->errstr . "\n") if $pdbh->err;
 	if (!defined($ps)) {
-		die "Could not find support \"$doc->{'ED_REFIMP_PS'}\" in EDTK_SUPPORTS\n";
+		die "ERROR: Could not find support \"$doc->{'ED_REFIMP_PS'}\" in EDTK_SUPPORTS\n";
 	}
 
 	# Récupération de la liste des encarts à joindre pour ce document,
@@ -260,13 +297,13 @@ sub _omgr_insert($$$$$) {
 	my @encrefs = split(/,/, $doc->{'ED_REFIMP_REFIDDOC'} || "");
 	my $now = strftime("%Y%m%d", localtime());
 	my $sth = $pdbh->prepare('SELECT * FROM EDTK_SUPPORTS WHERE ED_REFIMP = ?')
-	    or die $pdbh->errstr;
+	    or die ("ERROR: die in _omgr_insert, message is " . $pdbh->errstr);
 	my $encpds = 0;
 	my @needed = ();
 
 	foreach my $encref (@encrefs) {
 		# L'ERREUR EST ICI : ON DEVRAIT AJOUTER DES LIGNES D'INDEX PAR ENCART AVEC TYPIMP = E xxxxxx
-		my $enc = $pdbh->selectrow_hashref($sth, undef, $encref) or die "ERROR: in omgr for encref $encref $pdbh->errstr \n";
+		my $enc = $pdbh->selectrow_hashref($sth, undef, $encref) or die ("ERROR: in omgr for encref $encref " . $pdbh->errstr . "\n");
 		if (defined($enc->{'ED_DEBVALID'}) && length($enc->{'ED_DEBVALID'}) > 0) {
 			next if $now < $enc->{'ED_DEBVALID'};
 		}
@@ -288,7 +325,7 @@ sub _omgr_insert($$$$$) {
 	my $numpgpli = 0;
 	my $seqpgdoc = 0;
 	my $idldoc = undef;
-	open(my $fh, '<', $in) or die "Cannot open index file \"$in\": $!\n";
+	open(my $fh, '<', $in) or die "ERROR: Cannot open index file \"$in\": $!\n";
 	my $prevseq = -1;
 	my $count = 0;
 
@@ -305,14 +342,15 @@ sub _omgr_insert($$$$$) {
 		$csv->parse($_);
 		my @data = $csv->fields();
 
-		# Truncate the name and city fields if necessary.
-		if (length($data[5]) > 25) {
-			warn "WARN : \"$data[5]\" truncated to 25 characters\n";
-			$data[5] =~ s/^(.{25}).*$/$1/;
+		# Truncate the name of city field if necessary.
+		if (length($data[5]) > 30) {
+			warn "WARN : \"$data[5]\" truncated to 30 characters\n";
+			$data[5] =~ s/^(.{30}).*$/$1/;
 		}
-		if (length($data[7]) > 30) {
-			warn "WARN : \"$data[7]\" truncated to 30 characters\n";
-			$data[7] =~ s/^(.{30}).*$/$1/;
+		# Truncate the name field if necessary.
+		if (length($data[7]) > 38) {
+			warn "WARN : \"$data[7]\" truncated to 38 characters\n";
+			$data[7] =~ s/^(.{38}).*$/$1/;
 		}
 
 		my $first = $prevseq != $data[3];		# Is this the first page?
@@ -390,7 +428,15 @@ sub _omgr_insert($$$$$) {
 		my $sth = $dbh->prepare_cached($sql);
 # warn "INFO : insert Query = $sql\n";
 # warn "INFO : insert values = ". dump (%$entry) . "\n"; # bug d'insertion de certaines valeurs dans Postgres
-		$sth->execute(values(%$entry));
+		
+		eval {
+			$sth->execute(values(%$entry));
+		};
+		if ($@) {
+			warn "ERROR: $@\n";
+			eval { $dbh->rollback };
+			die "ERROR: rollback done before dying in omgr_insert\n";
+		}
 
 		$prevseq = $entry->{'ED_SEQDOC'};
 		$count++;
@@ -472,14 +518,14 @@ sub _get_next_filiere ($$){
 	# Récupération des paramètres d'assignation de la filiere.
 	my ($ed_priorite, $ed_idmanufact, $ed_typed, $ed_modedi, $ed_idgplot, $ed_nbbacprn) 
 			= $pdbh->selectrow_array('select ED_PRIORITE, ED_IDMANUFACT, ED_TYPED, ED_MODEDI, ED_IDGPLOT, ED_NBBACPRN from EDTK_FILIERES where ED_IDFILIERE =? ',
-	    			undef, $filiere) or die $pdbh->errstr;
+	    			undef, $filiere) or die ("ERROR: in _get_next_filiere, message is " . $pdbh->errstr);
 	# Récupération du 1er élément de la liste ordonnée des filieres.
 	my $next_filiere 
 			= $pdbh->selectrow_array('select ED_IDFILIERE from EDTK_FILIERES where ED_IDMANUFACT =? and ED_TYPED =? and ED_MODEDI =? and ED_NBBACPRN >=? and ED_ACTIF =? and ED_IDFILIERE !=? and ED_PRIORITE >? and (ED_IDGPLOT = ? or ED_IDGPLOT = ?) order by ED_PRIORITE',
 	    			undef, $ed_idmanufact, $ed_typed, $ed_modedi, $ed_nbbacprn, 'O', $filiere, $ed_priorite, $ed_idgplot, '%');
 
      $next_filiere||=DEFFIL;
-	warn "INFO : next_filiere is $next_filiere\n";
+	#warn "DEBUG: next_filiere is $next_filiere\n";
 	return $next_filiere; 
 }
 
@@ -490,7 +536,7 @@ sub _omgr_filiere($$$$$$) {
 
 	# Récupération des paramètres de l'application documentaire.
 	my $doc = $pdbh->selectrow_hashref('SELECT * FROM EDTK_REFIDDOC WHERE ED_REFIDDOC = ?',
-	    undef, $app) or die $pdbh->errstr;
+	    undef, $app) or die ("ERROR: die in _omgr_filiere, message is " . $pdbh->errstr);
 
 #	# Récupération de la liste des encarts à joindre à ce document,
 #	# et en déduire le poids supplémentaire à ajouter à chaque pli.
@@ -507,9 +553,9 @@ sub _omgr_filiere($$$$$$) {
 
 	# Récupération du support pour la première page et les suivantes.
 	my $p1 = $pdbh->selectrow_hashref('SELECT * FROM EDTK_SUPPORTS WHERE ED_REFIMP = ?',
-	    undef, $doc->{'ED_REFIMP_P1'}) or die $pdbh->errstr;
+	    undef, $doc->{'ED_REFIMP_P1'}) or die ("ERROR: die in _omgr_filiere, message is " . $pdbh->errstr);
 	my $ps = $pdbh->selectrow_hashref('SELECT * FROM EDTK_SUPPORTS WHERE ED_REFIMP = ?',
-	    undef, $doc->{'ED_REFIMP_PS'}) or die $pdbh->errstr;
+	    undef, $doc->{'ED_REFIMP_PS'}) or die ("ERROR: die in _omgr_filiere, message is " . $pdbh->errstr);
 
 	# On recherche toutes les entrées qui ont un lot assigné 
 	# mais pas encore de filière cf EDTK LOTS
@@ -519,13 +565,13 @@ sub _omgr_filiere($$$$$$) {
 
 	foreach my $lotid (@$lotids) {
 		my $lot = $pdbh->selectrow_hashref('SELECT * FROM EDTK_LOTS WHERE ED_IDLOT = ?',
-		    undef, $lotid) or die $pdbh->errstr;
+		    undef, $lotid) or die ("ERROR: die in _omgr_filiere, message is " . $pdbh->errstr);
 
 		# On essaye maintenant de matcher les documents avec chacune des filières.
 		my $sql = "SELECT * FROM EDTK_FILIERES WHERE ED_ACTIF = 'O' "
 		    . "AND (ED_IDMANUFACT IS NULL OR ED_IDMANUFACT = '' OR ED_IDMANUFACT = ?) "
 		    . "ORDER BY ED_PRIORITE ASC";
-		my $sth = $pdbh->prepare($sql) or die $pdbh->errstr;
+		my $sth = $pdbh->prepare($sql) or die ("ERROR: die in _omgr_filiere, message is " . $pdbh->errstr);
 		$sth->execute($lot->{'ED_IDMANUFACT'});
 
 		# LES CONTRAINTES EN NOMBRE MINIMUM/MAXIMUM DE PAGES ET PLIS SONT VÉRIFIÉES
@@ -603,7 +649,7 @@ sub omgr_export(%) {
 
 			CHECK_FIL:
 			{
-				warn "DEBUG: Considering tuple : $idlot, $idfiliere, $idcorp\n";
+				warn "INFO : Considering OMGR tuple : $idlot, $idfiliere, $idcorp\n";
 				# La clause WHERE que l'on réutilise dans la plupart des requêtes afin de ne
 				# traiter que les entrées qui nous intéressent.
 				my $where = 'WHERE ED_IDLOT = ? AND ED_IDFILIERE = ? AND ED_CORP = ? AND ED_SEQLOT IS NULL';
@@ -728,7 +774,7 @@ sub omgr_export(%) {
 							my @vals= ($next_filiere, $idlot, $idfiliere, $idcorp);
 							my $num = $dbh->do($sql, undef, @vals);
 							$dbh->commit;
-							warn "INFO : downgrade filiere to $next_filiere for $num pages\n";
+							#warn "DEBUG: downgrade filiere to $next_filiere for $num pages\n";
 							$idfiliere = $next_filiere;
 						redo CHECK_FIL;
 					}
@@ -771,7 +817,7 @@ sub omgr_export(%) {
 					foreach (@plis) {
 						my ($nbplis, $nbpgpli) = @$_;
 	
-						warn "DEBUG: Assigning $nbplis of $nbpgpli pages each to lot $seqlot\n";
+						#warn "DEBUG: Assigning $nbplis of $nbpgpli pages each to lot $seqlot\n";
 						# Cette requête sélectionne les N premiers plis non affectés
 						# d'une taille donnée, les plis étant uniquement identifiés avec
 						# un identifiant de lot de document + un identifiant de pli.
@@ -789,7 +835,7 @@ sub omgr_export(%) {
 						my $count = $dbh->do($sql, undef, $seqlot, $dtlot, @wvals2, $nbpgpli, $nbplis);
 						my $pages = $nbplis * $nbpgpli;
 						if ($count != $pages) {
-							die "Unexpected UPDATE row count ($count != $pages)\n";
+							die "ERROR: Unexpected UPDATE row count ($count != $pages)\n";
 						}
 					}
 					warn "INFO : Assigned $selpgs pages to lot \"$name\"\n";
@@ -825,7 +871,7 @@ sub omgr_export(%) {
 	
 					# Extraction des données.
 					my $lotdir = "$basedir/$name";
-					mkdir("$lotdir") or die "Cannot create directory \"$lotdir\": $!\n";
+					mkdir("$lotdir") or die "ERROR: Cannot create directory \"$lotdir\": $!\n";
 					my $file = "$name.idx";
 					warn "INFO : Creating index file \"$file\"\n";
 					$sql = "SELECT * FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} .
@@ -833,7 +879,7 @@ sub omgr_export(%) {
 					$sth = $dbh->prepare($sql);
 					$sth->execute($seqlot);
 	
-					open(my $fh, ">$lotdir/$file") or die $!;
+					open(my $fh, ">$lotdir/$file") or die ("ERROR: die in omgr_export, message is " . $!);
 					# Génération de la ligne de header.
 					my $csv = Text::CSV->new({ binary => 1, eol => "\n", quote_space => 0 });
 					$csv->print($fh, [map { $$_[0] } @INDEX_COLS]);
@@ -881,7 +927,7 @@ sub omgr_export(%) {
 						['ED_LISTEREFIMP',	join(', ', @refimps)],
 						['ED_DTLOT',		$dtlot]
 					);
-					open($fh, ">$lotdir/$file") or die $!;
+					open($fh, ">$lotdir/$file") or die ("ERROR: die in omgr_export, message is " . $!);
 					$csv->print($fh, [map { $$_[0] } @jobfields]);
 					$csv->print($fh, [map { $$_[1] } @jobfields]);
 					close($fh);
@@ -992,10 +1038,9 @@ sub omgr_check_seqlot_ref ($$;$){
 		warn "INFO : pas de donnees associees.\n";
 		exit;
 	}
-	my $fmt = "%10s %-16s %-16s %9s %-7s %9s %10s %8s %8s";
+	my $fmt = "%6s %-16s %-16s %6s %-7s %7s %10s %8s %8s";
 	my @head= ("NB_DOCS", "REFIDDOC", "IDLDOC", "NB_PG", "SEQLOT", "NB_PLIS", "STATUS", "DTPOST", "DTPOST2");
 
-	#warn sprintf "INFO : %-7s %-16s %-16s %9s %-7s %9s %10s %8s %8s\n", "NB_DOCS", "REFIDDOC", "IDLDOC", "NB_PG", "SEQLOT", "NB_PLIS", "STATUS", "DTPOST", "DTPOST2";
 	_filled_rows($rows);
 	@$rows  = (\$fmt, \@head, @$rows);
 
@@ -1216,5 +1261,8 @@ sub _print_All_rTab($){
 1;
 }
 
+END {
+	warn "oEdtk::Outmngr v$VERSION - (c) 2005-2011 edtk\@free.fr\n"
+}
 
 1;

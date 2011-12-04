@@ -6,16 +6,25 @@ use warnings;
 use oEdtk::Main;
 use oEdtk::Config 		qw(config_read);
 use oEdtk::DBAdmin 		qw(db_connect);
-use oEdtk::Outmngr 	0.07	qw(omgr_stats);
+use oEdtk::Outmngr 	0.28	qw(omgr_stats);
 use Term::ReadKey;
 use Sys::Hostname;
+
+
+sub usage () {
+	die "Usage: $0 <ANO|DUPLE|STOP|RESET> <idldoc|seqlot> [idseqpg|STOP_status] \n\n"
+		."\t ANO\tblock doc(s) for anomaly in doc\n"
+		."\t DUPLE\tblock duplicated doc(s)\n"
+		."\t STOP\tblock to stop doc(s)\t(index_Purge_DCLIB won't delete DCLIB)\n"
+		."\t RESET\tunblock to redo doc(s)\t(index_Purge_DCLIB won't delete DCLIB)\n";
+}
 	
 
 if (@ARGV < 2) {
 	&usage();
 }
 
-my ($event, $idldoc, $idseqpg) = ($ARGV[0], $ARGV[1], $ARGV[2]);
+my ($event, $key1, $key2) = ($ARGV[0], $ARGV[1], $ARGV[2]);
 if 		($event=~/^ANO$/i) {
 } elsif 	($event=~/^DUPLE$/i){
 } elsif 	($event=~/^STOP$/i){
@@ -25,16 +34,16 @@ if 		($event=~/^ANO$/i) {
 }
 
 my $type="";
-if 		($idldoc=~/^\d{16}$/){ # 1392153206001881
+if 		($key1=~/^\d{16}$/){ # 1392153206001881
 		$type = 'idldoc';
 
-} elsif 	($idldoc=~/^\d{7}$/) { # 1411123
+} elsif 	($key1=~/^\d{7}$/) { # 1411123
 		$type = 'seqlot';
 
 } else {
 	&usage();
 }
-$idseqpg = $idseqpg || 0;
+$key2 = $key2 || 0;
 
 my $cfg = config_read('EDTK_STATS');
 my $dbh = db_connect($cfg, 'EDTK_DBI_STATS',
@@ -46,15 +55,19 @@ my $dbh = db_connect($cfg, 'EDTK_DBI_STATS',
 ################################################################################
 
 my @values;
-push (@values, $idldoc);
+push (@values, $key1);
 my $sql = "SELECT ED_REFIDDOC, ED_SOURCE, ED_IDLDOC, ED_SEQDOC, ED_DTEDTION, ED_NOMDEST"
 		. " FROM EDTK_INDEX ";
 
 if 	($type eq 'idldoc') {
 	$sql.= " WHERE ED_IDLDOC = ? ";
-	if (defined $idseqpg && $idseqpg > 0 ){
+	if (defined $key2 && ($key2=~/^STOP$/) ){
+		$sql .="  AND ED_SEQLOT  = ? ";
+		push (@values, $key2);
+
+	} elsif (defined $key2 && $key2 > 0 ){
 		$sql .="  AND ED_SEQDOC  = (SELECT ED_SEQDOC FROM EDTK_INDEX WHERE ED_IDLDOC = ? AND ED_IDSEQPG = ? )";
-		push (@values, $idldoc, $idseqpg);
+		push (@values, $key1, $key2);
 	}
 
 } elsif ($type eq 'seqlot'){
@@ -64,12 +77,13 @@ if 	($type eq 'idldoc') {
 	$sql .=" ORDER BY ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
 
 
-	my $sth = $dbh->prepare($sql);
-	$sth->execute(@values);
-	my $rows= $sth->fetchall_arrayref();
+my $sth = $dbh->prepare($sql);
+$sth->execute(@values);
+my $rows= $sth->fetchall_arrayref();
 
 if ($#$rows<0) {
 	warn "INFO : pas de donnees associees.\n";
+	# tracker l'action
 	exit;
 }
 
@@ -91,10 +105,16 @@ ReadMode ('restore');
 
 
 my 	$updt = "UPDATE EDTK_INDEX SET ED_DTLOT = ?, ED_SEQLOT = ?, ED_DTPOSTE = ?, ED_STATUS = ? ";
+my	$sequence= 0;
 if 	($type eq 'idldoc') {
 	$updt.= " WHERE ED_IDLDOC = ? ";
-	if (defined $idseqpg && $idseqpg > 0){
+
+	if (defined $key2 && ($key2=~/^STOP$/) ){
+		$updt .="  AND ED_SEQLOT  = ? ";
+		
+	} elsif (defined $key2 && $key2 > 0){
 		$updt .="  AND ED_SEQDOC  = (SELECT ED_SEQDOC FROM EDTK_INDEX WHERE ED_IDLDOC = ? AND ED_IDSEQPG = ? )";
+		$sequence = $key2;
 	}
 
 } elsif ($type eq 'seqlot'){
@@ -105,9 +125,11 @@ if 	($type eq 'idldoc') {
 
 # rajouter un controle, on a pas le droit de changer l'etat d'un doc déjà loti
 # mais on a le droit de faire un reset pour rejouer le lotissement
-if ($event!~/^RESET$/i) {
+if ($event!~/^RESET$/i && $event!~/^STOP$/i) {
+	# pour tous les autres event on ne rejoue pas les docs, ils seront purgés (index_Purge_DCLIB)
 	# warn "INFO : $updt \n $event, $event, $event, $event, @values\n";
 	$sth->execute($event, $event, $event, $event, @values);
+
 } else {
 	my $NULL="";
 	# warn "INFO : $updt \n $NULL, $NULL, $NULL, $event, @values\n";
@@ -119,14 +141,9 @@ if ($event!~/^RESET$/i) {
 $sql = "INSERT INTO EDTK_TRACKING(ED_TSTAMP, ED_USER, ED_SEQ, ED_SNGL_ID, ED_APP, ED_JOB_EVT, ED_OBJ_COUNT, ED_CORP, ED_HOST, ED_K4_VAL) ";
 $sql .=" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 my $trk = $dbh->prepare($sql);
-$trk->execute('20111003111111', 'idx_Block', $idseqpg, $idldoc, 'idx_Block', 'W', $row_count , $cfg->{'EDTK_CORP'}, hostname(),  "$event for @values");
+$trk->execute('20111003111111', 'idx_Block', $sequence, $key1, 'idx_Block', 'W', $row_count , $cfg->{'EDTK_CORP'}, hostname(),  "$event for @values");
 
 print "DONE ";
 ################################################################################
-
-sub usage () {
-	die "Usage: $0 <ANO|DUPLE|STOP|RESET> <idldoc|seqlot> [idseqpg] \n\n\t ANO\tblock doc(s) for anomaly in doc\n\t DUPLE\tblock duplicated doc(s)\n\t STOP\tblock to stop doc(s)\n\t RESET\tunblock to redo doc(s)\n";
-	# ajouter gestion du cas RESET d'un seqlot complet
-}
 
 1;

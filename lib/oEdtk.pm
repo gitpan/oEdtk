@@ -5,7 +5,7 @@ BEGIN {
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
 		use strict;
 
-		$VERSION	= 0.6114; # a.ammr a.a année d'existence, mm mois, r release 
+		$VERSION	= 0.6121; # a.ammr a.a année d'existence, mm mois, r release 
 		@ISA		= qw(Exporter);
 		@EXPORT	= qw(oEdtk_version);
 }
@@ -22,7 +22,11 @@ sub oEdtk_version {
 	return "oEdtk v$VERSION";
 }
 
-END {}
+
+END {
+	warn "oEdtk v$VERSION - (c) 2005-2011 edtk\@free.fr\n"
+}
+
 1;
 
 __END__

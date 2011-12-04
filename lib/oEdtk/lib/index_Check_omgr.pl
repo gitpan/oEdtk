@@ -29,6 +29,5 @@ printf $$fmt . "\n", @$head;
 
 foreach my $row (@$rows) {
 	printf $$fmt . "\n", @$row;
-#	printf "%14s %-16s %16s %9d %-7s %9s %10s %8s %8s\n", @$row; 
 }
 

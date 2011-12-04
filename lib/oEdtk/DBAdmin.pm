@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.22;
+our $VERSION		= 0.24;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -124,6 +124,34 @@ sub csv_import ($$$;$){
 	close($fh);
 }
 
+
+sub _db_connect1 {
+	my ($cfg, $dsnvar, $dbargs) = @_;
+	my $dbh;
+	my $dsn = $cfg->{$dsnvar};
+
+	warn "INFO : Connecting to DSN $dsn, $dsnvar...\n";
+
+	# gestion de la connexion dans une boucle temporisée, pour effectuer 3 tentatives de connexion avec incrément de pause
+	for (my $i=0;$i<3;$i++){
+		sleep ($cfg->{EDTK_WAITRUN}*$i);
+		eval {
+			 $dbh=DBI->connect($dsn, $cfg->{"${dsnvar}_USER"}, $cfg->{"${dsnvar}_PASS"}, $dbargs); ## xxxx
+		};
+
+		if ($@){
+			# en cas d'incident de connexion, on ne dit rien, on essaie encore
+			warn "INFO : DBI connection missmatch to $dsnvar, we try 3 times\n";
+			warn "INFO : error message was : $@\n";
+
+		} else {
+			# si ça semble bon on sort
+			$i=4;
+		}
+	}
+	return $dbh;	
+}
+
  
 sub db_connect {
 	my ($cfg, $dsnvar, $dbargs) = @_;
@@ -142,23 +170,13 @@ sub db_connect {
 			warn "ERROR: Could not connect to main database server: $DBI::errstr\n";
 			$dbh = _db_connect1($cfg, "${dsnvar}_BAK", $dbargs);
 			if (!defined $dbh) {
-				die "ERROR: Could not connect to backup database server: $DBI::errstr\n";
+				die "ERROR: Could not connect to backup database server : $DBI::errstr\n";
 			}
 		} else {
-			die "ERROR: Could not connect to database server: $DBI::errstr\n";
+			die "ERROR: Could not connect to database server : $DBI::errstr\n";
 		}
 	}
 	return $dbh;
-}
-
-
-sub _db_connect1 {
-	my ($cfg, $dsnvar, $dbargs) = @_;
-
-	my $dsn = $cfg->{$dsnvar};
-
-	warn "INFO : Connecting to DSN $dsn...\n";
-	return DBI->connect($dsn, $cfg->{"${dsnvar}_USER"}, $cfg->{"${dsnvar}_PASS"}, $dbargs); ## xxxx
 }
 
 
@@ -333,9 +351,9 @@ our @INDEX_COLS = (
 	['ED_SEQDOC',	'INTEGER NOT NULL'],	# Numéro de séquence du document dans le lot
 
 	['ED_CPDEST',	'VARCHAR2(8)'],		# Code postal Destinataire
-	['ED_VILLDEST','VARCHAR2(25)'],		# Ville destinataire
+	['ED_VILLDEST','VARCHAR2(30)'],		# Ville destinataire				ALTER table edtk_index modify ED_VILLDEST VARCHAR2(30);
 	['ED_IDDEST',	'VARCHAR2(25)'],		# Identifiant du destinataire dans le système de gestion
-	['ED_NOMDEST',	'VARCHAR2(30)'],		# Nom destinataire
+	['ED_NOMDEST',	'VARCHAR2(38)'],		# Nom destinataire					ALTER table edtk_index modify ED_NOMDEST VARCHAR2(38);
 	['ED_IDEMET',	'VARCHAR2(10)'],		# identifiant de l'émetteur
 	['ED_DTEDTION','VARCHAR2(8) NOT NULL'], # date d'édition, celle qui figure sur le document
 	['ED_TYPPROD',	'CHAR'],				# type de production associée au lot
