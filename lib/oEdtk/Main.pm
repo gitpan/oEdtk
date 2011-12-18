@@ -36,6 +36,7 @@ our @EXPORT 	= 	qw(
 			oe_define_TeX_output
 			oe_env_var_completion
 			oe_fmt_date
+			oe_iso_country
 			oe_ID_LDOC
 			oe_new_job
 			oe_now_time
@@ -555,10 +556,25 @@ sub oe_now_time(){			# migrer oe_now_time
 return $time;
 }
 
-
-# Le dictionnaire des abbréviations.
+# DICTIONNAIRE ISO DES PAYS
+my $_DICO_COUNTRY;
+# DICTIONNAIRE DES ABBRÉVIATIONS.
 my $_DICO_POST;
 
+{
+my $_LAST_ISO ="";
+
+	sub oe_iso_country(;$){
+		# retourne le code pays dans la codification country_dico.ini ou la dernière valeur connue
+		my $country = shift;
+		if (!defined($_DICO_COUNTRY))  {
+			my $cfg = config_read();
+			$_DICO_COUNTRY = oEdtk::Dict->new($cfg->{'EDTK_DICO_COUNTRY'}, , { section => $cfg->{'EDTK_LANG'} });
+		}
+		$_LAST_ISO = $_DICO_COUNTRY->translate($country) if defined ($country);
+		return $_LAST_ISO;
+	}
+}
 
 sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	# CETTE FONCTION PERMET UN NETTOYAGE DES LIGNES D'ADRESSE POUR CONSTRUIRE LES BLOCS D'ADRESSE DESTINTATIRE
@@ -1554,6 +1570,6 @@ my $_backup_date ;
 
 END {
 	_restore_sys_date;
-	warn "oEdtk::Main v$VERSION - (c) 2005-2011 edtk\@free.fr\n"
+	warn "oEdtk::Main v$VERSION - (c) 2005-2012 edtk\@free.fr\n"
 }
 1;

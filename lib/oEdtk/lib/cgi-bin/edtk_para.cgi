@@ -7,9 +7,12 @@ use warnings;
 
 use CGI;
 use CGI::FormBuilder;
+use File::Basename;
 use oEdtk::Config qw(config_read);
 use oEdtk::DBAdmin qw(db_connect);
 
+my $check_cgi = uc(basename($0));
+if (!defined ($cfg->{$check_cgi}) || ($cfg->{$check_cgi}) !~/yes/i ) { die "ERROR: config said 'application not authorized on this server'\n" }
 
 
 sub para_load($$$) {

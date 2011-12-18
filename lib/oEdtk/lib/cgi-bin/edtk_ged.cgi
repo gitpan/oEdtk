@@ -5,23 +5,31 @@
 use strict;
 use warnings;
 
-use oEdtk::Config	qw(config_read);
 use CGI 'standard';
+use File::Basename;
+use oEdtk::Config	qw(config_read);
+use oEdtk::Main;
 
 
 my $req 	= CGI->new();
-my $error 	= $req->cgi_error;	# http://fr.wikipedia.org/wiki/Liste_des_codes_HTTP
+my $error = $req->cgi_error;	# http://fr.wikipedia.org/wiki/Liste_des_codes_HTTP
 my $cfg 	= config_read('EDOCMNGR');
+
+
+my $check_cgi = uc(basename($0));
+if (!defined ($cfg->{$check_cgi}) || ($cfg->{$check_cgi}) !~/yes/i ) { die "ERROR: config said 'application not authorized on this server'\n" }
+
+
 my $redirect_url;
 
 
 if (defined $req->param('idldocpg') && $req->param('idldocpg') ne "" && defined $req->param('owner') && $req->param('owner') ne "") {
-	$redirect_url =  sprintf ($cfg->{'EDMS_URL_LOOKUP'}, 
+	$redirect_url = sprintf ($cfg->{'EDMS_URL_LOOKUP'}, 
 					$req->param('idldocpg'), 
 					$req->param('view')	|| '1', 
 					$req->param('owner'), 
 					$req->param('owner'));
-	warn "INFO : eDocs Share lookup url for ". $cfg->{'EDMS_HTML_HOST'} ." owner => ". $req->param('owner') ". server => $redirect_url\n";
+	warn "INFO : eDocs Share lookup url for ". $cfg->{'EDMS_HTML_HOST'} ." owner => ". $req->param('owner') ." server => $redirect_url\n";
 
 } else {
 	print $req->header(-status=>400),

@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.31;
+our $VERSION	= 0.311;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -112,6 +112,7 @@ sub omgr_track_folds ($;$){
 	my $dbh = shift;
 	my $cfg = config_read('EDTK_DB', 'EDTK_STATS');
 	my $nb_j_historique = shift ||  $cfg->{'EDTK_STATS_DAYS_FROM'} || 10;
+	warn "INFO : omgr_track_folds for last $nb_j_historique days\n";
 	my ($sql);
 
 	# REQUETE POUR LE MAIL SUIVI METIER
@@ -773,7 +774,7 @@ sub omgr_export(%) {
 							my $next_filiere = _get_next_filiere($pdbh, $idfiliere);
 							my @vals= ($next_filiere, $idlot, $idfiliere, $idcorp);
 							my $num = $dbh->do($sql, undef, @vals);
-							$dbh->commit;
+							$dbh->commit; # voir si on peut éviter pour bénéficier du rollback en cas de besoin de reprise
 							#warn "DEBUG: downgrade filiere to $next_filiere for $num pages\n";
 							$idfiliere = $next_filiere;
 						redo CHECK_FIL;
@@ -791,7 +792,7 @@ sub omgr_export(%) {
 							my $next_filiere = _get_next_filiere($pdbh, $idfiliere);
 							my @vals = ($next_filiere, $idlot, $idfiliere, $idcorp);
 							my $num = $dbh->do($sql, undef, @vals);
-							$dbh->commit;
+							$dbh->commit;  # voir si on peut éviter pour bénéficier du rollback en cas de besoin de reprise
 							warn "INFO : downgrade filiere to $next_filiere for $num pages\n";
 							$idfiliere = $next_filiere;
 						redo CHECK_FIL;
@@ -1038,7 +1039,7 @@ sub omgr_check_seqlot_ref ($$;$){
 		warn "INFO : pas de donnees associees.\n";
 		exit;
 	}
-	my $fmt = "%6s %-16s %-16s %6s %-7s %7s %10s %8s %8s";
+	my $fmt = "%7s %-16s %-16s %6s %-7s %7s %10s %8s %8s";
 	my @head= ("NB_DOCS", "REFIDDOC", "IDLDOC", "NB_PG", "SEQLOT", "NB_PLIS", "STATUS", "DTPOST", "DTPOST2");
 
 	_filled_rows($rows);
@@ -1262,7 +1263,7 @@ sub _print_All_rTab($){
 }
 
 END {
-	warn "oEdtk::Outmngr v$VERSION - (c) 2005-2011 edtk\@free.fr\n"
+	warn "oEdtk::Outmngr v$VERSION - (c) 2005-2012 edtk\@free.fr\n"
 }
 
 1;

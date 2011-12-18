@@ -5,10 +5,11 @@
 use strict;
 use warnings;
 
-use oEdtk::Config	qw(config_read);
-use File::Copy;
-use File::Temp		qw(tempdir);
 use CGI;
+use File::Basename;
+use File::Copy;
+use oEdtk::Config	qw(config_read);
+use oEdtk::Main;
 
 my $req = CGI->new();
 my $error = $req->cgi_error;	# http://fr.wikipedia.org/wiki/Liste_des_codes_HTTP
@@ -18,9 +19,12 @@ my $app = $req->param('app');
 my $ged = $req->param('ged');
 
 my $cfg = config_read('COMPO', 'EDOCMNGR');
-my $workdir = tempdir('edtkXXXXXXX', DIR => $cfg->{'EDTK_DIR_APPTMP'});
-# Ensure that the directory is readable 
-chmod(0777, $workdir);
+my $check_cgi = uc(basename($0));
+if (!defined ($cfg->{$check_cgi}) || ($cfg->{$check_cgi}) !~/yes/i ) { die "ERROR: config said 'application not authorized on this server'\n" }
+
+
+my $workdir = $cfg->{'EDTK_DIR_APPTMP'} . "/" . $check_cgi . "." . oe_ID_LDOC();
+mkdir $workdir, 0777 or die "ERROR: can't mkdir $workdir : $!\n";
 
 
 eval {
@@ -97,8 +101,9 @@ eval {
 	}
 };
 
-# Ensure that the directory is readable once we are finished with it.
-chmod(0777, $workdir);
+# Ensure that the directory and all files are readable once we are finished with it.
+my @files = glob("$workdir/*");
+chmod(0777, $workdir, @files);
 
 
 if ($@) {

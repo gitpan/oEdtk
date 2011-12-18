@@ -9,15 +9,21 @@ use CGI;
 use File::Basename;
 use File::Copy;
 use File::Temp		qw(tempdir);
-use oEdtk::Main	qw(oe_corporation_set);
 use oEdtk::Config	qw(config_read);
 use oEdtk::EDMS	qw(EDMS_edidx_build EDMS_edidx_write EDMS_idx_create_csv EDMS_import EDMS_idldoc_seqpg);
+use oEdtk::Main;
 
 
 my $req 		= CGI->new();
 my $error 	= $req->cgi_error;
 my $_STATUS	= 400;
 my $cfg 		= config_read('EDOCMNGR');
+
+
+my $check_cgi = uc(basename($0));
+if (!defined ($cfg->{$check_cgi}) || ($cfg->{$check_cgi}) !~/yes/i ) { die "ERROR: config said 'application not authorized on this server'\n" }
+
+
 my $workdir 	= tempdir('edtkXXXXXXX', DIR => $cfg->{'EDTK_DIR_APPTMP'});
 my $fh  		= $req->upload('ED_FILENAME');
 my %key_param;
@@ -52,6 +58,7 @@ if (defined $req->param('ED_FILENAME') && $req->param('ED_FILENAME') ne "") {
 		$req->start_html('400 malformed'),
 		$req->h2('400 malformed request : no search key or no user in your doc request'),
 		#$req->h2(%key_param);
+		#$req->strong($cfg);
 	die "400 no search key in your doc request\n";
 }
 

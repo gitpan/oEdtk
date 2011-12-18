@@ -47,6 +47,7 @@ sub new {
 	return bless $self, $class;
 }
 
+
 sub translate {
 	# passer en option 'check' pour demander une vérification de la présence de la valeur dans le dictionnaire
 	# si la valeur est absente du dictionnaire, retourne 'undef'
@@ -62,6 +63,7 @@ sub translate {
 	}
 	return $val;
 }
+
 
 sub substitue_char {
 	my ($self, $line) = shift;

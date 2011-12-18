@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.24;
+our $VERSION		= 0.25;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -350,7 +350,7 @@ our @INDEX_COLS = (
 	['ED_IDSEQPG',	'INTEGER NOT NULL'],	# Sequence Numéro de séquence de page dans le lot de mise en page
 	['ED_SEQDOC',	'INTEGER NOT NULL'],	# Numéro de séquence du document dans le lot
 
-	['ED_CPDEST',	'VARCHAR2(8)'],		# Code postal Destinataire
+	['ED_CPDEST',	'VARCHAR2(10)'],		# Code postal Destinataire			ALTER table edtk_index modify ED_CPDEST VARCHAR2(10);
 	['ED_VILLDEST','VARCHAR2(30)'],		# Ville destinataire				ALTER table edtk_index modify ED_VILLDEST VARCHAR2(30);
 	['ED_IDDEST',	'VARCHAR2(25)'],		# Identifiant du destinataire dans le système de gestion
 	['ED_NOMDEST',	'VARCHAR2(38)'],		# Nom destinataire					ALTER table edtk_index modify ED_NOMDEST VARCHAR2(38);

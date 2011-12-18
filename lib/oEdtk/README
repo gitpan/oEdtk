@@ -1,6 +1,6 @@
 	***************************************************************************
 	***************************************************************************
-						oEdtk v 0.6115			03/12/2011  
+						oEdtk v 0.6123			17/12/2011  
 	***************************************************************************
 	***************************************************************************
 		
@@ -111,9 +111,7 @@
 	***************************************************************************
 		- reprise prévisu en fin de runEdtk.pl => bug gestion compteur de fichiers xls non pris en compte
 		- AC016 : éditions avec duplicata, utiliser ED_POSTCOMP pour sélectionner le tex de postcomposition
-		- AcqAno pour demander infos au(x) façonnier(s))
 		- acqCheck lier l'envoi du mail à index_Run_lot
-		- BUG autorisation d'activation cgi/html depuis edtk.ini 
 		- clean up process assemblage des pages in ged (exit pdfmaker)
 		- dans tracking ajouter une colonne message
 		- dans tracking ajouter une k5 sur tous les enviro de façon à suivre le type d'index
@@ -128,28 +126,33 @@
 		- gestion des paragraphes
 		- index_Block : RESET doit réinitialiser la filière à la filière de base du lot
 		- interfaçage graphique Descriptors / Maquettage
-		- liste des pré imprimés incomplètes sur PG de garde (cf vaccigrippe)
+		- liste des pré imprimés incomplètes sur PG de garde
 		- normalisation des noms de colonnes tracking / index
 		- normaliser colonnes SGBD (tracking)
-		- normaliser Main.pm
 		- opération de remove / ANO de lot ou de seqlot (ràf trace dans tracking)
 		- pagination / foliotage à remettre dans le lotissement
 		- params_export ko à debugger
 		- perl packaging des dist => 0.6 11 n
 		- quand un lot n'est pas encore loti, il faut pouvoir identifier les lots en attente de lotissement (purges éventuelles, cf script de stats/Purge)
-		- reprise procédure livraison sur dév (lmndv00)
+		- reprise procédure livraison sur dév
 		- revoir le mode Excel sur exemple mode Tex
 		- sysdate : prévoir la version psg 
 
 
 	HISTORY
 	***************************************************************************
+	version 0.612x
+		contrôle d'exécution sur cgi
+		dictionnaire iso des codes pays
+		controle retour d'acquittement au façonnier pour vérification
+		foliotage technique dans le lotissement 	
+
 	version 0.6115
 		SGBD connexion retry (3 times)
 		correcting bug in FIFO configuration	
 	
 	version 0.6000
-		ajouter ed_host dans check ini
+		ajout ed_host dans check ini
 		ALTER table edtk_index modify ED_SEQLOT VARCHAR2(7); => modifier les seqlot pour rajouter l'année '391123' => '1391123'
 		intégrer les contraintes de lotissement (ed_cpdest => ed_constraint (ex de val : "ED_CODRUPT = 'NOUVEL_ER'" ou "ED_CPDEST like '75%' and ED_CODRUPT = 'NOUVEL_ER'" ou "ED_HOST ='SRVPROD'" ))
 		nettoyer Main.pm => oEUser.pm

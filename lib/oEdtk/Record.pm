@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(blessed);
-our $VERSION		= 0.01;
+our $VERSION		= 0.03;
 
 sub debug {
 	my ($self) = @_;
@@ -12,7 +12,7 @@ sub debug {
 }
 
 
-# A record is a sequence of fields.
+# A RECORD IS A SEQUENCE OF FIELDS.
 sub new {
 	my ($class, @fields) = @_;
 
@@ -95,10 +95,10 @@ sub bind_all {
 		my @parts = split(/-/, $name);
 		my $id = (reverse sort { length($a) <=> length($b) } @parts)[0];
 
-		my $orig = $field->get_name();
+		my $orig= $field->get_name();
 		my $len = $field->get_len();
-		warn "DEBUG: $orig \t($pos/$len) \t=> $id \t(index: $count)\n" if $self->{'_DEBUG'};
-		$pos += $len+1 if ($len ne '*');
+		warn "DEBUG: $id \tindex: $count \tpos: $pos \tlength: $len \tfrom $orig\n" if $self->{'_DEBUG'};
+		$pos += $len if ($len ne '*');
 		
 		$field->set_name($id);
 		$identifiers{$id} = 1;
@@ -114,6 +114,7 @@ sub bind_all_c7 {
 	my ($self) = @_;
 
 	my $count = 0;
+	my $pos = 0;
 	my %identifiers;
 	foreach my $field (@{$self->{'fields'}}) {
 		my $name = $field->get_name();
@@ -132,8 +133,10 @@ sub bind_all_c7 {
 			}
 		}
 
-		my $orig = $field->get_name();
-		warn "DEBUG: $orig => $id (index: $count)\n" if $self->{'_DEBUG'};
+		my $orig= $field->get_name();
+		my $len = $field->get_len();
+		warn "DEBUG: $id \tindex: $count \tpos: $pos \tlength: $len \tfrom $orig\n" if $self->{'_DEBUG'};
+		$pos += $len if ($len ne '*');
 		
 		$field->set_name($id);
 		$identifiers{$id} = 1;

@@ -11,6 +11,14 @@ lib/oEdtk/Doc.pm
 lib/oEdtk/EDMS.pm
 lib/oEdtk/Field.pm
 lib/oEdtk/FPField.pm
+lib/oEdtk/iniEdtk/char_dico.ini
+lib/oEdtk/iniEdtk/country_dico.ini
+lib/oEdtk/iniEdtk/edtk_dico.ini
+lib/oEdtk/iniEdtk/mail.acq.txt
+lib/oEdtk/iniEdtk/mail.bat.txt
+lib/oEdtk/iniEdtk/mail.report.acq.txt
+lib/oEdtk/iniEdtk/mail.txt.prod
+lib/oEdtk/iniEdtk/mail.txt.test
 lib/oEdtk/iniEdtk/postal_dico_FR.ini
 lib/oEdtk/iniEdtk/snip_address.ini
 lib/oEdtk/iniEdtk/tplate.edtk.ini
