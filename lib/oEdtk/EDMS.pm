@@ -55,6 +55,8 @@ sub EDMS_prepare($$$$) {
 	die "ERROR: Could not create zip achive \"$zipfile\"\n"
 	    unless $zip->writeToFileNamed($zipfile) == AZ_OK;
 	print "$zipfile\n";
+
+return 1;
 }
 
 sub EDMS_process_zip($;$) {
@@ -249,7 +251,7 @@ sub EDMS_idx_create_csv($$$$$) {
 
 	my $csv = Text::CSV->new({ binary => 1, sep_char => ';', eol => "\n", quote_space => 0 });
 	my $edmsidx = "${app}_$idldoc.idx";
-	open(my $fh, '>', $edmsidx) or die "Cannot create \"$edmsidx\": $!\n";
+	open(my $fh, '>', $edmsidx) or die "ERROR: Cannot create \"$edmsidx\": $!\n";
 
 	# Always return the index file as the first file in the list, see
 	# EDMS_import() for why this is important.
@@ -263,7 +265,7 @@ sub EDMS_idx_create_csv($$$$$) {
 		# Dates need to be in a specific format.
 		my $datefmt = $cfg->{'EDMS_DATE_FORMAT'};
 		if ($vals->{'ED_DTEDTION'} !~ /^(\d{4})(\d{2})(\d{2})$/) {
-			die "Unexpected date format for ED_DTEDTION: $vals->{'ED_DTEDTION'}\n";
+			die "ERROR: Unexpected date format for ED_DTEDTION: $vals->{'ED_DTEDTION'}\n";
 		}
 		my ($year, $month, $day) = ($1, $2, $3);
 		$vals->{'EDMS_PROCESS_DT'} = strftime($datefmt, 0, 0, 0, $day, $month - 1, $year - 1900);
@@ -430,7 +432,7 @@ sub EDMS_edidx_write (\%) {
 	my @edms_cols 	= split(/,/, $cfg->{'EDMS_INDEX_COLS'});
 	my $index 	= $$refOpt{'ED_REFIDDOC'} . "_" . $$refOpt{'ED_IDLDOC'} .".idx";
 	
-	open (my $fh, ">>$index") or die $!;
+	open (my $fh, ">>$index") or die "ERROR: can't open $index : $!";
 	my $csv = Text::CSV->new({ binary => 1, sep_char => ';', eol => "\n", quote_space => 0 });
 
 	my @fields; # = map { $$refOpt{$$_[0]} } @edms_cols;

@@ -19,7 +19,7 @@ my $cfg = config_read('EDTK_DB');
 my $dbh = db_connect($cfg, 'EDTK_DBI_PARAM',
     { AutoCommit => 1, RaiseError => 1 });
 
-open(my $fh, ">", $file) or die "$file: $!\n";
+open(my $fh, ">", $file) or die "ERROR: can't open $file: $!\n";
 my $csv = Text::CSV->new({ sep_char => ";", binary => 1 , eol => "\n" });
 
 eval {

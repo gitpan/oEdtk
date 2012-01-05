@@ -5,26 +5,23 @@ BEGIN {
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
 		use strict;
 
-		$VERSION	= 0.6122; # a.ammr a.a année d'existence, mm mois, r release 
+		$VERSION	= 0.7012; # a.ammr a.a année d'existence, mm mois, r release 
 		@ISA		= qw(Exporter);
-		@EXPORT	= qw(oEdtk_version);
+		@EXPORT	= qw(oEdtk_release);
 }
 
 #
 # CODE - DOC AT THE END
 #
 
-sub oEdtk_version {
-	# require oEdtk;
-	# import oEdtk_version;
-	# print oEdtk_version();
-
-	return "oEdtk v$VERSION";
+sub oEdtk_release {
+	# warn "DEBUG: >$?< \nDEBUG: >$@<\n";
+	return "(c) 2005-2012 daunay\@cpan.org - edtk\@free.fr - oEdtk v$VERSION\n";
 }
 
 
 END {
-	warn "oEdtk v$VERSION - (c) 2005-2011 edtk\@free.fr\n"
+	warn oEdtk_release();
 }
 
 1;

@@ -36,7 +36,7 @@ if (@ARGV % 2 != 0) {
 	my $rows = omgr_stats($dbh, $pdbh, 'day', 'idlot');
 	
 	my $mailfile = $cfg->{'EDTK_MAIL_OMGR'};
-	open(my $fh, '<', $mailfile) or die "Cannot open \"$mailfile\": $!\n";
+	open(my $fh, '<', $mailfile) or die "ERROR: Cannot open \"$mailfile\": $!\n";
 	my @body = <$fh>;
 	close($fh);
 	
@@ -53,9 +53,9 @@ if (@ARGV % 2 != 0) {
 	my $date = sprintf("%02d/%02d/%d", $day, $month + 1, $year + 1900);
 	my $time = sprintf("%02d:%02d:%02d", $hour, $min, $sec);
 	
-	my $subject = $cfg->{'EDTK_TYPE_ENV'};
-	$subject .= " - "; 	
-	$subject .= $cfg->{'EDTK_MAIL_SUBJ'};
+#	my $subject = $cfg->{'EDTK_TYPE_ENV'};
+#	$subject .= " - "; 	
+	my $subject .= $cfg->{'EDTK_MAIL_SUBJ'};
 	$subject =~ s/%date/$date/;
 	$subject =~ s/%time/$time/;
 

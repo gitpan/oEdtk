@@ -151,11 +151,13 @@ sub perlify {
 }
 
 if (@ARGV < 1) {
-	die usage(); #"usage: $0 <det-file> [out-file]\n";
+	usage(); #"usage: $0 <det-file> [out-file]\n";
+	exit 1;
 }
 
 # The regular expression that matches an identifier.
-my $idre = qr/[a-zA-Z\d-]{1,31}/;
+# my $idre = qr/[a-zA-Z\d-]{1,31}/;
+my $idre = qr/[a-zA-Z\d-]{1,}/;
 my $picre = qr/PIC(?:TURE)?(?:\s+IS)?/;
 my $typre = qr/S?(?:[9XAV](?:\(\d+\))?)+/;
 
@@ -174,11 +176,14 @@ my $recid;
 while (<$in>) {
 	chomp;
 	#s/^.{6}//;		# Remove the first six characters.
+	s/^(\*\D*)(\d{2}\.*)$/$2/;		# Strip first col comments.
 	s/\*.*$//;		# Strip comments.
+	s/\_/\-/g;		# replace '_' with '-'.
+	s/\s+$//g;		# remove end line white spaces
 	next if m/^\s*$/;	# Ignore empty lines.
 
 	if ($_ !~ /^\s*(\d{2})\s+($idre)(?:\s+OCCURS\s+(\d+)(?:\s+TIMES)?)?/) {
-		die "ERROR: Unexpected line format (line $.)\n";
+		die "ERROR: Unexpected line format (1) (line $. :'$_')\n";
 	}
 	my ($level, $id, $occurs, $rest) = ($1, $2, $3, $');
 
@@ -198,7 +203,7 @@ while (<$in>) {
 	} elsif ($rest =~ /^\s+$picre\s+($typre)\s*\.\s*$/) {
 		add($cur, $id, $1, $occurs);
 	} else {
-		die "ERROR: Unexpected line format (2) (line $.)\n";
+		die "ERROR: Unexpected line format (2) (line $. - rest '$rest' - recid $recid -  curlvl $curlvl - id $id)\n";
 	}
 }
 

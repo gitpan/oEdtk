@@ -76,10 +76,10 @@ sub tree_Directory_Completion ($){
 			if 		(-e $tree){
 			} elsif 	(-d $tree){		
 			} else {
-				warn "-> mkdir, create $tree\n";
+				warn "INFO : -> mkdir, create $tree\n";
 				eval {
 					mkdir $tree;
-				} ; die "ERR. mkdir $tree  $@" if $@;
+				} ; die "ERROR: mkdir $tree  $@" if $@;
 			}
 		}
 	}
@@ -118,7 +118,7 @@ sub run_Edtk_dev() {
 		warn "INFO : ".oe_now_time()." -END Perl- \n";
 		
 		if ($ctrl eq $NOK) {
-			warn "ERROR : return $? in prep_Edtk_Data\n";
+			warn "ERROR: return $? in prep_Edtk_Data\n";
 			&wait_Enter();
 			exit $NOK;	
 		} else {
@@ -127,7 +127,7 @@ sub run_Edtk_dev() {
 
 		# contrôler l'appariement des balises
 		if (c7_Control_Bal($work_file) eq $NOK) {
-			warn "ERROR : return $? in c7_Control_Bal\n";
+			warn "ERROR: return $? in c7_Control_Bal\n";
 			&wait_Enter();
 			exit $NOK;	
 		} else {
@@ -140,7 +140,7 @@ sub run_Edtk_dev() {
 		$ENV{EDTK_DOC_OUTPUT}= "$ENV{EDTK_FDATAOUT}.$ENV{EDTK_EXT_PDF}";
 		$ENV{EDTK_EXT_DEFAULT}=$ENV{EDTK_EXT_PDF};
 		if (c7EdtkComp("PDF") eq $NOK) {
-			warn "ERROR : return $? in c7EdtkComp\n";
+			warn "ERROR: return $? in c7EdtkComp\n";
 			&wait_Enter();
 			exit $NOK;	
 		} else {
@@ -148,7 +148,7 @@ sub run_Edtk_dev() {
 		}
 
 		if (c7EdtkEmit("PDF") eq $NOK) {
-			warn "ERROR : return $? in c7EdtkEmit\n";
+			warn "ERROR: return $? in c7EdtkEmit\n";
 			&wait_Enter();
 			exit $NOK;	
 		} else {
@@ -163,12 +163,12 @@ sub run_Edtk_dev() {
 #		$ENV{EDTK_EXT_DEFAULT}=$ENV{EDTK_EXT_WORK};
 
 		chdir($ENV{EDTK_DIR_APPTMP})
-		    or die "Cannot change current directory: $!\n";
+		    or die "ERROR: Cannot change current directory: $!\n";
 		my $ctrl = &prep_Edtk_Data($ENV{EDTK_FDATAIN}.".".$ENV{EDTK_EXT_DATA}); #, $ENV{EDTK_DOC_OUTPUT});	
 		warn "INFO : ".oe_now_time()." -END Extract- \n";
 		
 		if ($ctrl eq $NOK) {
-			warn "ERROR : return $? in prep_Edtk_Data\n";
+			warn "ERROR: return $? in prep_Edtk_Data\n";
 			&wait_Enter();
 			exit $NOK;	
 		} else {
@@ -199,7 +199,7 @@ sub prep_Edtk_Data ($;$$) {
 	my $option=shift || "";
 
 	env_Var_Completion($arg2);
-	warn "$command $arg1 $arg2\n";
+	warn "INFO : $command $arg1 $arg2\n";
 	env_Var_Completion($command);
 	env_Var_Completion($arg1);
 	env_Var_Completion($option);
@@ -209,9 +209,9 @@ sub prep_Edtk_Data ($;$$) {
 		system($command, $arg1, $option);
 	};
          
-	if ($?){
-		warn " ERROR -> $@";
-		warn " ERROR $command $arg1 $arg2 return $? ";
+	if ($@){
+		warn "INFO: ERROR -> $@\n";
+		warn "INFO: ERROR $command $arg1 $arg2 return $? \n";
 
 		return $NOK;
 	}
@@ -378,7 +378,7 @@ sub clean_full_dir ($;$){
 			opendir(DIR, $key);
 		};
 	     if ($?){
-			warn " WARNING opendir(DIR, $key) return $?\n";
+			warn "INFO : WARNING opendir(DIR, $key) return $?\n";
 			next ITEMS ;
 		}
 
@@ -395,10 +395,10 @@ sub clean_full_dir ($;$){
 					# print "$file\n";
 					if ($file =~m{$suppr_motif}){
 						if ($option ne "--dry-run") {
-							warn "suppresion de $file\n" if ($option eq "--verbose");
+							warn "INFO : suppresion de $file\n" if ($option eq "--verbose");
 							unlink ($file);
 						} else {
-							warn "--dry-run : $file\n";
+							warn "INFO : --dry-run : $file\n";
 						}
 					}
 				} #fin de if
@@ -442,7 +442,7 @@ sub file_list ($$;$){
 			opendir(DIR, $key);
 		};
 		if ($?){
-			warn " WARNING opendir(DIR, $key) return $?\n";
+			warn "INFO : WARNING opendir(DIR, $key) return $?\n";
 			next ITEMS ;
 		}
 

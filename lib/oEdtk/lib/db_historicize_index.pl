@@ -13,8 +13,8 @@ my $wait_time =1;
 my $suffixe =strftime "%Y%m%d%H%M%S", localtime;
 $wait_time ||=500*$cfg->{'EDTK_WAITRUN'};
 
-print "WARN : table should not be in use\n";
-print "WARN : wait or press a key\n";
+warn "WARN : table should not be in use\n";
+warn "WARN : wait or press a key\n";
 
 ReadMode('raw');
 my $key = ReadKey($wait_time);
@@ -22,4 +22,4 @@ ReadMode ('restore');
 
 historicize_table($dbh, $cfg->{'EDTK_DBI_OUTMNGR'}, $suffixe);
 
-print "WARN : backup done for ".$cfg->{'EDTK_DBI_OUTMNGR'}."\n";
+warn "WARN : backup done for ".$cfg->{'EDTK_DBI_OUTMNGR'}."\n";

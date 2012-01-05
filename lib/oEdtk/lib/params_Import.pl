@@ -15,7 +15,7 @@ if ($#ARGV < 1) {
 
 my ($table, $file) = @ARGV;
 
-open(my $fh, "<", $file) or die "$file: $!\n";
+open(my $fh, "<", $file) or die "ERROR: can't open $file: $!\n";
 my $csv = Text::CSV->new({ sep_char => ';', binary => 1 });
 
 my $cfg = config_read('EDTK_DB');

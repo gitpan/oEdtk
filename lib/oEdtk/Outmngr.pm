@@ -15,8 +15,8 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.311;
-our @ISA	= qw(Exporter);
+our $VERSION	= 0.6002;		# release number : Y.YSSS -> Year, Sequence 
+our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
 			omgr_check_doclibs
@@ -153,14 +153,14 @@ sub omgr_track_folds ($;$){
 		. "   AND  A.ED_REFIDDOC=C.ED_REFIDDOC"
 		. "   AND (A.ED_DTEDTION IS NULL OR A.ED_DTEDTION > TO_CHAR(SYSDATE-?, 'IYYYMMDD'))"
 		. " GROUP BY C.ED_MAIL_REFERENT, A.ED_CORP, A.ED_REFIDDOC, A.ED_DTEDTION, B.ED_DTPOST, B.ED_DTPOST2, B.ED_STATUS, A.ED_STATUS"
-		. " ORDER BY C.ED_MAIL_REFERENT, A.ED_CORP, A.ED_REFIDDOC, A.ED_DTEDTION";
+		. " ORDER BY C.ED_MAIL_REFERENT, A.ED_CORP, A.ED_REFIDDOC, STATUS, A.ED_DTEDTION";
 
 	my $sth = $dbh->prepare($sql);
 	$sth->execute($nb_j_historique);
 
 	my $rows	= $sth->fetchall_arrayref();
 
-	my $fmt = "%10s %-20s %-10s %6s %9s %7s %7s %8s %8s";
+	my $fmt = "%10s %-20s %-10s %7s %9s %7s %7s %8s %8s";
 	my @head= ("CORP", "REFIDDOC", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
 	_filled_rows($rows);
 
@@ -188,7 +188,7 @@ sub omgr_track_report {
 		. " COUNT (DISTINCT A.ED_SEQLOT||TO_CHAR(A.ED_IDPLI,'FM0000000')) AS NB_PLIS, "
 		. " B.ED_STATUS, B.ED_LOTNAME, A.ED_SEQLOT, C.ED_IDMANUFACT, "
 		. " B.ED_NBFACES AS NB_FACES_MANUFACT, B.ED_NBPLIS AS NB_PLIS_MANUFACT, B.ED_DTPOST "
-		. "FROM EDTK_INDEX A, EDTK_ACQ B, EDTK_LOTS C "
+		. "FROM " . $cfg->{'EDTK_STATS_OUTMNGR'} . " A, EDTK_ACQ B, EDTK_LOTS C "
 		. "WHERE A.ED_SEQLOT = B.ED_SEQLOT AND B.ED_STATUS != 'SENT' AND A.ED_IDLOT = C.ED_IDLOT (+) "
 		. "GROUP BY C.ED_IDMANUFACT, A.ED_REFIDDOC, A.ED_SEQLOT, A.ED_MODEDI, B.ED_STATUS, B.ED_DTPOST, B.ED_LOTNAME, B.ED_NBFACES, B.ED_NBPLIS ";
 
@@ -197,7 +197,7 @@ sub omgr_track_report {
 
 	my $rows	= $sth->fetchall_arrayref();
 
-	my $fmt = "%15s %6s %6s %7s %16s %7s %16s %14s %14s %8s %s";
+	my $fmt = "%15s %6s %6s %7s %16s %7s %16s %14s %14s %8s ";
 	my @head= ("REFIDDOC", "FACES", "PLIS", "STATUS", "LOTNAME", "SEQLOT", "MANUFACTURER", "MANUFACT_FACES", "MANUFACT_PLIS", "DTPOST");
 	_filled_rows($rows);
 
@@ -1263,7 +1263,7 @@ sub _print_All_rTab($){
 }
 
 END {
-	warn "oEdtk::Outmngr v$VERSION - (c) 2005-2012 edtk\@free.fr\n"
+#	warn "(c) 2005-2012 edtk\@free.fr - oEdtk::Outmngr v$VERSION\n";
 }
 
 1;

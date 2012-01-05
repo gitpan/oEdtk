@@ -6,7 +6,7 @@ use oEdtk::Config		qw(config_read);
 use oEdtk::DBAdmin		qw(db_connect);
 use oEdtk::Messenger	qw(oe_send_mail);
 
-print "Usage: $0 < |COMSET>\n\n";
+warn "Usage: $0 < |COMSET>\n\n";
 my $opt = $ARGV[0] || "";
 my (@tCheck_access, @tCheck_write, @tCheckMessage);
 

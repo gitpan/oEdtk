@@ -1,5 +1,5 @@
 package oEdtk::TexDoc;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use base 'oEdtk::Doc';
 use oEdtk::TexTag;
@@ -24,3 +24,5 @@ sub append_table {
 sub line_break {
 	return "%\n";
 }
+
+1;

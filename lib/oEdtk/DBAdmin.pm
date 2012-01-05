@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.25;
+our $VERSION		= 0.26;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -75,7 +75,7 @@ sub csv_import ($$$;$){
 	$params->{'sep_char'} 	= $params->{'sep_char'} || ",";
 	$params->{'quote_char'}	= $params->{'quote_char'}||'"' ;
 	
-	open(my $fh, '<', $in) or die "Cannot open index file \"$in\": $!\n";
+	open(my $fh, '<', $in) or die "ERROR: Cannot open index file \"$in\": $!\n";
 	my $csv = Text::CSV->new({ binary => 1, sep_char => $params->{'sep_char'}, 
 							quote_char => $params->{'quote_char'}});
 
@@ -187,8 +187,8 @@ sub create_table_TRACKING {
 	$sql .= "( ED_TSTAMP VARCHAR2(14) NOT NULL";	# Timestamp of event
 	$sql .= ", ED_USER VARCHAR2(10) NOT NULL";	# Job request user 
 	$sql .= ", ED_SEQ INTEGER NOT NULL";		# Sequence
-	$sql .= ", ED_SNGL_ID VARCHAR2(17) NOT NULL";# Single ID : format YWWWDHHMMSSPPPP.U (compuset se limite ? 16 digits : 15 entiers, 1 decimal)
-	$sql .= ", ED_APP VARCHAR2(20) NOT NULL";	# Application name
+	$sql .= ", ED_SNGL_ID VARCHAR2(17) NOT NULL";#xx ED_IDLDOC Single ID : format YWWWDHHMMSSPPPP.U (compuset se limite ? 16 digits : 15 entiers, 1 decimal)
+	$sql .= ", ED_APP VARCHAR2(20) NOT NULL";	#xx ED_REFIDDOC Application name
 	$sql .= ", ED_MOD_ED CHAR";				# Editing mode (Batch, Tp, Web, Mail)
 	$sql .= ", ED_JOB_EVT CHAR";				# Level of the event (Spool, Document, Line, Warning, Error)
 	$sql .= ", ED_CORP VARCHAR2(8) NOT NULL";	# Entity related to the document
@@ -201,7 +201,7 @@ sub create_table_TRACKING {
 		$sql .= ", ED_K${i}_VAL VARCHAR2(128)";	# Value of key $i
 	}
 #	$sql .= ", PRIMARY KEY (ED_SNGL_ID, ED_JOB_EVT, ED_APP)"
-	$sql .= ")";	#, CONSTRAINT pk_$ENV{EDTK_DBI_TABLENAME} PRIMARY KEY (ED_TSTAMP, ED_PROC, ED_SEQ)";
+	$sql .= " )";	#, CONSTRAINT pk_$ENV{EDTK_DBI_TABLENAME} PRIMARY KEY (ED_TSTAMP, ED_PROC, ED_SEQ)";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -228,6 +228,7 @@ sub historicize_table ($$$){
 sub move_table ($$$;$){
 	my ($dbh, $table_source, $table_cible, $create_option) = @_;
 	$create_option ||= "";
+	# s'assurer que la table n'est pas vide avant de la bouger ?
 	my $sql_create ="CREATE TABLE ".$table_cible." AS SELECT * FROM ".$table_source;
 	my $sql_insert ="INSERT INTO  ".$table_cible." SELECT * FROM ".$table_source;
 
@@ -266,7 +267,7 @@ sub create_table_FILIERES {
 	$sql .= ", ED_DIRECTION VARCHAR2(4) NOT NULL";
 	$sql .= ", ED_POSTCOMP VARCHAR2(8) NOT NULL";
 #	$sql .= ", PRIMARY KEY (ED_IDFILIERE, ED_IDMANUFACT, ED_PRIORITE)"
-	$sql .= ")";
+	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -279,16 +280,16 @@ sub create_table_LOTS {
 	my $sql = "CREATE TABLE $table";
 	$sql .= "( ED_IDLOT VARCHAR2(8)  NOT NULL";		# rendre UNIQUE 
 	$sql .= ", ED_PRIORITE INTEGER   UNIQUE"; 		# rendre UNIQUE 	ALTER table EDTK_LOTS modify ED_PRIORITE INTEGER UNIQUE;
-	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";	# renommer en ed_refiddoc ATTENTION cf structure index.xls
+	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";	#xx ED_REFIDDOC ATTENTION cf structure index.xls
 	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
 	$sql .= ", ED_FILTER VARCHAR2(64)";			# alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
+	$sql .= ", ED_REFENC VARCHAR2(20)";			# a mettre en place pour ajouter des encarts spécifiques à certains lots (cf impact calcul lotissement) # alter table EDTK_LOTS add ED_REFENC VARCHAR2(20)
 	$sql .= ", ED_GROUPBY VARCHAR2(16)"; 
-	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
 	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	
-	$sql .= ", ED_REFENC VARCHAR2(20) ";			# a mettre en place pour ajouter des encarts spécifiques à certains lots (cf impact calcul lotissement) # alter table EDTK_LOTS add ED_REFENC VARCHAR2(20)
+	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
 #	$sql .= ", PRIMARY KEY (ED_IDLOT, ED_PRIORITE, ED_IDAPPDOC)"
-	$sql .= ")";
+	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -314,7 +315,7 @@ sub create_table_REFIDDOC {
 	$sql .= ", ED_REFIMP_REFIDDOC VARCHAR2(64)"; 
 	$sql .= ", ED_MAIL_REFERENT VARCHAR2(300)";		# referent mail for doc validation
 #	$sql .= ", PRIMARY KEY (ED_REFIDDOC, ED_CORP, ED_CATDOC)"
-	$sql .= ")";
+	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -337,7 +338,7 @@ sub create_table_SUPPORTS {
 	$sql .= ", ED_DEBVALID VARCHAR2(8)"; 
 	$sql .= ", ED_FINVALID VARCHAR2(8)"; 
 #	$sql .= ", PRIMARY KEY (ED_REFIMP, ED_TYPIMP)"
-	$sql .= ")";
+	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -426,7 +427,7 @@ sub create_table_PARA {
 	$sql .= ", ED_TSTAMP VARCHAR2(14) NOT NULL";		# Timestamp of event
 	$sql .= ", ED_TEXTBLOC VARCHAR2(512)";
 #	$sql .= ", PRIMARY KEY (ED_PARA_REFIDDOC, ED_PARA_CORP)"
-	$sql .= ")";
+	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -440,7 +441,7 @@ sub create_table_DATAGROUPS {
 	$sql .= "( ED_DGPS_REFIDDOC VARCHAR2(20) NOT NULL"; 
 	$sql .= ", ED_ID INTEGER NOT NULL";
 	$sql .= ", ED_DATA VARCHAR2(64)";
-	$sql .= ")";
+	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -461,7 +462,7 @@ sub create_table_ACQUIT {
 	$sql .= ", ED_DTCHECK VARCHAR2(8)";			# date de check
 	$sql .= ", ED_STATUS VARCHAR2(4)";				# check status
 #	$sql .= ", PRIMARY KEY (ED_SEQLOT, ED_LOTNAME)"
-	$sql .= ")";
+	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;
 }
@@ -473,7 +474,7 @@ sub create_table_INDEX {
 	my $sql	= "CREATE TABLE $table ("
 			. join(', ', map {"$$_[0] $$_[1]"} @INDEX_COLS) . ", "
 			. " PRIMARY KEY (ED_IDLDOC, ED_SEQDOC, ED_IDSEQPG)"	# rajouter ED_SEQLOT ?
-			. ")";
+			. " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or warn "WARN : " . $dbh->errstr . "\n";
 }

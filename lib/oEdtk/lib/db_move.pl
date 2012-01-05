@@ -13,8 +13,8 @@ if (@ARGV < 2) {
 my $cfg = config_read('EDTK_DB');
 my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 
-print "INFO : data from $ARGV[0] will be inserted in $ARGV[1]\n";
+warn "INFO : data from $ARGV[0] will be inserted in $ARGV[1]\n";
 
 move_table($dbh, $ARGV[0], $ARGV[1], $ARGV[2]);
 
-print "INFO : insert done into $ARGV[1]\n";
+warn "INFO : insert done into $ARGV[1]\n";

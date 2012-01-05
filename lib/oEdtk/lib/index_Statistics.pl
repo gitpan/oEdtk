@@ -34,7 +34,7 @@ if (defined($ARGV[1]) && $ARGV[1]!~/idlot/i) {
 # If an output file was given on the command line, we dump the data in
 # the given file in CSV format.
 if (defined($ARGV[2]) && length($ARGV[2]) > 0) {
-	open(my $fh, ">$ARGV[2]") or die $!;
+	open(my $fh, ">$ARGV[2]") or die "ERROR: can't open $ARGV[2] : $!";
 	my $csv = Text::CSV->new({ binary => 1, eol => "\n" });
 	$csv->print($fh, \@cols);
 	foreach my $row (@$rows) {

@@ -1,6 +1,6 @@
 package oEdtk::TexTag;
 
-our $VERSION = '0.02';
+our $VERSION = '0.05';
 
 # A SIMPLE OBJECT THAT DESCRIBES A TEX TAG.
 sub new {
@@ -12,7 +12,7 @@ sub new {
 	}
 
 	if ($name =~ /\d/) {
-		#die "ERROR: Tag name cannot contain digits: $name\n";
+		warn "INFO : Tex Tag name cannot contain digits : $name\n";
 	}
 
 	my $self = {
@@ -74,6 +74,7 @@ sub escape {
 	# Deal with backslashes and curly braces first and at the same
 	# time, because escaping backslashes introduces curly braces, and,
 	# inversely, escaping curly braces introduces backslashes.
+	# see http://detexify.kirelabs.org/classify.html
 	my $new = '';
 	foreach my $s (split(/([{}\\])/, $str)) {
 		if ($s eq "{") {
@@ -86,21 +87,29 @@ sub escape {
 			$new .= $s;
 		}
 	}
-	$new =~ s/([%&\$_#])/\\$1/g;
-	$new =~ s/\^/\\textasciicircum{}/g;
-	$new =~ s/\~/\\textasciitilde{}/g;
-	$new =~ s/²/\\texttwosuperior{}/g;
-	$new =~ s/³/\\textthreesuperior{}/g;
-	$new =~ s/µ/\\textmu{}/g;
-	$new =~ s/°/\\textdegree{}/g;
 
-	# merci à Thierry qui a recensé tous les cas tordus dans nos adresses 15/07/2010 16:38:23
-	$new =~ s/¨//g;	# \\"{} provoque des erreurs dans le processus d'indexation pour injection en SGBD
-	$new =~ s/¿/\\textquestiondown{}/g;
-	$new =~ s/§/\\textsection{}/g;
-
-	# 01...@A...yz{}|~ 1°
+	$new =~ s/([%&\$_#])/\\$1/g;	
+	$new = oEdtk::Doc::char_xlate($new, "LATEX");
 	
+#	$new =~ s/\^/\\textasciicircum{}/g;
+#	$new =~ s/\~/\\textasciitilde{}/g;
+#	$new =~ s/\²/\\texttwosuperior{}/g;
+#	$new =~ s/\³/\\textthreesuperior{}/g;
+#	my $edanslo = chr(339); # ½
+#	$new =~ s/$edanslo/\\oe{}/g;
+#	$edanslo = chr(338); # ¼
+#	$new =~ s/$edanslo/\\OE{}/g;
+#	$new =~ s/\¥/\\OE{}/g;
+#	$new =~ s/\½/\\oe{}/g;
+#	$new =~ s/\µ/\\textmu{}/g;
+#	$new =~ s/\°/\\textdegree{}/g;
+#	$new =~ s/\¿/\\textquestiondown{}/g;
+#	$new =~ s/\§/\\textsection{}/g;
+#	$new =~ s/\¨//g;
+
+	# \\"{} => PROVOQUE DES ERREURS TEX DANS LE PROCESSUS D'INDEXATION (POUR INJECTION EN SGBD)
+	$new =~ s/\\\"\{\}/\\textquotestraightdblbase{}/g;
+	# 01...@A...yz{}|~ 1°
 	return $new;
 }
 

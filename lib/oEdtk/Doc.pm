@@ -1,9 +1,10 @@
 package oEdtk::Doc;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Scalar::Util qw(blessed);
 use overload '""' => \&dump;
 use oEdtk::Config (config_read);
+use oEdtk::Dict;
 
 # The maximum number of characters to output before inserting
 # a newline character.
@@ -97,6 +98,28 @@ sub append_table {
 
 sub line_break {
 	die "ERROR: oEdtk::Doc::line_break unimplemented method";
+}
+
+#sub dico_char_xlate {
+#	die "ERROR: oEdtk::Doc::dico_char_xlate unimplemented method";
+#}
+
+{
+my $_DICO_CHAR;
+
+	sub char_xlate($$){
+		my ($var, $section) = shift;
+		return $var if ($var eq "");
+	
+		if (!defined($_DICO_CHAR))  {
+			my $cfg		= config_read();
+			$_DICO_CHAR	= oEdtk::Dict->new($cfg->{'EDTK_DICO_XLAT'}, , { section => $section });
+		}
+		$var = $_DICO_CHAR->substitue($var);
+	#	warn "DEBUG: message DICO_CHAR\n";
+
+	return $var;
+	}
 }
 
 1;

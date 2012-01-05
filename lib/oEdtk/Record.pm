@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(blessed);
-our $VERSION		= 0.03;
+our $VERSION		= 0.04;
 
 sub debug {
 	my ($self) = @_;
@@ -33,29 +33,38 @@ sub new {
 	}
 
 	my $self = {
-		fields => \@fields,
-		template => $template,
-		bound => {}
+		fields_offset	=> 10,
+		fields		=> \@fields,
+		template		=> $template,
+		bound		=> {}
 	};
 	bless $self, $class;
 	return $self;
 }
 
 
+sub set_fields_offset {
+	my ($self, $fields_offset)= @_;
+	
+	$self->{'fields_offset'} = $fields_offset || 10;
+}
+
+
 sub parse {
-	my ($self, $line) = @_;
+	my ($self, $line)	= @_;
 	my @values;
 
-	my $bound = $self->{'bound'};
-	if ($line !~ /^.{8}(.*)$/) {
+	my $fields_offset	= $self->{'fields_offset'};
+	my $bound			= $self->{'bound'};
+	if ($line !~ /^.{$fields_offset}(.*)$/) {
 		die "ERROR: Line too short\n";
 	}
 
-	$line = $1;
-	my @vals = unpack($self->{'template'}, $line);
-	my %hvals = ();
+	$line	= $1;
+	my @vals	= unpack($self->{'template'}, $line);
+	my %hvals	= ();
 	foreach my $i (0 .. $#{$self->{'fields'}}) {
-		my $field = $self->{'fields'}->[$i];
+		my $field= $self->{'fields'}->[$i];
 		my $name = $field->get_name();
 		if (exists($bound->{$name})) {
 			$hvals{$name} = $field->process($vals[$i]);

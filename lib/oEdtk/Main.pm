@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.6111;
+our $VERSION 	=0.7004;		# release number : Y.YSSS -> Year, Sequence
+
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
 			c7Flux
@@ -12,16 +13,10 @@ our @EXPORT 	= 	qw(
 			fmt_address
 			fmt_address_sender
 			fmt_monetary
-			prodEdtk_Current_Rec
-			prodEdtk_Previous_Rec
-			prodEtk_rec_cdata_join
-			recEdtk_erase
-			recEdtk_join_tmplte
-			recEdtk_post_process
-			recEdtk_redefine
-			toC7date
 			oe_app_usage
+			oe_CAP_sans_accents
 			oe_cdata_table_build
+			oe_char_xlate
 			oe_clean_addr_line
 			oe_close_fo
 			oe_compo_link
@@ -36,13 +31,13 @@ our @EXPORT 	= 	qw(
 			oe_define_TeX_output
 			oe_env_var_completion
 			oe_fmt_date
-			oe_iso_country
 			oe_ID_LDOC
+			oe_iso_country
+			oe_list_encodings
 			oe_new_job
 			oe_now_time
 			oe_num_sign_x
 			oe_num2txt_us
-			oe_oe_uc_sans_accents
 			oe_open_fi_IN
 			oe_open_fo_OUT
 			oe_outmngr_compo_run
@@ -60,19 +55,29 @@ our @EXPORT 	= 	qw(
 			oe_trt_ref_rec
 			oe_uc_sans_accents
 			oe_unique_data_name
+			prodEdtk_Current_Rec
+			prodEdtk_Previous_Rec
+			prodEtk_rec_cdata_join
+			recEdtk_erase
+			recEdtk_join_tmplte
+			recEdtk_post_process
+			recEdtk_redefine
+			toC7date
 			*OUT *IN  @DATATAB $LAST_ENR
 			%motifs %ouTags %evalSsTrt
 			);
 
 use POSIX			qw(mkfifo);
-use List::Util 	qw(reduce);
-use List::MoreUtils	qw(uniq);
-use Math::Round 	qw(nearest);
-use Getopt::Long;
 use Date::Calc 	qw(Add_Delta_Days Delta_Days Date_to_Time Today Gmtime Week_of_Year);
+use Encode;
 use File::Basename;
+use Getopt::Long;
+use List::MoreUtils	qw(uniq);
+use List::Util 	qw(reduce);
+use Math::Round 	qw(nearest);
 use Sys::Hostname;
 
+use oEdtk;
 require oEdtk::libC7;
 require oEdtk::Outmngr;
 require oEdtk::TexDoc;
@@ -560,6 +565,9 @@ return $time;
 my $_DICO_COUNTRY;
 # DICTIONNAIRE DES ABBRÉVIATIONS.
 my $_DICO_POST;
+# DICTIONNAIRE de translation des caractères (déconseillés, mais parfois nécessaires).
+my $_DICO_CHAR;
+
 
 {
 my $_LAST_ISO ="";
@@ -568,13 +576,28 @@ my $_LAST_ISO ="";
 		# retourne le code pays dans la codification country_dico.ini ou la dernière valeur connue
 		my $country = shift;
 		if (!defined($_DICO_COUNTRY))  {
-			my $cfg = config_read();
-			$_DICO_COUNTRY = oEdtk::Dict->new($cfg->{'EDTK_DICO_COUNTRY'}, , { section => $cfg->{'EDTK_LANG'} });
+			my $cfg		= config_read();
+			$_DICO_COUNTRY	= oEdtk::Dict->new($cfg->{'EDTK_DICO_COUNTRY'}, , { section => $cfg->{'EDTK_LANG'} });
 		}
 		$_LAST_ISO = $_DICO_COUNTRY->translate($country) if defined ($country);
 		return $_LAST_ISO;
 	}
 }
+
+
+sub oe_char_xlate($;$){ # à migrer dans le dictionnaire ?
+	my $scalar = shift;
+
+	if (!defined($_DICO_CHAR))  {
+		my $section	= shift || 'DEFAULT';
+		my $cfg		= config_read();
+		$_DICO_CHAR	= oEdtk::Dict->new($cfg->{'EDTK_DICO_XLAT'}, , { section => $section });
+	}
+	$scalar = $_DICO_CHAR->substitue($scalar);
+	return $scalar;
+}
+
+
 
 sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	# CETTE FONCTION PERMET UN NETTOYAGE DES LIGNES D'ADRESSE POUR CONSTRUIRE LES BLOCS D'ADRESSE DESTINTATIRE
@@ -582,7 +605,7 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	my $rLine = shift;
 
 	# valeur par défaut dans le cas où le champs serait undef
-	if (!defined($rLine) || length($$rLine) == 0) {
+	if (!defined($$rLine) || length($$rLine) == 0) {
 		$$rLine = '';
 		return $$rLine;
 	}
@@ -590,22 +613,25 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	chomp($$rLine);	# pour être sûr de ne pas avoir de retour à la ligne en fin de champ
 	oe_trimp_space($rLine);
 
+	$$rLine = oe_char_xlate($$rLine, 'ADDRESS');
+
 	# à faire : une expression régulière qui traite tout ce qui n'est pas 0-9\-\°\w par des blancs...
-	#      ===> externaliser la liste des caractères à modifier
-	$$rLine =~ s/\./ /g;	# on remplace les points
-	$$rLine =~ s/\,/ /g;	# on remplace les virgules
-	$$rLine =~ s/\:/ /g;	# on remplace les points virgules
-	$$rLine =~ s/\;/ /g;	# on remplace les points virgules
+#	#      ===> externaliser la liste des caractères à modifier
+#	$$rLine =~ s/\./ /g;	# on remplace les points
+#	$$rLine =~ s/\,/ /g;	# on remplace les virgules
+#	$$rLine =~ s/\:/ /g;	# on remplace les 2 points 
+#	$$rLine =~ s/\;/ /g;	# on remplace les points virgules
 	#$$rLine =~ s/\// \/ /g;	# on ajoute des espaces autour de '/' dans les adresses
-	$$rLine =~ s/\(/ /g;	# on remplace les parenthèses ouvrantes
-	$$rLine =~ s/\)/ /g;	# on remplace les parenthèses fermantes
-	$$rLine =~ s/\²/ /g;	# on remplace les '²' (touche au-dessus de TAB)
-	$$rLine =~ s/\~/ /g;	# on remplace les '~' (touche alpha num 2)
-	$$rLine =~ s/\]/ /g;	# on remplace les ']' (touche alpha num °)
-	$$rLine =~ s/\[/ /g;	# on remplace les ']' (pas d'explication...)
-	$$rLine =~ s/\¨/ /g;	# on remplace les '¨' (pas d'explication...)
-	$$rLine =~ s/\{/ /g;	# on remplace les '}' (touche alpha num °)
-	$$rLine =~ s/\}/ /g;	# on remplace les '}' (touche alpha num °)
+#	$$rLine =~ s/\(/ /g;	# on remplace les parenthèses ouvrantes
+#	$$rLine =~ s/\)/ /g;	# on remplace les parenthèses fermantes
+#	$$rLine =~ s/\²/ /g;	# on remplace les '²' (touche au-dessus de TAB)
+#	$$rLine =~ s/\~/ /g;	# on remplace les '~' (touche alpha num 2)
+#	$$rLine =~ s/\]/ /g;	# on remplace les ']' (touche alpha num °)
+#	$$rLine =~ s/\[/ /g;	# on remplace les ']' (pas d'explication...)
+#	$$rLine =~ s/\¨/ /g;	# on remplace les '¨' (pas d'explication...)
+#	$$rLine =~ s/\{/ /g;	# on remplace les '}' (touche alpha num °)
+#	$$rLine =~ s/\}/ /g;	# on remplace les '}' (touche alpha num °)
+
 	$$rLine =~ s/^\s+//;	# on supprime les blancs consécutifs en début de chaîne (on a fait un oe_trimp_space en premier...) TRIM gauche
 	$$rLine =~ s/\s+$//;	# on supprime les blancs consécutifs en fin de chaîne (...) TRIM droite
 	$$rLine =~ s/^0\s+//;	# on supprime les zéros tout seul en début de chaine (on le passe en dernier, après les TRIM gauche)
@@ -630,7 +656,8 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	return $$rLine;
 }
 
-sub oe_oe_uc_sans_accents (\$) {
+
+sub oe_CAP_sans_accents (\$) {
 	# CETTE FONCTION CONVERTIT LES CARACTÈRES ACCENTUÉS MAJUSCULES EN CARACTÈRES NON ACCENTUÉS MAJ
 	# l'utilisation de la localisation provoque un bug dans la commande "sort".
 	# On ne s'appuie pas sur la possibilité de rétablir le comportement par défaut par échappement
@@ -650,7 +677,7 @@ sub oe_oe_uc_sans_accents (\$) {
 	${$refChaine}=~s/[ÒÔÖÕ]/O/g;
 	${$refChaine}=~s/[ÚÙÛÜ]/U/g;
 	${$refChaine}=~s/Ç/C/g;
-	# on ne reprend pas la commande uc qui peut être faite avant appel à oe_oe_uc_sans_accents
+	# on ne reprend pas la commande uc qui peut être faite avant appel à oe_CAP_sans_accents
 	# - soit on veut garder les minuscules accentuées, soit on veut tout capitaliser
 	## ${$refChaine}= uc ${$refChaine};
 
@@ -692,6 +719,12 @@ sub oe_trimp_space(\$) {		# migrer oe_trimp_space
 	${$rChaine} =~s/\s{2,}/ /go;
 
 return ${$rChaine};
+}
+
+
+sub oe_list_encodings {
+	my @list = Encode->encodings();
+	warn "INFO : available encodings on this machine are : @list\n";
 }
 
 				# migrer oe_open_fi_IN
@@ -790,29 +823,6 @@ sub oe_date_biggest($$) {
 }
 
 
-# sub oe_num2txt_us (\$){		# migrer oe_num2txt_us
-#	# traitement des montants au format Texte
-#	# le séparateur de décimal "," est transformé en "." pour les commandes de chargement US / C7
-#	# le séparateur de millier "." ou " " est supprimé
-#	# recoit : une variable alphanumerique formattée pour l'affichage
-#	# 		oe_num2txt_us($value);
-#
-#	my $refMontant  =shift;
-#	${$refMontant}||="";
-#
-#	if (${$refMontant}){
-#		${$refMontant}=~s/\s+//g;	# suppression des blancs
-#		${$refMontant}=~s/\.//g;	# suppression des séparateurs de milliers
-#		${$refMontant}=~s/\,/\./g;	# remplacement du séparateur de décimal
-#		${$refMontant}=~s/(.*)(\-)$/$2$1/;# éventuellement on met le signe négatif devant
-#	} else {
-#		${$refMontant}=0;
-#	}
-#
-#return ${$refMontant};
-#}
-
-
 sub oe_num2txt_us(\$) {
 	# traitement des montants au format Texte
 	# le séparateur de décimal "," est transformé en "." pour les commandes de chargement US / C7
@@ -907,20 +917,26 @@ sub oe_data_build($;$) {	#oe_xdata_build
 
 
 sub oe_app_usage() {		# migrer oe_app_usage
-        my $app="";
-        $0=~/([\w-]+[\.plmex]*$)/;
-        $1 ? $app="application.pl" : $app=$1;
-        print STDOUT << "EOF";
+	my $app="";
+	$0=~/([\w-]+[\.plmex]*$)/;
+	$1 ? $app="application.pl" : $app=$1;
+	print STDOUT << "EOF";
 
-        Usage : $app <input_data_file> [job_name] [options]
-			options :
-					--help
-					--massmail 	to confirm mass treatment
-					--edms		to confirm edms treatment
-					--cgi
+	Usage :	$app <input_data_file> [job_name] [options]
+	options :
 
-		these values depends on ED_REFIDDOC config table (ie if treatment should be confirmed)
+			--help		this message
+			--massmail 	to confirm mass treatment
+			--edms		to confirm edms treatment
+			--cgi
+					these values depends on ED_REFIDDOC config table 
+					(ie : if treatment should be confirmed)
+
+			--input_code	input caracters encoding
+					(ie : --input_code=iso-8859-1)
+
 EOF
+oe_list_encodings();
 exit 1;
 }
 
@@ -931,29 +947,31 @@ exit 1;
 my $_RUN_PARAMS;
 
 
-sub oe_new_job(@) {	# migrer oe_open_files / oe_open / oe_new_job
-	@ARGV=(@ARGV, @_);
+sub oe_new_job(@) {	
+	@ARGV = (@ARGV, @_); # surcharge éventuelle des options avec les paramamètre de oe_new_job pour GetOptions
+	my $cfg = config_read('COMPO');
 	my $params = {};
 	# DEFAULT OPTION VALUES.
 	my %defaults = (
-		index => 0,
-		massmail => 0,
-		edms => 0,
-		cgi	=> 0
+#		xls	 	=> 0,
+#		tex		=> 0,
+		index 	=> 0,
+		massmail 	=> 0,
+		edms 	=> 0,
+		cgi		=> 0,
+		input_code=> 0
 	);
 
-	#oe_new_job(@ARGV, {index => 1});
-	GetOptions(\%defaults, 'help', 'index', 'massmail', 'edms', 'cgi');
+	# oe_new_job('--index');
+	# oe_new_job("--input_code=utf8");
+
+	GetOptions(\%defaults, 'help', 'index', 'massmail', 'edms', 'cgi', 'input_code=s');
 	if ($defaults{help} or $#ARGV ==-1) {
 		&oe_app_usage();
 		exit 0;
 	}
 
 	my $fi = $ARGV[0];	# TO KEEP COMPATIBILITY
-	my $cfg = config_read('COMPO');
-	#if (!defined($params)) {
-	#	$params = {};
-	#}
 
 	if ($^O ne 'MSWin32') {
 		$defaults{'fifo'} = 1;
@@ -966,8 +984,19 @@ sub oe_new_job(@) {	# migrer oe_open_files / oe_open / oe_new_job
 			$params->{$key} = $val;
 		}
 	}
+
 	$params->{'doclib'} = _omngr_doclib();
 	$params->{'idldoc'} = oe_ID_LDOC();
+
+	$params->{'outfile'} 	= $cfg->{'EDTK_PRGNAME'}.".txt";	# devrait être lié à TexMode
+	$params->{'output_code'}	= $cfg->{'EDTK_OUT_ENCODING'} || 'utf8';
+	$params->{'output_code'}	= ">:encoding(". $params->{'output_code'} .")";
+	if ($params->{'input_code'}) {
+		$params->{'input_code'} = "<:encoding(". $params->{'input_code'} .")";
+	} else {
+		$params->{'input_code'} = "<";
+	}
+
 
 	# Override default setting if EDTK_COMPO_ASYNC is set in edtk.ini.
 	my $async = $cfg->{'EDTK_COMPO_ASYNC'};
@@ -977,9 +1006,6 @@ sub oe_new_job(@) {	# migrer oe_open_files / oe_open / oe_new_job
 		$params->{'fifo'} = 0;
 	}
 
-	my $fo = $cfg->{'EDTK_PRGNAME'}.".txt";	# devrait être lié à TexMode
-	$params->{'outfile'} = $fo;
-
 	if ($params->{'fifo'} && $^O eq 'MSWin32') {
 		warn "WARN : FIFO mode is not possible under Windows, ignoring.\n";
 		$params->{'fifo'} = 0;
@@ -988,7 +1014,7 @@ sub oe_new_job(@) {	# migrer oe_open_files / oe_open / oe_new_job
 	# If we are in FIFO mode and there is a left-over text file, the mkfifo()
 	# call would fail.  If we are not in FIFO mode and there's a left-over FIFO,
 	# we would hang indefinitely, so make sure to remove this file first.
-	unlink($fo);
+	unlink($params->{'outfile'});
 
 	# Handle options passed in the EDTK_OPTIONS environment variable.
 	if (exists($ENV{'EDTK_OPTIONS'})) {
@@ -999,16 +1025,16 @@ sub oe_new_job(@) {	# migrer oe_open_files / oe_open / oe_new_job
 	}
 
 	if ($params->{'fifo'}) {
-		warn "INFO : Creating FIFO for output data file ($fo)\n";
-		mkfifo($fo, 0700) or die "Could not create fifo : $!\n";
+		warn "INFO : Creating FIFO for output data file (". $params->{'outfile'} .")\n";
+		mkfifo($params->{'outfile'}, 0700) or die "ERROR: Could not create fifo : $!\n";
 		my $pid = oe_compo_run($cfg->{'EDTK_PRGNAME'}, $params);
 		$params->{'pid'} = $pid;
 	}
 
-	open(IN, '<', $fi)	or die "ERROR: Cannot open \"$fi\" for reading: $!\n";
-	warn "INFO : input perl data is $fi\n";
-	open(OUT, '>', $fo)	or die "ERROR: Cannot open \"$fo\" for writing: $!\n";
-	warn "INFO : input compo data is $fo\n";
+	open(IN, $params->{'input_code'}, $fi)						or die "ERROR: Cannot open \"$fi\" for reading: $!\n";
+	warn "INFO : input perl data is $fi (encode \'". $params->{'input_code'} ."\' $ARGV[-1])\n";
+	open(OUT,$params->{'output_code'}, $params->{'outfile'})		or die "ERROR: Cannot open \'". $params->{'outfile'} ."\' for writing: $!\n";
+	warn "INFO : input compo data is ".$params->{'outfile'} ." (encode \'". $params->{'output_code'} ."\')\n";
 
 	# Remember for later use in oe_compo_link() & oEdtk::Main.
 	$_RUN_PARAMS = $params;
@@ -1217,7 +1243,7 @@ sub oe_outmngr_output_run (;$){
 			c7_emit  ("PDF", $lib_filieres, $SsLot_output_txt, $SsLot_output_opf, "OMGR", @tDclib);
 		};
 		flock($lock, LOCK_UN);
-		die $@ if $@;	# Now that we unlocked, re-throw the error if any.
+		die "ERROR: can't unlock $lock : $@" if $@;	# Now that we unlocked, re-throw the error if any.
 
 		close(IN);	# XXX OMG THIS IS A HACK!$#@#@
 		warn "INFO : Packaging $cfg->{'EDTK_DIR_OUTMNGR'} $SsLot\n";
@@ -1248,7 +1274,8 @@ sub oe_outmngr_output_run (;$){
 
 	my @zips = map { $cfg->{'EDTK_DIR_OUTMNGR'}."/$$_[0].zip\n" } @lots;
 	print @zips;
-1;
+
+return 1;
 }
 
 
@@ -1301,6 +1328,8 @@ sub oe_compo_link (;@){		# migrer oe_close_files oe_compo_link
 		}
 		oe_after_compo($cfg->{'EDTK_PRGNAME'}, $params);
 	}
+
+return 1;
 }
 
 
@@ -1550,8 +1579,9 @@ my $_backup_date ;
 			system($commande);
 		};
 
-		if ($?){
-			warn "ERROR: echec commande $commande\n";
+#		if ($?){
+		if ($@){
+			warn "ERROR: echec commande $commande : $@\n";
 			return -1;
 		}
 
@@ -1570,6 +1600,7 @@ my $_backup_date ;
 
 END {
 	_restore_sys_date;
-	warn "oEdtk::Main v$VERSION - (c) 2005-2012 edtk\@free.fr\n"
+	# return "(c) 2005-2012 daunay\@cpan.org - edtk\@free.fr - oEdtk v$VERSION\n";
 }
+
 1;

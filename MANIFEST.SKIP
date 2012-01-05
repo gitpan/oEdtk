@@ -1,4 +1,4 @@
-^myldr/Makefile$
+^myldr/Makefile$ 
 ^myldr/Makefile\.old$
 ^myldr/main\.[^c].*$
 ^myldr/x?static(?:.[^c].*)?$

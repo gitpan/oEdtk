@@ -39,6 +39,8 @@ sub oe_cmd_run($) {
 
 	my $reason = oe_status_to_msg($?);
 	warn "ERROR: Command failed : $reason\n";
+
+return 1;
 }
 
 sub oe_cmd_run_bg($$) {
@@ -280,6 +282,8 @@ sub oe_after_compo($$) {
 	if ($cfg->{'EDTK_TYPE_ENV'} ne 'Test') {
 		unlink($index);
 	}
+
+return 1;
 }
 
 sub oe_csv_to_doc($$) {
