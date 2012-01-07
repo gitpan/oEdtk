@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.26;
+our $VERSION		= 0.27;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -194,6 +194,8 @@ sub create_table_TRACKING {
 	$sql .= ", ED_CORP VARCHAR2(8) NOT NULL";	# Entity related to the document
 	$sql .= ", ED_SOURCE VARCHAR2(128)";		# Input stream of this document
 	$sql .= ", ED_OBJ_COUNT INTEGER";			# Number of objects attached to the event
+	$sql .= ", ED_MESSAGE VARCHAR2(256)";		# Input stream of this document	# alter table EDTK_TRACKING add ED_MESSAGE VARCHAR2(256)
+																	# alter table EDTK_TRACK_2012 add ED_MESSAGE VARCHAR2(256);
 	$sql .= ", ED_HOST VARCHAR2(32)";			# Input stream of this document
 
 	foreach my $i (0 .. $maxkeys) {
@@ -476,7 +478,7 @@ sub create_table_INDEX {
 			. " PRIMARY KEY (ED_IDLDOC, ED_SEQDOC, ED_IDSEQPG)"	# rajouter ED_SEQLOT ?
 			. " )";
 
-	$dbh->do(_sql_fixup($dbh, $sql)) or warn "WARN : " . $dbh->errstr . "\n";
+	$dbh->do(_sql_fixup($dbh, $sql)) or warn "INFO : " . $dbh->errstr . "\n";
 }
 
 

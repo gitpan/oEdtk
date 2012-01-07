@@ -21,7 +21,7 @@ sub new {
 	}
 
 	if (length($name) > 8) {
-		warn "WARN : Tag name too long: $name\n";
+		warn "INFO : Tag name too long: $name\n";
 	}
 
 	my $self = {

@@ -94,12 +94,12 @@ if ($row_count<=10) {
 		printf "%14s  %6s %16s %09d %8s %-30s \n", @$row, ""; # 1391152325098839
 	}
 }
-print "WARN : Confirm Block request to set ". $row_count ." doc(s) for '$event' event ? (y/n)\n";
+warn "INFO : Confirm Block request to set ". $row_count ." doc(s) for '$event' event ? (y/n)\n";
 
 ReadMode('raw');
 my $key = ReadKey();
 if 		($key!~/^y$/i) {
-	die "WARN : abort request\n";
+	die "ERROR: abort request\n";
 }
 ReadMode ('restore');
 

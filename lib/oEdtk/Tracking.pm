@@ -1,5 +1,25 @@
 package oEdtk::Tracking;
 
+my ($_TRACK_SIG, $_TRACK_TRK);
+
+BEGIN { 
+	$SIG{'__WARN__'} = sub { 
+		warn $_[0];
+		if (defined $_TRACK_TRK && $_TRACK_SIG=~/warn/i) {
+			# http://perldoc.perl.org/functions/warn.html
+			$_TRACK_TRK->track('Warn', 1, $_[0]);
+		} 
+	};
+
+	$SIG{'__DIE__'} = sub { 
+		die $_[0];
+		if (defined $_TRACK_TRK) {
+			$_TRACK_TRK->track('Halt', 1, $_[0]);
+		} 
+	};
+}
+
+
 use strict;
 use warnings;
 
@@ -13,9 +33,10 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.10;
+our $VERSION		= 0.11;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(stats_iddest stats_week stats_month);
+
 
 sub new {
 	my ($class, $source, %params) = @_;
@@ -51,7 +72,7 @@ sub new {
 		my $key = uc($_);
 		if (length($key) > 8) {
 			$key =~ s/^(.{8}).*$/$1/;
-			warn "WARN : column \"\U$_\E\" too long, truncated to \"$key\"\n";
+			warn "INFO : column \"\U$_\E\" too long, truncated to \"$key\"\n";
 		}
 		if (exists($seen{$key})) {
 			die "ERROR: duplicate column \"$key\"";
@@ -65,7 +86,7 @@ sub new {
 	$app =~ s/^.*?[\/\\]?([-A-Z0-9]+)\.pl$/$1/;
 	if (length($app) > 20) {
 		$app =~ /^(.{20})/;
-		warn "WARN : application name \"$app\" too long, truncated to \"$1\"\n";
+		warn "INFO : application name \"$app\" too long, truncated to \"$1\"\n";
 		$app = $1;
 	}
 
@@ -76,7 +97,7 @@ sub new {
 	my $user = $params{'user'} || 'None';
 	if (length($user) > 10) {
 		$user =~ s/^(.{10}).*$/$1/;
-		warn "WARN : username \"$params{'user'}\" too long, truncated to \"$user\"\n";
+		warn "INFO : username \"$params{'user'}\" too long, truncated to \"$user\"\n";
 	}
 
 	# Truncate if necessary, by taking at most 32 characters on the right.
@@ -110,6 +131,11 @@ sub new {
 	}
 
 	$self->track('Job', 1);
+	if (defined $cfg->{'EDTK_TRACK_SIG'} && $cfg->{'EDTK_TRACK_SIG'}!~/no/i) {
+		$_TRACK_SIG = $cfg->{'EDTK_TRACK_SIG'};
+		warn "INFO : tracking catchs SIG messages -> '$_TRACK_SIG' set ('warn' for all, 'halt' for die only)\n";
+		$_TRACK_TRK = $self;
+	}
 	return $self;
 }
 
@@ -129,9 +155,9 @@ sub track {
 	# Validate the job event.
 	$job = _validate_event($job);
 
-	# Generate SQL request.
+	# GENERATE SQL REQUEST.
 	my $values = {
-		ED_TSTAMP	=> oe_now_time(),
+		ED_TSTAMP		=> oe_now_time(),
 		ED_USER		=> $self->{'user'},
 		ED_SEQ		=> $self->{'seq'}++,
 		ED_SNGL_ID	=> $self->{'id'},
@@ -143,27 +169,43 @@ sub track {
 		ED_HOST		=> hostname()
 	};
 
-	if ($job eq 'J') {
-		$values->{'ED_SOURCE'} = $self->{'source'};
-	}
-
-
 	foreach my $i (0 .. $#data) {
-		if (defined($data[$i]) && length($data[$i]) > 128) {
-			warn "WARN : \"$data[$i]\" truncated to 128 characters\n";
-			$data[$i] =~ s/^(.{128}).*$/$1/;
+		# ajout d'une colonne message pour gérer les messages et les warning 
+		# pour assurer la compatibilité avec l'existant on va inverser
+		# les data pour mettre le message en tête en attendant le job_evt
+		$values->{'ED_MESSAGE'}			= $data[$i] . " " . ($values->{'ED_MESSAGE'} || "");
+
+		# s'il n'y a qu'une data, on s'assure de ne pas la mettre inutilement dans une colonne utilisateur
+		if ($#data > 0) {
+			if (defined($data[$i]) && length($data[$i]) > 128) {
+				warn "INFO : \"$data[$i]\" truncated to 128 characters\n";
+				$data[$i] =~ s/^(.{128}).*$/$1/;
+			}
+			$values->{"ED_K${i}_NAME"}	= $usercols[$i];
+			$values->{"ED_K${i}_VAL"}	= $data[$i];
 		}
-		$values->{"ED_K${i}_NAME"} = $usercols[$i];
-		$values->{"ED_K${i}_VAL"}  = $data[$i];
 	}
 
-	my @cols = keys(%$values);
-	my $table = $self->{'table'};
-	my $sql = "INSERT INTO $table (" . join(', ', @cols) . ") VALUES (" .
+	if ($job eq 'W' || $job eq 'H') {
+		# si le job_evt est 'Warning' ou 'Halt' on gère les messages et la source
+		$values->{'ED_MESSAGE'}	=~ s/\s+/ /g;
+		$values->{'ED_MESSAGE'}	=~ s/^(.{256}).*$/$1/;
+		$values->{'ED_SOURCE'}	= $self->{'source'} if ($job eq 'H');
+
+	} elsif ($job eq 'J') {
+		$values->{'ED_SOURCE'}	= $self->{'source'};
+
+	} else {
+		undef ($values->{'ED_MESSAGE'});
+	}
+
+	my @cols	= keys(%$values);
+	my $table	= $self->{'table'};
+	my $sql	= "INSERT INTO $table (" . join(', ', @cols) . ") VALUES (" .
 	    join(', ', ('?') x @cols) . ")";
 
-	my $dbh = $self->{'dbh'};
-	my $sth = $dbh->prepare($sql);
+	my $dbh	= $self->{'dbh'};
+	my $sth	= $dbh->prepare($sql);
 	$sth->execute(values(%$values)) or die $sth->errstr;
 
 	if (!$dbh->{'AutoCommit'}) {
@@ -171,11 +213,12 @@ sub track {
 	}
 }
 
+
 sub set_entity {
 	my ($self, $entity) = @_;
 
 	if (!defined($entity) || length($entity) == 0) {
-		warn "WARN : Tracking::set_entity() called with an undefined entity!\n";
+		warn "INFO : Tracking::set_entity() called with an undefined entity!\n";
 		return;
 	}
 	# warn "INFO : translate >$entity< \n";
@@ -184,10 +227,12 @@ sub set_entity {
 	# warn $self->{'entity'}. " \$self->{'entity'}\n";
 }
 
+
 sub end {
 	my $self = shift;
 	$self->track('Halt', 1);
 } 
+
 
 # Pour chaque application, pour chaque entité juridique, et pour chaque semaine
 # le nombre de documents dans le tracking.
@@ -237,6 +282,7 @@ sub stats_week {
 
 	return $rows;
 }
+
 
 sub stats_iddest {
 	# passer les options par clefs de hash...
@@ -338,11 +384,11 @@ sub stats_month {
 
 
 
-my $_PRGNAME;
+#my $_PRGNAME;
 
 sub _validate_event {
 	# Job Event : looking for one of the following : 
-	#	 Job (default), Spool, Document, Line, Warning, Error, Halt
+	#	 Job (default), Spool, Document, Line, Error, Warning, Halt
 	my $job = shift;
 
 	warn "INFO : Halt event in Tracking = $job\n" if ($job =~/^H/);

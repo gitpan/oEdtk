@@ -346,16 +346,16 @@ sub define_Track_Key ($;$) {
 	$indice 	||=0;
 
 	if (!defined $ENV{EDTK_MAX_USER_KEY}) {	
-		warn "WARN : tracking key undefined\n";
+		warn "INFO : tracking key undefined\n";
 		return 0;
 
 	} elsif ($indice gt ($ENV{EDTK_MAX_USER_KEY}-1)) { 
-		warn "WARN : tracking key not allowed (limit is $ENV{EDTK_MAX_USER_KEY})\n";
+		warn "INFO : tracking key not allowed (limit is $ENV{EDTK_MAX_USER_KEY})\n";
 		return 0;
 
 	} elsif (length ($value) > 5) {
 		$value=~s/^(\w{5})(.*)/$1/;
-		warn "WARN : redefined col as '$value'";
+		warn "INFO : redefined col as '$value'";
 	}
 	if ($value) { $ED_K_NAME[$indice] =$value; }
 

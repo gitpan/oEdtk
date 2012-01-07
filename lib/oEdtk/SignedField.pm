@@ -24,7 +24,7 @@ sub process {
 	$data =~ s/\s+//g;
 
 	if ($data !~ /^-?\d*[p-y]?$/) {
-		warn "WARN : Unexpected numerical value: $data in ".$self->{'name'}."\n";
+		warn "INFO : Unexpected numerical value: $data in ".$self->{'name'}."\n";
 	}
 
 	if ($data eq '') {

@@ -922,18 +922,18 @@ sub oe_app_usage() {		# migrer oe_app_usage
 	$1 ? $app="application.pl" : $app=$1;
 	print STDOUT << "EOF";
 
-	Usage :	$app <input_data_file> [job_name] [options]
-	options :
+ Usage :	$app <input_data_file> [job_name] [options]
+ options :
 
-			--help		this message
-			--massmail 	to confirm mass treatment
-			--edms		to confirm edms treatment
-			--cgi
-					these values depends on ED_REFIDDOC config table 
-					(ie : if treatment should be confirmed)
+		--help		this message
+		--massmail 	to confirm mass treatment
+		--edms		to confirm edms treatment
+		--cgi
+				these values depends on ED_REFIDDOC config table 
+				(ie : when treatment should be confirmed)
 
-			--input_code	input caracters encoding
-					(ie : --input_code=iso-8859-1)
+		--input_code	input caracters encoding
+				(ie : --input_code=iso-8859-1)
 
 EOF
 oe_list_encodings();
@@ -1007,7 +1007,7 @@ sub oe_new_job(@) {
 	}
 
 	if ($params->{'fifo'} && $^O eq 'MSWin32') {
-		warn "WARN : FIFO mode is not possible under Windows, ignoring.\n";
+		warn "INFO : FIFO mode is not possible under Windows, ignoring.\n";
 		$params->{'fifo'} = 0;
 	}
 

@@ -345,12 +345,12 @@ sub _omgr_insert($$$$$) {
 
 		# Truncate the name of city field if necessary.
 		if (length($data[5]) > 30) {
-			warn "WARN : \"$data[5]\" truncated to 30 characters\n";
+			warn "INFO : \"$data[5]\" truncated to 30 characters\n";
 			$data[5] =~ s/^(.{30}).*$/$1/;
 		}
 		# Truncate the name field if necessary.
 		if (length($data[7]) > 38) {
-			warn "WARN : \"$data[7]\" truncated to 38 characters\n";
+			warn "INFO : \"$data[7]\" truncated to 38 characters\n";
 			$data[7] =~ s/^(.{38}).*$/$1/;
 		}
 
@@ -508,7 +508,7 @@ sub _omgr_lot($$$) {
 	my $num = $dbh->do("UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDLOT = ? " .
 	    "WHERE ED_IDLDOC = ? AND ED_IDLOT IS NULL", undef, DEFLOT, $idldoc);
 	if ($num > 0) {
-		warn "WARN : Assigned $num remaining pages to default lot \"" . DEFLOT . "\"\n";
+		warn "INFO : Assigned $num remaining pages to default lot \"" . DEFLOT . "\"\n";
 	}
 }
 
@@ -1089,7 +1089,7 @@ sub omgr_stats($$$$) {
 	} elsif ($period =~ /^\d+$/){
 		$key = $period;
 	} else {
-		warn "WARN : implémentation en attente évolution base\n";
+		warn "INFO : implémentation en attente évolution base\n";
 	}
 
 	if ($typeRqt !~/idlot/i) {
@@ -1200,7 +1200,7 @@ sub omgr_purge_fs($) {
 				push(@torm, $path);
 			}
 		} else {
-			warn "WARN : Unexpected filename : \"$file\"\n";
+			warn "INFO : Unexpected filename : \"$file\"\n";
 		}
 	}
 return @torm;

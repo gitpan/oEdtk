@@ -70,7 +70,7 @@ sub oe_cmd_run_bg($$) {
 	}
 	if ($pid) {
 		# Parent process.
-		warn "WARN : Successfully started subprocess, pid $pid\n";
+		warn "INFO : Successfully started subprocess, pid $pid\n";
 	} else {
 		# Child process.
 		exec($cmd);
