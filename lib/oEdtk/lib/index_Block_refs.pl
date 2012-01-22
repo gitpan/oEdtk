@@ -99,7 +99,7 @@ warn "INFO : Confirm Block request to set ". $row_count ." doc(s) for '$event' e
 ReadMode('raw');
 my $key = ReadKey();
 if 		($key!~/^y$/i) {
-	die "ERROR: abort request\n";
+	die "INFO : abort request\n";
 }
 ReadMode ('restore');
 

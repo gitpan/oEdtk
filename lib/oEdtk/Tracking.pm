@@ -33,14 +33,14 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.11;
+our $VERSION		= 0.7012;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(stats_iddest stats_week stats_month);
 
 
 sub new {
 	my ($class, $source, %params) = @_;
-
+	$source = $source || "";
 	my $cfg = config_read('EDTK_DB');
 
 	# Load the dictionary to normalize entity names.
@@ -148,8 +148,9 @@ sub track {
 	$count ||= 1;
 
 	my @usercols = @{$self->{'keys'}};
-	if (@data > @usercols) {
-		warn "INFO : Too much values : got " . @data . ", expected " .  @usercols . " maximum\n";
+	if (@data > (@usercols +1)) {
+		# max is @usercols nbcol + 1 for message col
+		warn "INFO : Too much values : got " . @data . ", expected " .  (@usercols +1) . " maximum\n";
 	}
 
 	# Validate the job event.

@@ -38,7 +38,7 @@ sub oe_cmd_run($) {
 	return if $? == 0;
 
 	my $reason = oe_status_to_msg($?);
-	warn "ERROR: Command failed : $reason\n";
+	die "ERROR: Command failed : $reason\n";
 
 return 1;
 }

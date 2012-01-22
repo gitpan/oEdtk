@@ -3,9 +3,8 @@ use strict;
 use warnings;
 
 use Config::IniFiles;
-
 use Exporter;
-our $VERSION	= 0.09;
+our $VERSION	= 0.11;
 our @ISA		= qw(Exporter);
 
 # Création d'un dictionnaire à partir d'un fichier INI.
@@ -44,6 +43,8 @@ sub new {
 		ignore_case => $ignore_case,
 		dico        => $dico
 	};
+
+# 	warn "INFO : objet Dict $class $self ($section $path) créé...\n";
 	return bless $self, $class;
 }
 
@@ -67,23 +68,23 @@ return $val;
 
 
 sub substitue {
-	my ($self, $chars) = @_;
+	my ($self, $var) = @_;
+#	warn "DEBUG: Dict::substitute value = '$var'\n";
 
-	# valeur par défaut dans le cas où $line serait undef
-	if (!defined($chars) || length($chars) == 0) {
-		$chars = '';
-		return $chars ;
-	}
-	while (my ($key, $val) = each %{$self->{'dico'}}) {
-#		warn "DEBUG: key = $key | val = $val\n";
-		if ($key =~ /^chr\((\d+)\)/){
-			$key = chr($1);
-#			warn "DEBUG: key = $key !!!\n";
+	if (defined($var) && length($var) > 0) {
+		while (my ($key, $val) = each %{$self->{'dico'}}) {
+	#		warn "DEBUG: key = $key | val = $val\n";
+			if ($key =~ /^chr\((\d+)\)/){
+				$key = chr($1);
+			}
+			$var =~s/$key/$val/ig;
 		}
-		$chars =~s/$key/$val/ig;
+
+#		warn "DEBUG: Dict::substitute value = '$var'\n";
 	}
 
-return $chars ;
+return $var ;
 }
+
 
 1;

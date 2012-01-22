@@ -115,7 +115,7 @@ sub EDMS_process($$$$;$) {
 	}
 
 	my @outfiles = ();
-	warn "INFO : Splitting $pdf into individual pages...\n";
+	warn "INFO : Splitting $pdf into individual docs...\n";
 
 	# Remplace les - et les . par des _ car Docubase ne peut pas importer de fichier comprenant des . dans leur nom
 	$idldoc =~ s/[-\.]/_/g;

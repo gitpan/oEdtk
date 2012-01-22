@@ -1,10 +1,8 @@
 package oEdtk::Doc;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Scalar::Util qw(blessed);
 use overload '""' => \&dump;
-use oEdtk::Config (config_read);
-use oEdtk::Dict;
 
 # The maximum number of characters to output before inserting
 # a newline character.
@@ -79,7 +77,6 @@ sub include {
 	$link=~s/\\/\//g;
 	if (-e $link){} else {die "ERROR: can't find include $link\n";}
 
-	#$self->append("input{".$link."}");
 	$self->append("_include_", $link);
 }
 
@@ -87,39 +84,22 @@ sub include {
 # THE FOLLOWINGS METHODS SHOULD ONLY BE IMPLEMENTED BY
 # THE SUBCLASSES (SEE C7DOC OR TEXDOC).
 sub mktag {
-	die "ERROR: oEdtk::Doc::mktag unimplemented method";
+	die "ERROR: oEdtk::Doc::mktag unimplemented method\n";
 }
 
 
 sub append_table {
-	die "ERROR: oEdtk::Doc::append_table unimplemented method";
+	die "ERROR: oEdtk::Doc::append_table unimplemented method\n";
 }
 
 
 sub line_break {
-	die "ERROR: oEdtk::Doc::line_break unimplemented method";
+	die "ERROR: oEdtk::Doc::line_break unimplemented method\n";
 }
 
-#sub dico_char_xlate {
-#	die "ERROR: oEdtk::Doc::dico_char_xlate unimplemented method";
-#}
 
-{
-my $_DICO_CHAR;
-
-	sub char_xlate($$){
-		my ($var, $section) = shift;
-		return $var if ($var eq "");
-	
-		if (!defined($_DICO_CHAR))  {
-			my $cfg		= config_read();
-			$_DICO_CHAR	= oEdtk::Dict->new($cfg->{'EDTK_DICO_XLAT'}, , { section => $section });
-		}
-		$var = $_DICO_CHAR->substitue($var);
-	#	warn "DEBUG: message DICO_CHAR\n";
-
-	return $var;
-	}
+sub escape {
+	die "ERROR: oEdtk::Doc::escape unimplemented method\n";
 }
 
 1;

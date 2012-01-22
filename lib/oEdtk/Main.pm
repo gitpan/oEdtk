@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.7004;		# release number : Y.YSSS -> Year, Sequence
+our $VERSION 	=0.7005;		# release number : Y.YSSS -> Year, Sequence
 
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
@@ -13,6 +13,14 @@ our @EXPORT 	= 	qw(
 			fmt_address
 			fmt_address_sender
 			fmt_monetary
+			prodEdtk_Current_Rec
+			prodEdtk_Previous_Rec
+			prodEtk_rec_cdata_join
+			recEdtk_erase
+			recEdtk_join_tmplte
+			recEdtk_post_process
+			recEdtk_redefine
+			toC7date
 			oe_app_usage
 			oe_CAP_sans_accents
 			oe_cdata_table_build
@@ -55,14 +63,6 @@ our @EXPORT 	= 	qw(
 			oe_trt_ref_rec
 			oe_uc_sans_accents
 			oe_unique_data_name
-			prodEdtk_Current_Rec
-			prodEdtk_Previous_Rec
-			prodEtk_rec_cdata_join
-			recEdtk_erase
-			recEdtk_join_tmplte
-			recEdtk_post_process
-			recEdtk_redefine
-			toC7date
 			*OUT *IN  @DATATAB $LAST_ENR
 			%motifs %ouTags %evalSsTrt
 			);
@@ -586,17 +586,17 @@ my $_LAST_ISO ="";
 
 
 sub oe_char_xlate($;$){ # à migrer dans le dictionnaire ?
-	my $scalar = shift;
+		my $scalar = shift;
 
-	if (!defined($_DICO_CHAR))  {
-		my $section	= shift || 'DEFAULT';
-		my $cfg		= config_read();
-		$_DICO_CHAR	= oEdtk::Dict->new($cfg->{'EDTK_DICO_XLAT'}, , { section => $section });
-	}
-	$scalar = $_DICO_CHAR->substitue($scalar);
+		if (!defined($_DICO_CHAR))  {
+			my $section	= shift || 'DEFAULT';
+			my $cfg		= config_read();
+			$_DICO_CHAR	= oEdtk::Dict->new($cfg->{'EDTK_DICO_XLAT'}, , { section => $section });
+		}
+		$scalar = $_DICO_CHAR->substitue($scalar);
+
 	return $scalar;
 }
-
 
 
 sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
