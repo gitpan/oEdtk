@@ -7,15 +7,23 @@ use oEdtk::Main;
 use oEdtk::Config 		qw(config_read);
 use oEdtk::DBAdmin 		qw(db_connect);
 use oEdtk::Outmngr 	0.28	qw(omgr_stats);
-#use Text::CSV;
+
+use Date::Calc		qw(Today Gmtime Week_of_Year);
+my $YWWD;
+{	my $time = time;
+	my ($year,$month,$day, $hour,$min,$sec, $doy,$dow,$dst) =
+		Gmtime($time);
+	my ($week,) = Week_of_Year($year,$month,$day);
+$YWWD = sprintf ("%1d%02d%1d", $year % 10, $week, $dow );
+}
 
 if (@ARGV < 1) {
 	die "Usage: $0 <today|week|yweek_value|idldoc|ALL> [refiddoc] [SEQLOT|SOURCE|source_name]\n"
 		."\t week\t\t: number of week in the year \n"
-		."\t yweek_value\t: number of week in the year as YWW \n"
+		."\t yweek_value\t: number of week in the year as YWW\n"
 		."\t idldoc\t\t: unique id doc lot (4 - 16 digits)\n" 
 		."\t source_name\t: job name in tracking\n\n"
-		." check references for tracked sources\n";
+		." check references for tracked sources\n (today YWWD = $YWWD)\n\n";
 }
 
 my $period=	$ARGV[0] || "today";
@@ -31,7 +39,7 @@ my $dbh = db_connect($cfg, 'EDTK_DBI_STATS',
 
 ################################################################################
 
-use Date::Calc		qw(Today Gmtime Week_of_Year);
+#use Date::Calc		qw(Today Gmtime Week_of_Year);
 	my $time = time;
 	my ($year,$month,$day, $hour,$min,$sec, $doy,$dow,$dst) =
 		Gmtime($time);
@@ -111,6 +119,7 @@ use Date::Calc		qw(Today Gmtime Week_of_Year);
 	}
 
 	warn sprintf "%9s %-7s %-15s %-16s %s  from EDTK_STATS_OUTMNGR\n", "NB_DOCS", "STATUS", "REFIDDOC", "IDLDOC", $col;
+
 
 ################################################################################
 

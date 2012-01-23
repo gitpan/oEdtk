@@ -1,9 +1,9 @@
 package oEdtk::Doc;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use Scalar::Util qw(blessed);
 use overload '""' => \&dump;
-
+use oEdtk::Config (config_read);
 # The maximum number of characters to output before inserting
 # a newline character.
 my $LINE_CUTOFF = 120;
