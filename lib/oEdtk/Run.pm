@@ -16,7 +16,7 @@ use oEdtk::TexDoc;
 
 use Exporter;
 
-our $VERSION	= 0.05;
+our $VERSION	= 0.7006;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 	oe_status_to_msg
@@ -188,6 +188,7 @@ sub oe_compo_run($;$) {
 	return $pid if $options->{'fifo'};
 }
 
+
 sub oe_after_compo($$) {
 	my ($app, $options) = @_;
 
@@ -214,8 +215,8 @@ sub oe_after_compo($$) {
 	print "$cwd/$pdf\n";
 
 	# Cleanup?
+	unlink("$app.aux");
 	if ($cfg->{'EDTK_TYPE_ENV'} ne 'Test') {
-		unlink("$app.aux");
 		unlink($options->{'outfile'}) if ($options->{'outfile'});
 	}
 

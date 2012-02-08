@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.7005;		# release number : Y.YSSS -> Year, Sequence
+our $VERSION 	=0.7006;		# release number : Y.YSSS -> Year, Sequence
 
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
@@ -997,7 +997,6 @@ sub oe_new_job(@) {
 		$params->{'input_code'} = "<";
 	}
 
-
 	# Override default setting if EDTK_COMPO_ASYNC is set in edtk.ini.
 	my $async = $cfg->{'EDTK_COMPO_ASYNC'};
 	if (defined($async) && $async =~ /^yes$/i) {
@@ -1062,7 +1061,7 @@ sub oe_new_job(@) {
 
 	# Do we want to generate an index file?
 	if ($params->{'index'}) {
-		print OUT oe_data_build('xStOmgr');
+		print OUT oe_data_build ('xStOmgr');
 		print OUT oe_data_build ('xHost', hostname());
 	}
 	print OUT $TAG_COMMENT;
@@ -1127,17 +1126,14 @@ sub oe_outmngr_compo_run ($;$){
 	my $output_format	= shift || "PDF";
 	my $xTypTrt		= _app_typ_trt();
 
-	import oEdtk::Outmngr	qw(omgr_import);
-	import oEdtk::libC7 qw();
-	use Fcntl		qw(:flock);
+	import oEdtk::Outmngr qw(omgr_import);
+	import oEdtk::libC7	qw();
+	use Fcntl			qw(:flock);
 	use File::Copy;
 
-	my $cfg 	=config_read('COMSET');
-	my $script_compo=$cfg->{'EDTK_DIR_SCRIPT'} . "/" . $cfg->{'EDTK_PRGNAME'} . "." . $cfg->{'EDTK_EXT_COMP_OMGR'};
-#	my $script_compo=$cfg->{'EDTK_DIR_SCRIPT'} . "/" . $cfg->{'EDTK_PRGNAME'} . $cfg->{'EDTK_TYP_ENVIRO'} . "." . $cfg->{'EDTK_EXT_COMP_OMGR'};
-#	my $script_compo=$cfg->{'EDTK_DIR_SCRIPT'} . "/" . $cfg->{'EDTK_PRGNAME'} . "." . $cfg->{'EDTK_EXT_COMP_OMGR'};
-
-	my $lockfile = $cfg->{'EDTK_DOCLIB_LOCK'};
+	my $cfg 			= config_read('COMSET');
+	my $script_compo	= $cfg->{'EDTK_DIR_SCRIPT'} . "/" . $cfg->{'EDTK_PRGNAME'} . "." . $cfg->{'EDTK_EXT_COMP_OMGR'};
+	my $lockfile 		= $cfg->{'EDTK_DOCLIB_LOCK'};
 	open(my $lock, '>', $lockfile) or die "ERROR: Cannot open lock file: $!\n";
 
 	warn "INFO : lancement compo ($output_format, $script_compo, $input_fdatwork)\n";
@@ -1177,7 +1173,6 @@ sub oe_outmngr_compo_run ($;$){
 	#	."\n";
 
 
-
 	omgr_import	($cfg->{'EDTK_PRGNAME'}, $idx1) if ($xTypTrt =~ /[MGTD]/); # xxxxxx c'est là qu'il faut le bon nom d'application
 
 	if ($xTypTrt!~/D/) {
@@ -1188,6 +1183,7 @@ sub oe_outmngr_compo_run ($;$){
 	print "$cfg->{'EDTK_FDATAOUT'}.$output_format\n";
 1;
 }
+
 
 sub oe_outmngr_output_run (;$){
 	# le paramètre optionnel permet de fixer le type de traitement pour

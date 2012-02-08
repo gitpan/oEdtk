@@ -33,7 +33,7 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.7012;
+our $VERSION		= 0.7014;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(stats_iddest stats_week stats_month);
 
@@ -100,7 +100,7 @@ sub new {
 		warn "INFO : username \"$params{'user'}\" too long, truncated to \"$user\"\n";
 	}
 
-	# Truncate if necessary, by taking at most 32 characters on the right.
+	# Truncate if necessary, by taking at most 128 characters on the right.
 	if (length($source) > 128) {
 		$source = substr($source, -128, 128);
 	}
@@ -174,7 +174,9 @@ sub track {
 		# ajout d'une colonne message pour gérer les messages et les warning 
 		# pour assurer la compatibilité avec l'existant on va inverser
 		# les data pour mettre le message en tête en attendant le job_evt
-		$values->{'ED_MESSAGE'}			= $data[$i] . " " . ($values->{'ED_MESSAGE'} || "");
+		##################  PBM  DONNEES NON ALIMENTEES A REGARDER DE PRES
+		my $val = $data[$i] || "";
+		$values->{'ED_MESSAGE'}			= $val . " " . ($values->{'ED_MESSAGE'} || "");
 
 		# s'il n'y a qu'une data, on s'assure de ne pas la mettre inutilement dans une colonne utilisateur
 		if ($#data > 0) {
@@ -183,7 +185,7 @@ sub track {
 				$data[$i] =~ s/^(.{128}).*$/$1/;
 			}
 			$values->{"ED_K${i}_NAME"}	= $usercols[$i];
-			$values->{"ED_K${i}_VAL"}	= $data[$i];
+			$values->{"ED_K${i}_VAL"}	= $val;
 		}
 	}
 
