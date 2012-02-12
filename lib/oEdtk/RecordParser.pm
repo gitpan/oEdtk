@@ -142,7 +142,8 @@ sub next {
 	# denormalized record should be at the end of data stream
 	# a revoir
 	if ($id eq $denormalized) {
-		my @data = split(/(?:$denormalized_split_motif)+/, $data);
+#		my @data = split(/(?:$denormalized_split_motif)+/, $data);
+		my @data = split(/(?:$denormalized_split_motif)/, $data);
 #		my @data = split(/(?:\x{0}|\x{1}|\x{2})+/, $data);
 #		my @data = split(/(?:\x{0}|\x{1}|\x{2}|\x{20})+/, $data);
 		# my @data = split(/(?:\(?:\x{0}|\x{20})+(?:\x{1}|\x{2})+/, $data);
