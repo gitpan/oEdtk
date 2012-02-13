@@ -8,11 +8,14 @@ use oEdtk::DBAdmin	qw(db_connect);
 use oEdtk::Tracking	qw(stats_week stats_iddest stats_month);
 use List::MoreUtils	qw(uniq);
 
-if (@ARGV < 1) {
-	die "Usage : $0 [options]\n\n"
-		."\t\t monthly stats:\t month \t<start> [end] [\"excluded_ed_user, n\"]\n"
-		."\t\t weekly stats :\t week \t<start> [end] [\"excluded_ed_user, n\"]\n"
-		."\t\t iddest stats :\t iddest\t<start> <end> <\"excluded_ed_user, n\"> <ed_app> \n";
+if (@ARGV < 1 or $ARGV[0] =~/-h/i) {
+	warn "Usage : $0 [options]\n\n"
+		."\t\tThis edits statistics from tracking table. Options are :\n"
+		."\t\t monthly stats:\t month \t<start_date> [end_date] [\"excluded_ed_user, n\"]\n"
+		."\t\t weekly stats :\t week \t<start_date> [end_date] [\"excluded_ed_user, n\"]\n"
+		."\t\t iddest stats :\t iddest\t<start_date> <end_date> <\"excluded_ed_user, n\"> <ed_app> \n\n"
+		."\t\t date are written like YYYYMMDDHHMMSS\n";
+	exit 1;
 }
 
 my $cfg = config_read('EDTK_DB', 'EDTK_STATS');

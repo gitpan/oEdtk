@@ -9,8 +9,10 @@ use oEdtk::DBAdmin 		qw(db_connect);
 use oEdtk::Outmngr 	0.07	qw(omgr_stats);
 use Text::CSV;
 
-if (@ARGV < 1) {
-	die "Usage: $0 <day|week|all|value> <idlot|idgplot> [file]\n\n \t where 'value' has the format wwd (one or more numbers like 521 or 52)\n";
+if (@ARGV < 1 or $ARGV[0] =~/-h/i) {
+	warn "Usage: $0 <day|week|all|value> <idlot|idgplot> [file]\n";
+	warn "\n\t where 'value' has the format ywwd (one or more numbers like 2521 or 252)\n";
+	exit 1;
 }
 
 my $cfg = config_read('EDTK_STATS');

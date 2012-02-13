@@ -17,13 +17,13 @@ my $YWWD;
 $YWWD = sprintf ("%1d%02d%1d", $year % 10, $week, $dow );
 }
 
-if (@ARGV < 1) {
+if (@ARGV < 1 or $ARGV[0] =~/-h/i) {
 	die "Usage: $0 <today|week|yweek_value|idldoc|ALL> [refiddoc] [SEQLOT|SOURCE|source_name]\n"
 		."\t week\t\t: number of week in the year \n"
 		."\t yweek_value\t: number of week in the year as YWW\n"
 		."\t idldoc\t\t: unique id doc lot (4 - 16 digits)\n" 
 		."\t source_name\t: job name in tracking\n\n"
-		." check references for tracked sources\n (today YWWD = $YWWD)\n\n";
+		." This checks references for tracked sources\n (ie today YWWD = $YWWD)\n\n";
 }
 
 my $period=	$ARGV[0] || "today";

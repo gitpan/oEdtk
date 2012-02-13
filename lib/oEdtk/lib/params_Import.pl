@@ -8,18 +8,23 @@ use oEdtk::Main;
 use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect);
 
-if ($#ARGV < 1) {
-	die "Usage: $0 <table> <csv>\n";
+if ($#ARGV < 1 or $ARGV[0] =~/-h/i) {
+	die "\nUsage: $0 <table> <csv> [INI_SECTION]\n"
+		."\n\t\twhere INI_SECTION is a configuration section in edtk.ini\n"
+		."\t\t\t(usefull to load params in Prod, Dev, or other environnement)\n\n";
 	exit 1;
 }
 
 my ($table, $file) = @ARGV;
+my $section = shift || "";
+my $DBI = 'EDTK_DBI_PARAM';
+		$DBI = 'EDTK_DBI_DSN' if ($section ne "");
 
 open(my $fh, "<", $file) or die "ERROR: can't open $file: $!\n";
 my $csv = Text::CSV->new({ sep_char => ';', binary => 1 });
 
-my $cfg = config_read('EDTK_DB');
-my $dbh = db_connect($cfg, 'EDTK_DBI_PARAM',
+my $cfg = config_read('EDTK_DB', $section);
+my $dbh = db_connect($cfg, $DBI,
     { AutoCommit => 0, RaiseError => 1 });
 
 # Set the column names.

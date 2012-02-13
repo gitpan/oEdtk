@@ -230,7 +230,7 @@ sub historicize_table ($$$){
 sub move_table ($$$;$){
 	my ($dbh, $table_source, $table_cible, $create_option) = @_;
 	$create_option ||= "";
-	# s'assurer que la table n'est pas vide avant de la bouger ?
+	# move_table : s'assurer que la table n'est pas vide avant de la bouger !
 	my $sql_create ="CREATE TABLE ".$table_cible." AS SELECT * FROM ".$table_source;
 	my $sql_insert ="INSERT INTO  ".$table_cible." SELECT * FROM ".$table_source;
 

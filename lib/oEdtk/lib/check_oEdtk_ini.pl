@@ -2,15 +2,22 @@
 
 use strict;
 use warnings;
+use oEdtk;
 use oEdtk::Config		qw(config_read);
 use oEdtk::DBAdmin		qw(db_connect);
 use oEdtk::Messenger	qw(oe_send_mail);
 
-warn "Usage: $0 < |COMSET>\n\n";
+
+if (@ARGV > 0 or $ARGV[0] =~/-h/i) {
+	die "Usage: $0 \n\n\tthis will check configuration key in oEdtk.ini setup\n";
+}
+
+
 my $opt = $ARGV[0] || "";
 my (@tCheck_access, @tCheck_write, @tCheckMessage);
 
 if ($opt=~/comset/i) {
+	# deprecated
 	$opt = "COMSET";
 	#[COMSET]
 	push (@tCheck_access, 'EDTK_DIR_COMSET');

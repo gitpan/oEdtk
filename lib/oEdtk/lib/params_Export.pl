@@ -8,8 +8,9 @@ use oEdtk::Main;
 use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect);
 
-if ($#ARGV < 1) {
-	die "Usage: $0 <table> <csv>\n";
+if ($#ARGV < 1 or $ARGV[0] =~/-h/i) { 
+	warn "Usage: $0 <table> <csv>\n\n";
+	warn "\tThis extracts database params into csv file.\n";
 	exit 1;
 }
 

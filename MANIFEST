@@ -42,7 +42,6 @@ lib/oEdtk/lib/db_historicize_tracking.pl
 lib/oEdtk/lib/db_move.pl
 lib/oEdtk/lib/db_Schema_init.pl
 lib/oEdtk/lib/edms_process.pl
-lib/oEdtk/lib/edms_runner.pl
 lib/oEdtk/lib/html/edtk_ged.html
 lib/oEdtk/lib/html/edtk_inged.html
 lib/oEdtk/lib/html/index.html

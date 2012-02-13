@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.7004;		# release number : Y.YSSS -> Year, Sequence 
+our $VERSION	= 0.7005;		# release number : Y.YSSS -> Year, Sequence 
 our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -1067,11 +1067,11 @@ return $rows;
 
 sub omgr_stats_referent {
 	my ($dbh, $pdbh) = @_;
-	my $cfg = config_read('EDTK_DB');
+	my $cfg = config_read('EDTK_STATS');
 	my ($sql, $key);
 
 	$sql = "SELECT A.ED_MAIL_REFERENT, A.ED_REFIDDOC ";
-	$sql .=" FROM EDTK_REFIDDOC A, EDTK_INDEX B ";
+	$sql .=" FROM EDTK_REFIDDOC A, " . $cfg->{'EDTK_STATS_OUTMNGR'} . " B ";
 	$sql .=" WHERE A.ED_REFIDDOC = B.ED_REFIDDOC ";
 	$sql .=" AND A.ED_MASSMAIL != 'N' AND A.ED_MAIL_REFERENT IS NOT NULL ";
 	$sql .=" AND B.ED_SEQLOT IS NULL AND B.ED_DTLOT IS NULL ";
@@ -1089,7 +1089,7 @@ sub omgr_stats_referent {
 sub omgr_stats($$$$) {
 	my ($dbh, $pdbh, $period, $typeRqt) = @_;
 	$typeRqt = $typeRqt || "idlot";
-	my $cfg = config_read('EDTK_DB');
+	my $cfg = config_read('EDTK_STATS');
 	my ($sql, $key);
 	my $time = time;
 	my ($year,$month,$day, $hour,$min,$sec, $doy,$dow,$dst) =
@@ -1119,14 +1119,14 @@ sub omgr_stats($$$$) {
 	$sql .="SUM(ED_NBPGDOC), ";										# NB FACES IMPRIMEES
 	$sql .="CASE ED_MODEDI WHEN 'R' THEN 1 ELSE 2 END * SUM(ED_NBFPLI) ";		# NB FACES
 
-	if ($typeRqt !~/idlot/i) {
+	if ($typeRqt !~/idlot/i) { 
 		$sql .=", ED_MODEDI ";
-		$sql .=" FROM " . $cfg->{'EDTK_DBI_OUTMNGR'};
+		$sql .=" FROM " . $cfg->{'EDTK_STATS_OUTMNGR'};
 		$sql .=" GROUP BY ED_CORP, ED_IDLOT, ED_MODEDI ";
 		$sql .=" ORDER BY ED_CORP, ED_IDLOT, ED_MODEDI ";
 	} else { 
 		$sql .=", ED_IDFILIERE ";
-		$sql .=" FROM " . $cfg->{'EDTK_DBI_OUTMNGR'};
+		$sql .=" FROM " . $cfg->{'EDTK_STATS_OUTMNGR'};
 		$sql .=" WHERE ED_SEQLOT LIKE ? AND ED_SEQPGDOC = 1 ";
 		$sql .=" GROUP BY ED_CORP, ED_IDLOT, ED_SEQLOT, ED_IDFILIERE, ED_MODEDI ";
 		$sql .=" ORDER BY ED_CORP, ED_IDFILIERE, ED_SEQLOT ";

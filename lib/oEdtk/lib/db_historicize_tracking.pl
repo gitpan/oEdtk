@@ -9,15 +9,18 @@ use strict;
 
 my $cfg = config_read('EDTK_DB');
 my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
-my $wait_time =1;
 my $suffixe =strftime "%Y%m%d%H%M%S", localtime;
-$wait_time ||=500*$cfg->{'EDTK_WAITRUN'};
+my $wait_time =30*$cfg->{'EDTK_WAITRUN'} || 600;
 
+warn "INFO : historicize tracking table\n";
 warn "INFO : table should not be in use\n";
-warn "INFO : wait or press a key\n";
+warn "INFO : waiting $wait_time sec... press 'N' or 'S' to stop or any to run\n";
 
 ReadMode('raw');
 my $key = ReadKey($wait_time);
+if 		($key=~/^[ns]$/i) {
+	die "INFO : abort request\n";
+}
 ReadMode ('restore');
 
 historicize_table($dbh, $cfg->{'EDTK_DBI_TRACKING'}, $suffixe);

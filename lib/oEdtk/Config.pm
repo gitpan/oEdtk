@@ -37,7 +37,6 @@ sub config_read(@) {
  	my $uchost= hostname();
 	$uchost	= uc($uchost);
 
-
 	my %allcfg = ();
 	for (;;) {
 		die "ERROR: config file not found or unreadable: $ini\n" unless -r $ini;

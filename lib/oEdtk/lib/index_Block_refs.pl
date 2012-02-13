@@ -12,15 +12,17 @@ use Sys::Hostname;
 
 
 sub usage () {
-	die "Usage: $0 <ANO|DUPLE|STOP|RESET> <idldoc|seqlot> [idseqpg|STOP_status] \n\n"
+	warn "Usage: $0 <ANO|DUPLE|STOP|RESET> <idldoc|seqlot> [idseqpg|STOP_status] \n\n"
+		."\tThis changes docs status for omgr administration.\n\n"
 		."\t ANO\tblock doc(s) for anomaly in doc\n"
 		."\t DUPLE\tblock duplicated doc(s)\n"
 		."\t STOP\tblock to stop doc(s)\t(index_Purge_DCLIB won't delete DCLIB)\n"
 		."\t RESET\tunblock to redo doc(s)\t(index_Purge_DCLIB won't delete DCLIB)\n";
+	exit 1;
 }
 	
 
-if (@ARGV < 2) {
+if (@ARGV < 2 or $ARGV[0] =~/-h/i) {
 	&usage();
 }
 

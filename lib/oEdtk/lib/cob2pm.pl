@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use File::Basename;
+use oEdtk;
 use oEdtk::libDev qw ( lastCourt );
 
 
@@ -13,7 +14,7 @@ sub usage() {
 Usage:
 	$PROG recorder_descriptor.cob > record_ID.pm
 
-Structure of descriptor file should start with record number 01 and should be :
+Structure of descriptor file SHOULD start with record number 01 and SHOULD be :
                01 VECTOR-RECORD-ID-ROW_NAME-1.
                * comment for row 
                    nn NOM-COLONNE1 PIC X(50).
@@ -36,7 +37,7 @@ ATT: each line should stop with a point '.'
           for data in record, data PIC
      note, in the recard name the shortest part would be considered as record key
 
- $PROG release 0.003 24/03/2011 15:33:48
+ $PROG release 24/03/2011 15:33:48
  this util builds records modules from copygroups descriptors
 
 EOF

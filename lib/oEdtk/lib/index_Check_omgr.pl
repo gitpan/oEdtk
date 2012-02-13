@@ -8,8 +8,10 @@ use oEdtk::Config	qw(config_read);
 use oEdtk::DBAdmin	qw(db_connect);
 use oEdtk::Outmngr	qw(omgr_check_seqlot_ref);
 
-if (@ARGV < 1) {
-	die "Usage: $0 <seqlot_ref|idldoc_ref [idseqpg_ref]>\n\n look statitics for checked docs in output manager\n";
+if (@ARGV < 1 or $ARGV[0] =~/-h/i) {
+	warn "Usage: $0 <seqlot_ref|idldoc_ref [idseqpg_ref]>\n\n";
+	warn "\tThis looks statitics for checked docs in output manager (index db)\n";
+	exit 1;
 }
 
 my $cfg = config_read('EDTK_STATS');

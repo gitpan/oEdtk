@@ -109,6 +109,14 @@
 	
 	TODO
 	***************************************************************************
+		- documentation
+		- move_table : s'assurer que la table n'est pas vide avant de la bouger
+		- gestion épurement glissant des bases
+		- chargement de la configuration, revenir au chargement multi-sections (attention passage appname)
+		- configuration en contexte ciblé (livraisons, chargement paramètres, tests) sans modification edtk.ini
+		- omgr_stats / index_Statistics impact passage idlot sur 7 ok, mais màj id sur \d{6}
+		- contrôler utilisation des alias plutôt que les noms de tables (index/tracking)
+		- normalisation des principales clefs tracking/paramétrage (automat)
 		- reprise prévisu en fin de runEdtk.pl => bug gestion compteur de fichiers xls non pris en compte
 		- AC016 : éditions avec duplicata, utiliser ED_POSTCOMP pour sélectionner le tex de postcomposition
 		- acqCheck lier l'envoi du mail à index_Run_lot

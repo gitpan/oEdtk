@@ -11,9 +11,10 @@ use oEdtk::Run			qw(oe_outmngr_output_run_tex);
 
 my $cfg = config_read('EDTK_DB', 'MAIL');
 
-if (@ARGV % 2 != 0) {
-	warn "Odd number of parameters.\n";
+if (@ARGV % 2 != 0 or $ARGV[0] =~/-h/i) {
+	warn "Odd number of parameters.\n" if ($ARGV[0] !~/-h/i);
 	warn "usage: $0 [<column> <value>]...\n";
+	warn "\n\tthis run outmanagement from index table and doclibs\n";
 	exit 1;
 }
 

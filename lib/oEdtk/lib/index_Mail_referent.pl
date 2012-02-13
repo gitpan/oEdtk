@@ -9,7 +9,14 @@ use oEdtk::Outmngr	qw(omgr_stats_referent);
 use oEdtk::Messenger qw(oe_send_mail);
 
 
-# run statistics and send the advertissement by mail.
+if ($ARGV[0] =~/-h/i) {
+	warn "Usage : $0\n\n";
+	warn "\tThis runs statistics and sends mail to referent for approval request.\n";
+	exit 1;
+}
+
+
+# run statistics and send the advertissement by mail. 
 my $cfg = config_read('EDTK_DB', 'MAIL');
 my $dbh = db_connect($cfg, 'EDTK_DBI_DSN',
     { AutoCommit => 1, RaiseError => 1 });
