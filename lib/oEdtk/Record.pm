@@ -4,10 +4,10 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(blessed);
-our $VERSION		= 0.04;
+our $VERSION	= 0.7005;
 
 sub debug {
-	my ($self) = @_;
+	my ($self)= @_;
 	$self->{'_DEBUG'} = 1;
 }
 
@@ -26,13 +26,14 @@ sub new {
 		if ($len eq '*' && $i < $#fields) {
 			die "ERROR: oEdtk::Record::new: catch-all field must be the last\n";
 		}
-		if ($i != 0) {
-			$template .= ' ';
-		}
+#		if ($i != 0) {
+#			$template .= ' ';
+#		}
 		$template .= "A$len";
 	}
 
 	my $self = {
+		seek_key		=> "LIGNE.{153}(.{10})",
 		fields_offset	=> 10,
 		fields		=> \@fields,
 		template		=> $template,
@@ -40,6 +41,13 @@ sub new {
 	};
 	bless $self, $class;
 	return $self;
+}
+
+
+sub set_seek_key{
+	my ($self, $seek_key)= @_;
+	
+	$self->{'seek_key'} = $seek_key || "LIGNE.{153}(.{10})";
 }
 
 
@@ -54,13 +62,13 @@ sub parse {
 	my ($self, $line)	= @_;
 	my @values;
 
-	my $fields_offset	= $self->{'fields_offset'};
 	my $bound			= $self->{'bound'};
-	if ($line !~ /^.{$fields_offset}(.*)$/) {
-		die "ERROR: Line too short\n";
-	}
+#	my $fields_offset	= $self->{'fields_offset'};
+#	if ($line !~ /^.{$fields_offset}(.*)$/) {
+#		die "ERROR: Line too short\n";
+#	}
+#	$line	= $1;
 
-	$line	= $1;
 	my @vals	= unpack($self->{'template'}, $line);
 	my %hvals	= ();
 	foreach my $i (0 .. $#{$self->{'fields'}}) {

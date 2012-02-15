@@ -35,6 +35,7 @@ WriteMakefile(
 		charnames				=> 0,
 		Config::IniFiles 		=>'2.30',
 		Cwd					=> 0,
+		Data::Dumper			=> 0,
 		Date::Calc			=> 0,
 		DBI					=>'1.60',
 		Digest::MD5			=> 0,

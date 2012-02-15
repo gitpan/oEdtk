@@ -110,6 +110,9 @@
 	TODO
 	***************************************************************************
 		- documentation
+		- integrer les polices dans les flux PDF plutot que les vectoriser.
+		- Optimiser les flux continues (omgr).
+		- Aplatir les PDF pour que ce ne soit pas un assemblage de cadre (omgr).
 		- move_table : s'assurer que la table n'est pas vide avant de la bouger
 		- gestion épurement glissant des bases
 		- chargement de la configuration, revenir au chargement multi-sections (attention passage appname)
