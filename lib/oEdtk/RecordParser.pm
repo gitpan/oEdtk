@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
-our $VERSION		= 0.7005;
+our $VERSION		= 0.7006;
 
 # METTRE AU POINT PARAMÉTRAGE
 my $_denormalized_record = "OPTION";
@@ -113,6 +113,12 @@ sub add_motif_to_denormalized_split {
 	my ($self, $motif)= @_;
 	
 	$self->{'denormalized_split_motif'} .= "|".$motif;
+}
+
+sub set_motif_to_denormalized_split {
+	my ($self, $motif)= @_;
+	
+	$self->{'denormalized_split_motif'} = $motif;
 }
 
 

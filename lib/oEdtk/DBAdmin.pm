@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.27;
+our $VERSION		= 0.7031;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -282,7 +282,8 @@ sub create_table_LOTS {
 	my $sql = "CREATE TABLE $table";
 	$sql .= "( ED_IDLOT VARCHAR2(8)  NOT NULL";		# rendre UNIQUE 
 	$sql .= ", ED_PRIORITE INTEGER   UNIQUE"; 		# rendre UNIQUE 	ALTER table EDTK_LOTS modify ED_PRIORITE INTEGER UNIQUE;
-	$sql .= ", ED_IDAPPDOC VARCHAR2(20) NOT NULL";	#xx ED_REFIDDOC ATTENTION cf structure index.xls
+	$sql .= ", ED_IDAPPDOC VARCHAR2(20)";			#xx ED_REFIDDOC ATTENTION cf structure index.xls		-> ALTER table EDTK_LOTS modify ED_IDAPPDOC VARCHAR2(20) NULL
+	$sql .= ", ED_REFIDDOC VARCHAR2(20) NOT NULL";	# alter table EDTK_LOTS add ED_REFIDDOC VARCHAR2(20)	-> ALTER table EDTK_LOTS modify ED_REFIDDOC VARCHAR2(20) NOT NULL
 	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
 	$sql .= ", ED_FILTER VARCHAR2(64)";			# alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
 	$sql .= ", ED_REFENC VARCHAR2(20)";			# a mettre en place pour ajouter des encarts spécifiques à certains lots (cf impact calcul lotissement) # alter table EDTK_LOTS add ED_REFENC VARCHAR2(20)
@@ -290,7 +291,7 @@ sub create_table_LOTS {
 	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
-#	$sql .= ", PRIMARY KEY (ED_IDLOT, ED_PRIORITE, ED_IDAPPDOC)"
+#	$sql .= ", PRIMARY KEY (ED_IDLOT, ED_PRIORITE, ED_REFIDDOC)"
 	$sql .= " )";
 
 	$dbh->do(_sql_fixup($dbh, $sql)) or die $dbh->errstr;

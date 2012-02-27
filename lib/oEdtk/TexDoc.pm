@@ -1,5 +1,5 @@
 package oEdtk::TexDoc;
-our $VERSION = '0.03';
+our $VERSION = 0.7004;
 
 use base 'oEdtk::Doc';
 use oEdtk::Config (config_read);
@@ -31,7 +31,7 @@ sub line_break {
 
 my $_CFG		= config_read();
 # ON OUVRE LE DICTIONNAIRE EN STATIQUE POUR ÉVITER LES ACCÈS MULTIPLES AU FICHIER CORRESPONDANT
-my $_DICO_CHAR	= oEdtk::Dict->new($_CFG->{'EDTK_DICO_XLAT'}, , { section => 'LATEX' });
+my $_DICO_TEX_CHAR	= oEdtk::Dict->new($_CFG->{'EDTK_DICO_XLAT'}, , { section => 'LATEX' });
 
 # http://woufeil.developpez.com/tutoriels/perl/poo/
 sub escape {
@@ -55,9 +55,9 @@ sub escape {
 		}
 	}
 	$new =~s/([%&\$_#])/\\$1/g;
-#	warn "INFO : \$_DICO_CHAR = $_DICO_CHAR\n";
+#	warn "INFO : \$_DICO_TEX_CHAR = $_DICO_TEX_CHAR\n";
 # xxx la ligne qui suit provoque une erreur après la fin de programme
-#	$new = $_DICO_CHAR->substitue($new);
+	$new = $_DICO_TEX_CHAR->substitue($new);
 
 	# \\"{} => PROVOQUE DES ERREURS TEX DANS LE PROCESSUS D'INDEXATION (POUR INJECTION EN SGBD)
 	$new =~ s/\\\"\{\}/\\textquotestraightdblbase{}/g;

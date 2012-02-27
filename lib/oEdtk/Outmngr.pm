@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.7005;		# release number : Y.YSSS -> Year, Sequence 
+our $VERSION	= 0.7031;		# release number : Y.YSSS -> Year, Sequence 
 our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -488,7 +488,7 @@ sub _omgr_lot($$$) {
 	my $cfg = config_read('EDTK_DB');
 
 	# Sélection des lots appropriés.
-	my $sql = 'SELECT ED_IDLOT, ED_IDAPPDOC, ED_CPDEST, ED_FILTER, ED_GROUPBY, ED_IDMANUFACT, ED_IDGPLOT ' .
+	my $sql = 'SELECT ED_IDLOT, ED_REFIDDOC, ED_CPDEST, ED_FILTER, ED_GROUPBY, ED_IDMANUFACT, ED_IDGPLOT ' .
 	    'FROM EDTK_LOTS ORDER BY ED_PRIORITE';
 	my $sth = $pdbh->prepare($sql);
 	$sth->execute();
@@ -496,12 +496,12 @@ sub _omgr_lot($$$) {
 		# On essaye de matcher des documents avec ce lot.
 		$sql		= 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_IDLOT = ? ' ;
 		my $where = ' WHERE ED_IDLOT IS NULL AND ED_IDLDOC = ? ';
-		if ($lot->{'ED_IDAPPDOC'}=~/\%/) {
+		if ($lot->{'ED_REFIDDOC'}=~/\%/) {
 			$where .= " AND ED_REFIDDOC LIKE ? ";
 		} else {
 			$where .= " AND ED_REFIDDOC = ? ";
 		}
-		my @values=($lot->{'ED_IDLOT'}, $idldoc, $lot->{'ED_IDAPPDOC'});
+		my @values=($lot->{'ED_IDLOT'}, $idldoc, $lot->{'ED_REFIDDOC'});
 		
 		if (defined $lot->{'ED_CPDEST'}) {
 			$where .= " AND ED_CPDEST LIKE ? ";
@@ -917,7 +917,7 @@ sub omgr_export(%) {
 						['ED_IDLOT',		$idlot],
 						['ED_SEQLOT',		$seqlot],
 						['ED_CORP',		$gvals->{'ED_CORP'}],
-						['ED_IDAPPDOC',	$lot->{'ED_IDAPPDOC'}],
+						['ED_REFIDDOC',	$lot->{'ED_REFIDDOC'}],
 						['ED_CPDEST',		$lot->{'ED_CPDEST'}],
 						['ED_GROUPBY',		$lot->{'ED_GROUPBY'}],
 						['ED_IDMANUFACT',	$lot->{'ED_IDMANUFACT'}],

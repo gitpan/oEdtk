@@ -4,7 +4,7 @@ use warnings;
 
 use Config::IniFiles;
 use Exporter;
-our $VERSION	= 0.11;
+our $VERSION	= 0.7012;
 our @ISA		= qw(Exporter);
 
 # Création d'un dictionnaire à partir d'un fichier INI.
@@ -73,10 +73,6 @@ sub substitue {
 
 	if (defined($var) && length($var) > 0) {
 		while (my ($key, $val) = each %{$self->{'dico'}}) {
-	#		warn "DEBUG: key = $key | val = $val\n";
-			if ($key =~ /^chr\((\d+)\)/){
-				$key = chr($1);
-			}
 			$var =~s/$key/$val/ig;
 		}
 

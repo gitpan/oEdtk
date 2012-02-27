@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.7006;		# release number : Y.YSSS -> Year, Sequence
+our $VERSION 	=0.7007;		# release number : Y.YSSS -> Year, Sequence
 
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
@@ -604,7 +604,7 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	# elle travaille sur la référence de la variable directement mais retourne aussi la chaine resultante
 	my $rLine = shift;
 
-	# valeur par défaut dans le cas où le champs serait undef
+	# valeur par défaut dans le cas où le champs serait undef 
 	if (!defined($$rLine) || length($$rLine) == 0) {
 		$$rLine = '';
 		return $$rLine;
@@ -614,24 +614,10 @@ sub oe_clean_addr_line(\$) {	# migrer oe_clean_addr_line
 	oe_trimp_space($rLine);
 
 	$$rLine = oe_char_xlate($$rLine, 'ADDRESS');
-
 	# à faire : une expression régulière qui traite tout ce qui n'est pas 0-9\-\°\w par des blancs...
-#	#      ===> externaliser la liste des caractères à modifier
-#	$$rLine =~ s/\./ /g;	# on remplace les points
-#	$$rLine =~ s/\,/ /g;	# on remplace les virgules
-#	$$rLine =~ s/\:/ /g;	# on remplace les 2 points 
-#	$$rLine =~ s/\;/ /g;	# on remplace les points virgules
-	#$$rLine =~ s/\// \/ /g;	# on ajoute des espaces autour de '/' dans les adresses
-#	$$rLine =~ s/\(/ /g;	# on remplace les parenthèses ouvrantes
-#	$$rLine =~ s/\)/ /g;	# on remplace les parenthèses fermantes
-#	$$rLine =~ s/\²/ /g;	# on remplace les '²' (touche au-dessus de TAB)
-#	$$rLine =~ s/\~/ /g;	# on remplace les '~' (touche alpha num 2)
-#	$$rLine =~ s/\]/ /g;	# on remplace les ']' (touche alpha num °)
-#	$$rLine =~ s/\[/ /g;	# on remplace les ']' (pas d'explication...)
-#	$$rLine =~ s/\¨/ /g;	# on remplace les '¨' (pas d'explication...)
-#	$$rLine =~ s/\{/ /g;	# on remplace les '}' (touche alpha num °)
-#	$$rLine =~ s/\}/ /g;	# on remplace les '}' (touche alpha num °)
 
+	# LA LIGNE SUIVANTE N'EST À ACTIVER QU'APRÈS TEST, POUR LE MOMENT PRIS EN CHARGE PAR LE oe_char_xlate
+	#$$rLine =~ s/\\+/\//g;	# on supprime on remplace les backslash qui sont des caractères d'échappement et qui semble-t-il ne sont pas comptés lors du controle de taille (sprintf("%.38s",...) 
 	$$rLine =~ s/^\s+//;	# on supprime les blancs consécutifs en début de chaîne (on a fait un oe_trimp_space en premier...) TRIM gauche
 	$$rLine =~ s/\s+$//;	# on supprime les blancs consécutifs en fin de chaîne (...) TRIM droite
 	$$rLine =~ s/^0\s+//;	# on supprime les zéros tout seul en début de chaine (on le passe en dernier, après les TRIM gauche)
