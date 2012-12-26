@@ -16,8 +16,8 @@ use oEdtk::TexDoc;
 
 use Exporter;
 
-our $VERSION	= 0.7006;
-our @ISA	= qw(Exporter);
+our $VERSION	= 0.7111;
+our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 	oe_status_to_msg
 	oe_compo_run
@@ -318,18 +318,20 @@ sub oe_csv_to_doc($$) {
 sub oe_outmngr_output_run_tex($;$) {
 	my ($filter, $type) = @_;
 
-	if ($type !~ /[MTD]/) {
-		# oe_outmngr_output_run : on ne passe dans index_output qu'en cas de Mass, Debug ou Test de lotissement
-		warn "INFO : traitement OM '$type' -> lotissement suspendu\n";
-		return 1;
-	}
+# Avec la distinction aplication de mise en forme et traitement de lotissement, le test suivant n'a plus de sens
+#	if ($type !~ /[MTD]/) {
+#		# oe_outmngr_output_run : on ne passe dans index_output qu'en cas de Mass, Debug ou Test de lotissement
+#		warn "INFO : traitement OM '$type' -> lotissement suspendu\n";
+#		return 1;
+#	}
 
 	my $cfg = config_read('COMPO');
+	my $type_env= $cfg->{'EDTK_TYPE_ENV'};
+	my $basedir = $cfg->{'EDTK_DIR_OUTMNGR'};
 
 	warn "INFO : Appel omgr_export\n";
 	my @lots = omgr_export(%$filter);
 
-	my $basedir = $cfg->{'EDTK_DIR_OUTMNGR'};
 	foreach (@lots) {
 		my ($lot, @doclibs) = @$_;
 
@@ -378,7 +380,8 @@ sub oe_outmngr_output_run_tex($;$) {
 		my ($lot) = @$_;
 
 		print "$basedir/$lot.zip\n";
-		if ($type !~ /D/) {
+		if ($type_env !~ /D/) {
+			warn "INFO : suppression des fichiers intermediaires ($type_env)\n";
 			rmtree("$basedir/$lot");
 		}
 	}

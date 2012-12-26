@@ -5,7 +5,7 @@ BEGIN {
 		use vars 	qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
 		use strict;
 
-		$VERSION	= 0.7029; # a.ammr a.a année d'existence, mm mois, r release 
+		$VERSION	= 0.7125; # a.ammr a.a année d'existence, mm mois, r release
 		@ISA		= qw(Exporter);
 		@EXPORT	= qw(oEdtk_release);
 }
@@ -16,7 +16,7 @@ BEGIN {
 
 sub oEdtk_release {
 	# warn "DEBUG: >$?< \nDEBUG: >$@<\n";
-	return "\n(c) 2005-2012 daunay\@cpan.org - edtk\@free.fr - oEdtk v$VERSION\n";
+	return "\n(c) 2005-2013 daunay\@cpan.org - edtk\@free.fr - oEdtk v$VERSION\n";
 }
 
 
@@ -51,10 +51,10 @@ here.
     sub main() {
         # File input and output opening
         oe_new_job($ARGV[0], $ARGV[1]);
-        
+
         # Application initialisation (user defined)
         &initApp();
-        
+
         # Reading the input line by line
         while (my $ligne=<IN>) {
             chomp ($ligne);
@@ -65,7 +65,7 @@ here.
                 warn "INFO IGNORE REC. line $.\n";
        	    }
         }
-        
+
         # Closing input and output file
         oe_compo_link($ARGV[0], $ARGV[1]);
         return 1;
@@ -76,7 +76,7 @@ here.
         # structure of record '016' for spliting/extraction
         # (could be delayed in 'pre_process' procedure)
         oe_rec_motif("016", "A67 A20 A*");
-        
+
         # compuset output declaration (only if necessary)
         oe_rec_output("016", "<SK>%s<#DATE=%s><SK>%s");
         return 1;
@@ -90,10 +90,10 @@ here.
     sub main() {
         # File input and output opening
         oe_new_job($ARGV[0], $ARGV[1]);
-        
+
         # Application initialisation (user defined)
         &initApp();
-        
+
         # Reading the input line by line
         while (my $ligne=<IN>) {
             chomp ($ligne);
@@ -104,7 +104,7 @@ here.
             	warn "INFO IGNORE REC. line $.\n";
             }
         }
-        
+
         # Closing input and output file
         oe_compo_link($ARGV[0], $ARGV[1]);
         return 1;
@@ -116,18 +116,18 @@ here.
         # before to proceed the record
         # (mandatory only if no oe_rec_motif declared)
         oe_rec_pre_process("016", \&initDoc);
-        
+
         # structure of record '016' for spliting/extraction
         # (could be delayed in 'pre_process' procedure)
         oe_rec_motif("016", "A67 A20 A*");
-        
+
         # process '&format_date' after record is read
         # (only if necessary)
         oe_rec_process("016", \&format_date);
-        
+
         # compuset output declaration (only if necessary)
         oe_rec_output("016", "<SK>%s<#DATE=%s><SK>%s");
-        
+
         # process after building the output
         # (only if necessary)
         recEdtk_post_process("016", \&vars_prepared_for_next_Rec);
@@ -235,7 +235,7 @@ Examples :
 		} elsif (oe_process_ref_rec(3, 3, $ligne, 6)) {
 			# this will process both records '016' and '600'
 			# (and cut away first 6 caracters of the record line).
-			
+
 		} else {
 			# if not, record is ignored
 			warn "INFO IGNORE REC. line $.\n";

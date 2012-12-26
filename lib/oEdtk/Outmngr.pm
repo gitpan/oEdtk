@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.7031;		# release number : Y.YSSS -> Year, Sequence 
+our $VERSION	= 0.7121;		# release number : Y.YSSS -> Year, Sequence 
 our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -359,6 +359,13 @@ sub _omgr_insert($$$$$) {
 		$csv->parse($_);
 		my @data = $csv->fields();
 
+		# Truncate the CP field if necessary.
+		# Si le CP est supérieur à 10 caractères, il est tronqué à 10 en prenant les 4 premiers suivi des 6 derniers
+		if (length($data[4]) > 10) {
+			warn "INFO : \"$data[4]\" truncated to 10 characters\n";
+			$data[4] = substr($data[4], 0, 4) . substr($data[4], -6);
+		}
+
 		# Truncate the name of city field if necessary.
 		if (length($data[5]) > 30) {
 			warn "INFO : \"$data[5]\" truncated to 30 characters\n";
@@ -495,6 +502,12 @@ sub _omgr_lot($$$) {
 	while (my $lot = $sth->fetchrow_hashref()) {
 		# On essaye de matcher des documents avec ce lot.
 		$sql		= 'UPDATE ' . $cfg->{'EDTK_DBI_OUTMNGR'} . ' SET ED_IDLOT = ? ' ;
+
+#XXX AJOUTER GESTION DES REFENC / LOT : AJOUT ED_REFENC À ED_LISTREFENC
+		# if (defined $lot->{'ED_REFENC'}) {
+		#	ajouter ED_REFENC à ED_LISTREFENC
+		# }
+
 		my $where = ' WHERE ED_IDLOT IS NULL AND ED_IDLDOC = ? ';
 		if ($lot->{'ED_REFIDDOC'}=~/\%/) {
 			$where .= " AND ED_REFIDDOC LIKE ? ";
@@ -510,8 +523,6 @@ sub _omgr_lot($$$) {
 		if (defined $lot->{'ED_FILTER'} and $lot->{'ED_FILTER'}=~/\=/) {
 			$where .= " AND " . $lot->{'ED_FILTER'};
 		}
-
-# ajouter gestion des refenc / lot : AJOUT ed_refenc à ed_listrefenc
 
 		my $num 	= $dbh->do($sql . $where, undef, @values);
 		    
@@ -914,14 +925,16 @@ sub omgr_export(%) {
 					$file = "$name.job";
 					warn "INFO : Creating job ticket file \"$file\"\n";
 					my @jobfields = (
+						['ED_PRIORITE',	$lot->{'ED_PRIORITE'}],
+						['ED_REFIDDOC',	$lot->{'ED_REFIDDOC'}],
 						['ED_IDLOT',		$idlot],
 						['ED_SEQLOT',		$seqlot],
 						['ED_CORP',		$gvals->{'ED_CORP'}],
-						['ED_REFIDDOC',	$lot->{'ED_REFIDDOC'}],
-						['ED_CPDEST',		$lot->{'ED_CPDEST'}],
 						['ED_GROUPBY',		$lot->{'ED_GROUPBY'}],
-						['ED_IDMANUFACT',	$lot->{'ED_IDMANUFACT'}],
+						['ED_CPDEST',		$lot->{'ED_CPDEST'}],
+						['ED_REFENC',		$lot->{'ED_REFENC'}],
 						['ED_LOTNAME',		$lot->{'ED_LOTNAME'}],
+						['ED_IDMANUFACT',	$lot->{'ED_IDMANUFACT'}],
 						['ED_IDFILIERE',	$idfiliere],
 						['ED_DESIGNATION',	$fil->{'ED_DESIGNATION'}],
 						['ED_MODEDI',		$fil->{'ED_MODEDI'}],

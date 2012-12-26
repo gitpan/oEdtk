@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               oEdtk
-version:            0.7029
+version:            0.7125
 abstract:           ~
 author:
     - oEdtk group <oedtk@free.fr>
@@ -42,7 +42,7 @@ no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.55_02
+generated_by:       ExtUtils::MakeMaker version 6.57_05
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4

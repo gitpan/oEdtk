@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.7031;
+our $VERSION		= 0.7111;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -280,15 +280,15 @@ sub create_table_LOTS {
 	my $table = "EDTK_LOTS";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_IDLOT VARCHAR2(8)  NOT NULL";		# rendre UNIQUE 
-	$sql .= ", ED_PRIORITE INTEGER   UNIQUE"; 		# rendre UNIQUE 	ALTER table EDTK_LOTS modify ED_PRIORITE INTEGER UNIQUE;
+	$sql .= "( ED_IDLOT VARCHAR2(8) NOT NULL";		# rendre UNIQUE ?								-> ALTER table EDTK_LOTS modify ED_IDLOT VARCHAR2(8) NOT NULL
+	$sql .= ", ED_PRIORITE INTEGER   UNIQUE"; 		# rendre UNIQUE 								-> ALTER table EDTK_LOTS modify ED_PRIORITE INTEGER UNIQUE;
 	$sql .= ", ED_IDAPPDOC VARCHAR2(20)";			#xx ED_REFIDDOC ATTENTION cf structure index.xls		-> ALTER table EDTK_LOTS modify ED_IDAPPDOC VARCHAR2(20) NULL
-	$sql .= ", ED_REFIDDOC VARCHAR2(20) NOT NULL";	# alter table EDTK_LOTS add ED_REFIDDOC VARCHAR2(20)	-> ALTER table EDTK_LOTS modify ED_REFIDDOC VARCHAR2(20) NOT NULL
-	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
-	$sql .= ", ED_FILTER VARCHAR2(64)";			# alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
-	$sql .= ", ED_REFENC VARCHAR2(20)";			# a mettre en place pour ajouter des encarts spécifiques à certains lots (cf impact calcul lotissement) # alter table EDTK_LOTS add ED_REFENC VARCHAR2(20)
+	$sql .= ", ED_REFIDDOC VARCHAR2(20) NOT NULL";	# 											-> alter table EDTK_LOTS add ED_REFIDDOC VARCHAR2(20)	-> ALTER table EDTK_LOTS modify ED_REFIDDOC VARCHAR2(20) NOT NULL
+	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# 											-> alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
+	$sql .= ", ED_FILTER VARCHAR2(64)";			# 											-> alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
+	$sql .= ", ED_REFENC VARCHAR2(32)";			# a mettre en place pour ajouter des encarts spécifiques à certains lots (cf impact calcul lotissement) # 	-> ALTER table EDTK_LOTS modify ED_REFENC VARCHAR2(32);
 	$sql .= ", ED_GROUPBY VARCHAR2(16)"; 
-	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
+	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# 											-> ALTER table EDTK_LOTS modify ED_LOTNAME VARCHAR2(64) NOT NULL;
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	
 	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
 #	$sql .= ", PRIMARY KEY (ED_IDLOT, ED_PRIORITE, ED_REFIDDOC)"
@@ -372,8 +372,8 @@ our @INDEX_COLS = (
 	['ED_CLEGED4',	'VARCHAR2(20)'],		# clef pour système d'archivage
 	['ED_ADRLN5',	'VARCHAR2(38)'],		# ligne d'adresse 5
 	['ED_CORP',	'VARCHAR2(8)  NOT NULL'],# société émettrice de la page		ALTER table edtk_index modify ED_CORP VARCHAR2(8) NOT NULL;
-	['ED_DOCLIB',	'VARCHAR2(32)' ],		# merge library compuset associée ? la page
-	['ED_REFIMP',	'VARCHAR2(8)'],		# référence de pr?-imprim? ou d'imprim? ou d'encart
+	['ED_DOCLIB',	'VARCHAR2(32)'],		# merge library compuset associée ? la page
+	['ED_REFIMP',	'VARCHAR2(16)'],		# référence de pr?-imprim? ou d'imprim? ou d'encart
 	['ED_ADRLN6',	'VARCHAR2(38)'],		# ligne d'adresse 6
 	['ED_SOURCE',	'VARCHAR2(8) NOT NULL'],	# Source de l'index
 	['ED_OWNER',	'VARCHAR2(10)'],		# propriétaire du document (utilisation en gestion / archivage de documents)
@@ -382,16 +382,16 @@ our @INDEX_COLS = (
 	['ED_CATDOC',	'CHAR'],				# catégorie de document
 	['ED_CODRUPT',	'VARCHAR2(8)'],		# code forçage de rupture	ALTER table edtk_index modify ED_CODRUPT VARCHAR2(8);
 
-	# SECTION LOTISSEMENT DE L'INDEX
-	['ED_IDLOT',	'VARCHAR2(6)'],		# identifiant du lot
-	['ED_SEQLOT',	'VARCHAR2(7)'],		# identifiant du lot de mise sous plis (sous-lot) ALTER table edtk_index modify ED_SEQLOT VARCHAR2(7);
+	# SECTION LOTISSEMENT DE L'INDEX 
+	['ED_IDLOT',	'VARCHAR2(8)'],		# identifiant du lot						ALTER table EDTK_INDEX modify ED_IDLOT VARCHAR2(8) NOT NULL;
+	['ED_SEQLOT',	'VARCHAR2(7)'],		# identifiant du lot de mise sous plis (sous-lot) ALTER table EDTK_INDEX modify ED_SEQLOT VARCHAR2(7);
 	['ED_DTLOT',	'VARCHAR2(8)'],		# date de la création du lot de mise sous plis
-	['ED_IDFILIERE','VARCHAR2(5)'],		# identifiant de la filière de production     	ALTER table edtk_index modify ED_IDFILIERE VARCHAR2(5);
+	['ED_IDFILIERE','VARCHAR2(5)'],		# identifiant de la filière de production     	ALTER table EDTK_INDEX modify ED_IDFILIERE VARCHAR2(5);
 	['ED_SEQPGDOC','INTEGER'],			# numéro de séquence de page dans le document
 	['ED_NBPGDOC',	'INTEGER'],			# nombre de page (faces) du document
 	['ED_POIDSUNIT','INTEGER'],			# poids de l'imprim? ou de l'encart en mg
-	['ED_NBENC',	'INTEGER'],			# nombre d'encarts du doc					ALTER table edtk_index add ED_NBENC integer;
-	['ED_ENCPDS',	'INTEGER'],			# poids des encarts du doc					ALTER table edtk_index add ED_ENCPDS INTEGER;
+	['ED_NBENC',	'INTEGER'],			# nombre d'encarts du doc					ALTER table EDTK_INDEX add ED_NBENC integer;
+	['ED_ENCPDS',	'INTEGER'],			# poids des encarts du doc					ALTER table EDTK_INDEX add ED_ENCPDS INTEGER;
 	['ED_BAC_INSERT','INTEGER'],			# Appel de bac ou d'insert
 
 	# SECTION EDITION DE L'INDEX
@@ -405,7 +405,7 @@ our @INDEX_COLS = (
 #	['ED_FORMS',	'VARCHAR2(8)'],		# Forms 
 
 	# SECTION PLI DE L'INDEX
-	['ED_IDPLI',	'INTEGER'],				# identifiant du pli
+	['ED_IDPLI',	'INTEGER'],			# identifiant du pli
 	['ED_NBDOCPLI','INTEGER NOT NULL'],	# nombre de documents du pli
 	['ED_NUMPGPLI','INTEGER NOT NULL'],	# numéro de la page (face) dans le pli
 	['ED_NBPGPLI',	'INTEGER'],			# nombre de pages (faces) du pli

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.7007;		# release number : Y.YSSS -> Year, Sequence
+our $VERSION 	=0.7125;		# release number : Y.YSSS -> Year, Sequence
 
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
@@ -909,17 +909,20 @@ sub oe_app_usage() {		# migrer oe_app_usage
 	print STDOUT << "EOF";
 
  Usage :	$app <input_data_file> [job_name] [options]
+ Usage :	$app --noinputfiles [job_name] [options]
  options :
 
 		--help		this message
 		--massmail 	to confirm mass treatment
 		--edms		to confirm edms treatment
 		--cgi
-				these values depends on ED_REFIDDOC config table 
-				(ie : when treatment should be confirmed)
+				these values depend on ED_REFIDDOC config table 
+				(example : omgr treatment confirmation)
 
 		--input_code	input caracters encoding
 				(ie : --input_code=iso-8859-1)
+		--noinputfiles	no data file needed for treatment
+
 
 EOF
 oe_list_encodings();
@@ -948,27 +951,21 @@ sub oe_new_job(@) {
 		input_code=> 0
 	);
 
+	# exemples d'ajout de paramètres au lancement 
 	# oe_new_job('--index');
 	# oe_new_job("--input_code=utf8");
 
-	GetOptions(\%defaults, 'help', 'index', 'massmail', 'edms', 'cgi', 'input_code=s');
-	if ($defaults{help} or $#ARGV ==-1) {
-		&oe_app_usage();
-		exit 0;
+	GetOptions(\%defaults, 'help', 'index', 'massmail', 'edms', 'cgi', 'noinputfiles', 'input_code=s');
+	while (my ($key, $val) = each(%defaults)) {
+		if (!defined($params->{$key})) {
+			$params->{$key} = $val;
+		}
 	}
-
-	my $fi = $ARGV[0];	# TO KEEP COMPATIBILITY
 
 	if ($^O ne 'MSWin32') {
 		$defaults{'fifo'} = 1;
 	} else {
 		$defaults{'fifo'} = 0;
-	}
-
-	while (my ($key, $val) = each(%defaults)) {
-		if (!defined($params->{$key})) {
-			$params->{$key} = $val;
-		}
 	}
 
 	$params->{'doclib'} = _omngr_doclib();
@@ -982,6 +979,24 @@ sub oe_new_job(@) {
 	} else {
 		$params->{'input_code'} = "<";
 	}
+
+
+	my $fi;
+	if ($defaults{help}) {
+		&oe_app_usage();
+		exit 0;
+	} elsif ($defaults{noinputfiles}) {
+		$fi = 0;	
+		warn "INFO : no input file for this treatment\n";
+	} elsif ($#ARGV ==-1) {	# TO KEEP COMPATIBILITY
+		&oe_app_usage();
+		exit 0;
+	} else {
+		$fi = $ARGV[0];	# TO KEEP COMPATIBILITY
+		open(IN, $params->{'input_code'}, $fi)						or die "ERROR: Cannot open \"$fi\" for reading: $!\n";
+		warn "INFO : input perl data is $fi (encode \'". $params->{'input_code'} ."\' $ARGV[-1])\n";
+	}
+
 
 	# Override default setting if EDTK_COMPO_ASYNC is set in edtk.ini.
 	my $async = $cfg->{'EDTK_COMPO_ASYNC'};
@@ -1016,8 +1031,6 @@ sub oe_new_job(@) {
 		$params->{'pid'} = $pid;
 	}
 
-	open(IN, $params->{'input_code'}, $fi)						or die "ERROR: Cannot open \"$fi\" for reading: $!\n";
-	warn "INFO : input perl data is $fi (encode \'". $params->{'input_code'} ."\' $ARGV[-1])\n";
 	open(OUT,$params->{'output_code'}, $params->{'outfile'})		or die "ERROR: Cannot open \'". $params->{'outfile'} ."\' for writing: $!\n";
 	warn "INFO : input compo data is ".$params->{'outfile'} ." (encode \'". $params->{'output_code'} ."\')\n";
 
@@ -1270,10 +1283,6 @@ sub oe_compo_link (;@){		# migrer oe_close_files oe_compo_link
 
 	my @opt=@_;
 
-	print OUT oe_data_build('xFinFlux');
-	close(OUT) or die "ERROR: closing output $!\n";
-	close(IN)  or die "ERROR: closing input $!\n";
-
 	if ($TAG_MODE eq 'TEX') {
 		my $cfg = config_read('COMPO');
 		my $params = $_RUN_PARAMS;
@@ -1283,6 +1292,13 @@ sub oe_compo_link (;@){		# migrer oe_close_files oe_compo_link
 				$_=~s/\-+//g;
 				$params->{$_} = 1;
 			}
+		}
+
+		print OUT oe_data_build('xFinFlux');
+		close(OUT) or die "ERROR: closing output $!\n";
+		if ($params->{'noinputfiles'}) {
+		} else {
+			close(IN)  or die "ERROR: closing input $!\n" ;
 		}
 
 		if ($params->{'fifo'}) {
