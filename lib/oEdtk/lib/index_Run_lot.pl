@@ -35,27 +35,24 @@ if (@ARGV % 2 != 0 or $ARGV[0] =~/-h/i) {
 	my $pdbh = db_connect($cfg, 'EDTK_DBI_PARAM');
 	
 	my $rows = omgr_stats($dbh, $pdbh, 'day', 'idlot');
+	my $fmt  = shift (@$rows);
+	my $head = shift (@$rows);
 	
 	my $mailfile = $cfg->{'EDTK_MAIL_OMGR'};
 	open(my $fh, '<', $mailfile) or die "ERROR: Cannot open \"$mailfile\": $!\n";
 	my @body = <$fh>;
 	close($fh);
 	
-	my @cols= ("LOT", "CORP", "ID_SEQLOT", "PLIS", "DOCS", "FEUILLES", "PAGES", "FACES", "FIL.");
-	my $fmt = "%-16s%-8s" . "%9s" x (@cols - 3) . "  %-6s\n";
-	
 	push(@body, "\n\n\n");
-	push(@body, sprintf($fmt, @cols));
+	push(@body, sprintf($$fmt, @$head));
 	foreach my $row (@$rows) {
-		push(@body, sprintf($fmt, @$row));
+		push(@body, sprintf($$fmt, @$row));
 	}
 	
 	my ($sec,$min,$hour,$day,$month,$year) = localtime();
 	my $date = sprintf("%02d/%02d/%d", $day, $month + 1, $year + 1900);
 	my $time = sprintf("%02d:%02d:%02d", $hour, $min, $sec);
 	
-#	my $subject = $cfg->{'EDTK_TYPE_ENV'};
-#	$subject .= " - "; 	
 	my $subject .= $cfg->{'EDTK_MAIL_SUBJ'};
 	$subject =~ s/%date/$date/;
 	$subject =~ s/%time/$time/;

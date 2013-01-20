@@ -8,7 +8,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.7111;
+our $VERSION		= 0.8011;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -81,7 +81,7 @@ sub csv_import ($$$;$){
 
 	my $line;
 	if (defined $params->{'header'}){
-		$line = $params->{'header'};
+		$line =$params->{'header'};
 	} else {
 		$line = <$fh>;
 	}
@@ -284,13 +284,14 @@ sub create_table_LOTS {
 	$sql .= ", ED_PRIORITE INTEGER   UNIQUE"; 		# rendre UNIQUE 								-> ALTER table EDTK_LOTS modify ED_PRIORITE INTEGER UNIQUE;
 	$sql .= ", ED_IDAPPDOC VARCHAR2(20)";			#xx ED_REFIDDOC ATTENTION cf structure index.xls		-> ALTER table EDTK_LOTS modify ED_IDAPPDOC VARCHAR2(20) NULL
 	$sql .= ", ED_REFIDDOC VARCHAR2(20) NOT NULL";	# 											-> alter table EDTK_LOTS add ED_REFIDDOC VARCHAR2(20)	-> ALTER table EDTK_LOTS modify ED_REFIDDOC VARCHAR2(20) NOT NULL
-	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# 											-> alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
+	$sql .= ", ED_CPDEST VARCHAR2(8)"; 			# xxx passer cpdet sur 10 partout											-> alter table EDTK_LOTS modify ED_CPDEST VARCHAR2(8);
 	$sql .= ", ED_FILTER VARCHAR2(64)";			# 											-> alter table EDTK_LOTS add ED_FILTER VARCHAR2(64); 
 	$sql .= ", ED_REFENC VARCHAR2(32)";			# a mettre en place pour ajouter des encarts spécifiques à certains lots (cf impact calcul lotissement) # 	-> ALTER table EDTK_LOTS modify ED_REFENC VARCHAR2(32);
 	$sql .= ", ED_GROUPBY VARCHAR2(16)"; 
 	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# 											-> ALTER table EDTK_LOTS modify ED_LOTNAME VARCHAR2(64) NOT NULL;
 	$sql .= ", ED_IDGPLOT VARCHAR2(16) NOT NULL";	
-	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL"; 
+	$sql .= ", ED_IDMANUFACT VARCHAR2(16) NOT NULL";	
+	$sql .= ", ED_CONSIGNE VARCHAR2(250) ";			# alter table EDTK_LOTS add ED_CONSIGNE VARCHAR2(250)
 #	$sql .= ", PRIMARY KEY (ED_IDLOT, ED_PRIORITE, ED_REFIDDOC)"
 	$sql .= " )";
 
@@ -384,7 +385,7 @@ our @INDEX_COLS = (
 
 	# SECTION LOTISSEMENT DE L'INDEX 
 	['ED_IDLOT',	'VARCHAR2(8)'],		# identifiant du lot						ALTER table EDTK_INDEX modify ED_IDLOT VARCHAR2(8) NOT NULL;
-	['ED_SEQLOT',	'VARCHAR2(7)'],		# identifiant du lot de mise sous plis (sous-lot) ALTER table EDTK_INDEX modify ED_SEQLOT VARCHAR2(7);
+	['ED_SEQLOT',	'VARCHAR2(7)'],		# identifiant du lot de mise sous plis (sous-lot) ALTER table EDTK_INDEX modify ED_SEQLOT VARCHAR2(7); update edtk_index set ed_seqlot = substr('1'|| ed_seqlot,-7);
 	['ED_DTLOT',	'VARCHAR2(8)'],		# date de la création du lot de mise sous plis
 	['ED_IDFILIERE','VARCHAR2(5)'],		# identifiant de la filière de production     	ALTER table EDTK_INDEX modify ED_IDFILIERE VARCHAR2(5);
 	['ED_SEQPGDOC','INTEGER'],			# numéro de séquence de page dans le document
@@ -455,7 +456,7 @@ sub create_table_ACQUIT {
 	my $table = "EDTK_ACQ";
 
 	my $sql = "CREATE TABLE $table";
-	$sql .= "( ED_SEQLOT  VARCHAR2(7)  NOT NULL";	# identifiant du lot de mise sous plis (sous-lot)
+	$sql .= "( ED_SEQLOT  VARCHAR2(7)  NOT NULL";	# identifiant du lot de mise sous plis (sous-lot) update edtk_acq set ed_seqlot = substr('1'|| ed_seqlot,-7);
 	$sql .= ", ED_LOTNAME VARCHAR2(16) NOT NULL";	# alter table EDTK_LOTS add ED_LOTNAME VARCHAR2(16);  alter table EDTK_LOTS modify ED_LOTNAME VARCHAR2(16) NOT NULL;
 	$sql .= ", ED_DTPRINT VARCHAR2(8)";			# date de d'imrpession
 	$sql .= ", ED_DTPOST  VARCHAR2(8)  NOT NULL";	# date de remise en poste

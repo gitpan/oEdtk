@@ -11,7 +11,7 @@ use Exporter;
 our $VERSION	= 0.001;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(oe_send_mail);
-
+#http://search.cpan.org/~rjbs/Email-Sender-0.120002/lib/Email/Sender/Manual/QuickStart.pm
 
 sub oe_send_mail {
 	my ($to, $subject, @body) = @_;

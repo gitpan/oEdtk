@@ -202,7 +202,7 @@ sub EDMS_import($@) {
 sub EDMS_idx_process($$$$&) {
 	my ($app, $idx, $idldoc, $keys, $sub) = @_;
 
-	my @idxcols = map { $$_[0] } @INDEX_COLS[0..28]; # il faudrait peut être pousser jusqu'à 29 (ED_IDIDX) voir plus
+	my @idxcols = map { $$_[0] } @INDEX_COLS[0..28]; # il faudrait peut être pousser jusqu'à 30 (ED_CODRUPT) voir plus
 
 	open(my $fh, '<', $idx) or die "ERROR: Cannot open \"$idx\": $!\n";
 	my $csv = Text::CSV->new({ binary => 1, sep_char => ';' });

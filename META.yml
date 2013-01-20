@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               oEdtk
-version:            0.7125
+version:            0.8014
 abstract:           ~
 author:
     - oEdtk group <oedtk@free.fr>
@@ -30,6 +30,7 @@ requires:
     Math::Round:          0.06
     Net::FTP:             0
     overload:             0
+    Roman:                0
     Scalar::Util:         0
     Spreadsheet::WriteExcel:  1.00
     Sys::Hostname:        0

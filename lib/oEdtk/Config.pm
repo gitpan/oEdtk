@@ -7,10 +7,10 @@ use Config::IniFiles;
 use Sys::Hostname;
 
 use Exporter;
-
-our $VERSION		= 0.04;
+our $VERSION		= 0.8011;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(config_read);
+
 
 sub config_read(@) {
 	my ($sections, $app);
@@ -53,7 +53,7 @@ sub config_read(@) {
 	$cfg{'EDTK_HOST'} = $uchost;
 	foreach ('DEFAULT', 'ENVDESC', @$sections, $uchost) {
 		if (exists $allcfg{$_}) {
-			%cfg = (%cfg, %{$allcfg{$_}});
+			%cfg = ( %cfg, %{$allcfg{$_}} );
 		}
 	}
 
@@ -68,20 +68,20 @@ sub config_read(@) {
 		}
 	}
 
-
-#	my $typ_ext = "$cfg{'EDTK_FTYP_TEST'}|$cfg{'EDTK_FTYP_HOMOL'}|$cfg{'EDTK_FTYP_PROD'}";
-
-	# on pousse les valeurs dans un tableau, pour éliminer les valeurs nulles
-	my @tTyp_ext;
-#	push (@tTyp_ext, $cfg{'EDTK_FTYP_TEST'})	if $cfg{'EDTK_FTYP_TEST'};
-#	push (@tTyp_ext, $cfg{'EDTK_FTYP_HOMOL'})	if $cfg{'EDTK_FTYP_HOMOL'};
-#	push (@tTyp_ext, $cfg{'EDTK_FTYP_PROD'})	if $cfg{'EDTK_FTYP_PROD'};
-
-	# on recherche chacun des motifs valides
-	foreach my $typ_ext (@tTyp_ext) {
-		$cfg{'EDTK_PRGNAME'} =~ s/([\w\-\.]+)($typ_ext)/$1/ie;
-	#	$cfg{'EDTK_TYP_ENVIRO'}	= $2 || $cfg{'EDTK_FTYP_DFLT'};
-	}
+#### Deprecated was used for Compuset
+##	my $typ_ext = "$cfg{'EDTK_FTYP_TEST'}|$cfg{'EDTK_FTYP_HOMOL'}|$cfg{'EDTK_FTYP_PROD'}";
+#
+#	# on pousse les valeurs dans un tableau, pour éliminer les valeurs nulles
+#	my @tTyp_ext;
+##	push (@tTyp_ext, $cfg{'EDTK_FTYP_TEST'})	if $cfg{'EDTK_FTYP_TEST'};
+##	push (@tTyp_ext, $cfg{'EDTK_FTYP_HOMOL'})	if $cfg{'EDTK_FTYP_HOMOL'};
+##	push (@tTyp_ext, $cfg{'EDTK_FTYP_PROD'})	if $cfg{'EDTK_FTYP_PROD'};
+#
+#	# on recherche chacun des motifs valides
+#	foreach my $typ_ext (@tTyp_ext) {
+#		$cfg{'EDTK_PRGNAME'} =~ s/([\w\-\.]+)($typ_ext)/$1/ie;
+#	#	$cfg{'EDTK_TYP_ENVIRO'}	= $2 || $cfg{'EDTK_FTYP_DFLT'};
+#	}
 
 	# Expand variables inside other variables.
 	foreach my $key (keys %cfg) {
@@ -89,7 +89,8 @@ sub config_read(@) {
 			;
 		}
 	}
-	return \%cfg;
+
+return \%cfg;
 }
 
 1;

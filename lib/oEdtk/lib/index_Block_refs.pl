@@ -6,7 +6,6 @@ use warnings;
 use oEdtk::Main;
 use oEdtk::Config 		qw(config_read);
 use oEdtk::DBAdmin 		qw(db_connect);
-use oEdtk::Outmngr 	0.28	qw(omgr_stats);
 use Term::ReadKey;
 use Sys::Hostname;
 
@@ -17,7 +16,10 @@ sub usage () {
 		."\t ANO\tblock doc(s) for anomaly in doc\n"
 		."\t DUPLE\tblock duplicated doc(s)\n"
 		."\t STOP\tblock to stop doc(s)\t(index_Purge_DCLIB won't delete DCLIB)\n"
-		."\t RESET\tunblock to redo doc(s)\t(index_Purge_DCLIB won't delete DCLIB)\n";
+		."\t RESET\tunblock to redo doc(s)\t(index_Purge_DCLIB won't delete DCLIB)\n\n"
+		."\t idldoc is a complete idldoc (ie. 2241234567894561)\n"
+		."\t or idldoc is a part of idldoc (ie. 2241%), with at least 4 digits \n"  
+		."\t STOP_status to change only documents set previously as 'STOP' \n";
 	exit 1;
 }
 	
@@ -36,14 +38,17 @@ if 		($event=~/^ANO$/i) {
 }
 
 my $type="";
-if 		($key1=~/^\d{16}$/){ # 1392153206001881
-		$type = 'idldoc';
+if         ($key1=~/^\d{16}$/){ # 1392153206001881
+        $type = 'idldoc';
 
-} elsif 	($key1=~/^\d{7}$/) { # 1411123
-		$type = 'seqlot';
+} elsif     ($key1=~/^\d{4,15}\%$/) { # 2241%
+        $type = 'idldoc';
+
+} elsif     ($key1=~/^\d{7}$/) { # 1411123
+        $type = 'seqlot';
 
 } else {
-	&usage();
+    &usage();
 }
 $key2 = $key2 || 0;
 
@@ -56,30 +61,40 @@ my $dbh = db_connect($cfg, 'EDTK_DBI_STATS',
 
 ################################################################################
 
-my @values;
-push (@values, $key1);
 my $sql = "SELECT ED_REFIDDOC, ED_SOURCE, ED_IDLDOC, ED_SEQDOC, ED_DTEDTION, ED_NOMDEST"
 		. " FROM EDTK_INDEX ";
+my $where;
+my @values;
+push (@values, $key1);
+my $sequence = 0;
 
 if 	($type eq 'idldoc') {
-	$sql.= " WHERE ED_IDLDOC = ? ";
-	if (defined $key2 && ($key2=~/^STOP$/) ){
-		$sql .="  AND ED_SEQLOT  = ? ";
+	if ($key1=~/\%$/){
+		$where.= " WHERE ED_IDLDOC like ? ";
+	} else {
+		$where.= " WHERE ED_IDLDOC = ? ";
+	}
+
+	if (defined $key2 && ($key2=~/^STOP$/i) ){
+		$where .="  AND ED_STATUS = ? ";
 		push (@values, $key2);
 
-	} elsif (defined $key2 && $key2 > 0 ){
-		$sql .="  AND ED_SEQDOC  = (SELECT ED_SEQDOC FROM EDTK_INDEX WHERE ED_IDLDOC = ? AND ED_IDSEQPG = ? )";
+	} elsif (defined $key2 && $key2 > 0 && $key1!~/\%$/){ # key2 est le numéro de page
+	#} elsif (defined $key2 && $key2 > 0 ){
+		$where .="  AND ED_SEQDOC  = (SELECT ED_SEQDOC FROM EDTK_INDEX WHERE ED_IDLDOC = ? AND ED_IDSEQPG = ? )";
 		push (@values, $key1, $key2);
+		$sequence = $key2;
 	}
 
 } elsif ($type eq 'seqlot'){
-	$sql.= " WHERE ED_SEQLOT = ? ";
+	$where.= " WHERE ED_SEQLOT = ? ";
 }
-	$sql .=" GROUP BY ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
-	$sql .=" ORDER BY ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
+
+my 	$present  =" GROUP BY ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
+	$present .=" ORDER BY ED_REFIDDOC, ED_IDLDOC, ED_SEQDOC, ED_NOMDEST, ED_DTEDTION, ED_SOURCE ";
 
 
-my $sth = $dbh->prepare($sql);
+my $sth = $dbh->prepare($sql.$where.$present);
 $sth->execute(@values);
 my $rows= $sth->fetchall_arrayref();
 
@@ -107,26 +122,8 @@ ReadMode ('restore');
 
 
 my 	$updt = "UPDATE EDTK_INDEX SET ED_DTLOT = ?, ED_SEQLOT = ?, ED_DTPOSTE = ?, ED_STATUS = ? ";
-my	$sequence= 0;
-if 	($type eq 'idldoc') {
-	$updt.= " WHERE ED_IDLDOC = ? ";
+	$sth = $dbh->prepare($updt.$where);
 
-	if (defined $key2 && ($key2=~/^STOP$/) ){
-		$updt .="  AND ED_SEQLOT  = ? ";
-		
-	} elsif (defined $key2 && $key2 > 0){
-		$updt .="  AND ED_SEQDOC  = (SELECT ED_SEQDOC FROM EDTK_INDEX WHERE ED_IDLDOC = ? AND ED_IDSEQPG = ? )";
-		$sequence = $key2;
-	}
-
-} elsif ($type eq 'seqlot'){
-	$updt.= " WHERE ED_SEQLOT = ? ";
-}
-	$sth = $dbh->prepare($updt);
-
-
-# rajouter un controle, on a pas le droit de changer l'etat d'un doc déjà loti
-# mais on a le droit de faire un reset pour rejouer le lotissement
 if ($event!~/^RESET$/i && $event!~/^STOP$/i) {
 	# pour tous les autres event on ne rejoue pas les docs, ils seront purgés (index_Purge_DCLIB)
 	# warn "INFO : $updt \n $event, $event, $event, $event, @values\n";

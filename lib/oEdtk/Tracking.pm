@@ -33,7 +33,7 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.7014;
+our $VERSION		= 0.8012;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(stats_iddest stats_week stats_month);
 
@@ -130,7 +130,7 @@ sub new {
 		}
 	}
 
-	$self->track('Job', 1);
+	$self->track('Job', 1, join (' ', @ARGV)); # conserver le join pour placer tous les parametres libres dans la zone de message
 	if (defined $cfg->{'EDTK_TRACK_SIG'} && $cfg->{'EDTK_TRACK_SIG'}!~/no/i) {
 		$_TRACK_SIG = $cfg->{'EDTK_TRACK_SIG'};
 		warn "INFO : tracking catchs SIG messages -> '$_TRACK_SIG' set ('warn' for all, 'halt' for die only)\n";
@@ -167,6 +167,7 @@ sub track {
 		ED_JOB_EVT	=> $job,
 		ED_OBJ_COUNT	=> $count,
 		ED_CORP		=> $self->{'entity'},
+		ED_SOURCE		=> $self->{'source'},
 		ED_HOST		=> hostname()
 	};
 

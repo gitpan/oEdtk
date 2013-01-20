@@ -15,7 +15,7 @@ use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.7121;		# release number : Y.YSSS -> Year, Sequence 
+our $VERSION	= 0.8012;		# release number : Y.YSSS -> Year, Sequence 
 our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -164,7 +164,6 @@ sub omgr_track_folds ($;$){
 	my @head= ("CORP", "REFIDDOC", "STATUS", "NB_DOCS", "DTEDITION", "NB_LOTS", "NB_PLIS", "DTPOST", "DTPOST2");
 	_filled_rows($rows);
 
-	# return @tlist;
 	@$rows = (\$fmt, \@head, @$rows);
 	return $rows;
 }
@@ -953,9 +952,11 @@ sub omgr_export(%) {
 						['ED_NBFEUILLOT',	$nbfeuillot],
 						['ED_NBPLISLOT',	$selplis],
 						['ED_FORMATP',		$gvals->{'ED_FORMATP'}],
-						['ED_LISTEREFENC',	$gvals->{'ED_LISTEREFENC'} || ""],
-						['ED_LISTEREFIMP',	join(', ', @refimps)],
+						['ED_CONSIGNE',	$lot->{'ED_CONSIGNE'}],
+						['ED_LISTEREFENC',	$gvals->{'ED_LISTEREFENC'} 	|| ""],
+						['ED_LISTEREFIMP',	join(', ', @refimps) 		|| ""], # si je mets ce champs en dernier, je plante latex...
 						['ED_DTLOT',		$dtlot]
+
 					);
 					open($fh, ">$lotdir/$file") or die ("ERROR: die in omgr_export, message is " . $!);
 					$csv->print($fh, [map { $$_[0] } @jobfields]);
@@ -1121,10 +1122,13 @@ sub omgr_stats($$$$) {
 		warn "INFO : implémentation en attente évolution base\n";
 	}
 
+	my @head;
 	if ($typeRqt !~/idlot/i) {
-		$sql = "SELECT ED_IDLOT, ED_CORP, ";
+		@head= ("CORP", "LOT", "PLIS", "DOCS", "FEUILLES", "PAGES", "FACES", "FIL.");
+		$sql = "SELECT ED_CORP, ED_IDLOT, ";
 	} else { 
-		$sql = "SELECT ED_IDLOT, ED_CORP, ED_SEQLOT, ";
+		@head= ("CORP", "LOT", "ID_SEQLOT", "PLIS", "DOCS", "FEUILLES", "PAGES", "FACES", "FIL.");
+		$sql = "SELECT ED_CORP, ED_IDLOT, ED_SEQLOT, ";
 	}	
 	$sql .="COUNT (DISTINCT ED_IDLDOC||TO_CHAR(ED_SEQDOC,'FM0000000')), ";	# NB PLIS # ne tient pas compte des éventuels regroupement à revoir : (DISTINCT TO_CHAR(ED_SEQLOT,'FM0000000')||TO_CHAR(ED_IDPLI,'FM0000000')) 
 	$sql .="COUNT (DISTINCT ED_IDLDOC||TO_CHAR(ED_SEQDOC,'FM0000000')), ";	# NB DOCS
@@ -1155,9 +1159,21 @@ sub omgr_stats($$$$) {
 	my $rows = $sth->fetchall_arrayref();
 	foreach my $row (@$rows) {
 		my ($lot) = $pdbh->selectrow_array('SELECT ED_LOTNAME FROM EDTK_LOTS WHERE ED_IDLOT = ?',
-		    undef, @$row[0]);
-		@$row[0] = $lot;
+		    undef, @$row[1]);
+		@$row[1] = $lot;
 	}
+
+	my $fmt = "%-8s%-16s" . "%9s" x (@head - 3) . "  %-6s\n";
+	@$rows  = (\$fmt, \@head, @$rows);
+
+#my $fmt  = shift (@$rows);
+#my $head = shift (@$rows);
+#printf $$fmt . "\n", @$head; 
+#
+#foreach my $row (@$rows) {
+#	printf $$fmt . "\n", @$row;
+#}
+
 	return $rows;
 }
 
@@ -1292,7 +1308,7 @@ sub _print_All_rTab($){
 }
 
 END {
-#	warn "(c) 2005-2012 edtk\@free.fr - oEdtk::Outmngr v$VERSION\n";
+
 }
 
 1;

@@ -55,8 +55,7 @@ sub escape {
 		}
 	}
 	$new =~s/([%&\$_#])/\\$1/g;
-#	warn "INFO : \$_DICO_TEX_CHAR = $_DICO_TEX_CHAR\n";
-# xxx la ligne qui suit provoque une erreur après la fin de programme
+	# warn "DEBUG : \$_DICO_TEX_CHAR = $_DICO_TEX_CHAR\n";
 	$new = $_DICO_TEX_CHAR->substitue($new);
 
 	# \\"{} => PROVOQUE DES ERREURS TEX DANS LE PROCESSUS D'INDEXATION (POUR INJECTION EN SGBD)

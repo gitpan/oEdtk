@@ -16,7 +16,7 @@ use oEdtk::TexDoc;
 
 use Exporter;
 
-our $VERSION	= 0.7111;
+our $VERSION	= 0.8011;
 our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 	oe_status_to_msg
@@ -380,7 +380,7 @@ sub oe_outmngr_output_run_tex($;$) {
 		my ($lot) = @$_;
 
 		print "$basedir/$lot.zip\n";
-		if ($type_env !~ /D/) {
+		if ($type_env !~ /^De/i) { # on ne la fait pas pour les environnements de Dev ou Debug
 			warn "INFO : suppression des fichiers intermediaires ($type_env)\n";
 			rmtree("$basedir/$lot");
 		}

@@ -53,6 +53,7 @@ WriteMakefile(
 		Scalar::Util			=> 0,
 		Spreadsheet::WriteExcel 	=>'1.00',
 		Sys::Hostname			=> 0,
+		Roman				=> 0,
 		Term::ReadKey			=> 0,
 		Text::CSV				=>'1.20',
 		XML::LibXML			=>'1.70',

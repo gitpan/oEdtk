@@ -6,7 +6,6 @@ use warnings;
 use oEdtk::Main;
 use oEdtk::Config 		qw(config_read);
 use oEdtk::DBAdmin 		qw(db_connect);
-use oEdtk::Outmngr 	0.28	qw(omgr_stats);
 
 use Date::Calc		qw(Today Gmtime Week_of_Year);
 my $YWWD;

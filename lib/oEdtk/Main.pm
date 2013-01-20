@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.7125;		# release number : Y.YSSS -> Year, Sequence
+our $VERSION 	=0.8012;		# release number : Y.YSSS -> Year, Sequence
 
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
@@ -908,8 +908,8 @@ sub oe_app_usage() {		# migrer oe_app_usage
 	$1 ? $app="application.pl" : $app=$1;
 	print STDOUT << "EOF";
 
- Usage :	$app <input_data_file> [job_name] [options]
- Usage :	$app --noinputfiles [job_name] [options]
+ Usage :	$app </source/input/file.dat> [job] [options]
+ Usage :	$app --noinputfiles [job] [options]
  options :
 
 		--help		this message
