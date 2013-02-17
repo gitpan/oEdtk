@@ -33,14 +33,17 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.8012;
+our $VERSION		= 0.8014;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(stats_iddest stats_week stats_month);
 
 
 sub new {
 	my ($class, $source, %params) = @_;
-	$source = $source || "";
+	$source = $source || ($ARGV[1] || $ARGV[0]);
+	if ($source=~/^\-/){
+			$source = $ARGV[0];
+	}
 	my $cfg = config_read('EDTK_DB');
 
 	# Load the dictionary to normalize entity names.
