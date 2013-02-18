@@ -6,16 +6,16 @@ use warnings;
 use File::Basename;
 use Sys::Hostname;
 use Text::CSV;
-use Date::Calc		qw(Today Gmtime Week_of_Year);
+use Date::Calc		qw(Today Gmtime Week_of_Year Add_Delta_Days);
 use List::Util		qw(max sum);
 use oEdtk::Config	qw(config_read);
-use oEdtk::DBAdmin	qw(db_connect create_table_INDEX @INDEX_COLS);
+use oEdtk::DBAdmin	qw(db_connect db_backup_agent create_table_INDEX @INDEX_COLS);
 use POSIX			qw(strftime);
 use DBI;
 # use Sys::Hostname;
 
 use Exporter;
-our $VERSION	= 0.8012;		# release number : Y.YSSS -> Year, Sequence 
+our $VERSION	= 0.8024;		# release number : Y.YSSS -> Year, Sequence 
 our @ISA		= qw(Exporter);
 our @EXPORT_OK	= qw(
 			omgr_check_acquit
@@ -318,9 +318,10 @@ sub _omgr_insert($$$$$) {
 	my @needed = ();
 
 	foreach my $encref (@encrefs) {
-		# L'ERREUR EST ICI : ON DEVRAIT AJOUTER DES LIGNES D'INDEX PAR ENCART AVEC TYPIMP = E xxxxxx
+		# L'ERREUR EST ICI : ON DEVRAIT AJOUTER DES LIGNES D'INDEX PAR ENCART AVEC TYPIMP = E dupliqué pour chaque encart à partir de la dernière ligne du document xxxxxx
 		my $enc = $pdbh->selectrow_hashref($sth, undef, $encref) or die ("ERROR: in omgr for encref $encref " . $pdbh->errstr . "\n");
-		if (defined($enc->{'ED_DEBVALID'}) && length($enc->{'ED_DEBVALID'}) > 0) {
+		#warn "DEBUG: looking for encart ".$enc->{'ED_REFIMP'}." for $now\n";
+		if (defined($enc->{'ED_DEBVALID'}) && length($enc->{'ED_DEBVALID'}) > 0 && $enc->{'ED_DEBVALID'} ne '99999999') {
 			next if $now < $enc->{'ED_DEBVALID'};
 		}
 		if (defined($enc->{'ED_FINVALID'}) && length($enc->{'ED_FINVALID'}) > 0) {
@@ -330,7 +331,7 @@ sub _omgr_insert($$$$$) {
 		push(@needed, $encref);
 	}
 	my $listerefenc = join(', ', @needed) || "none"; # xxx réfléchir impact mise sous pli, en dur ou paramétrable dans table supports ?
-
+	#warn "DEBUG: selected listerefenc => $listerefenc\n";
 # POUR GÉRER DYNAMIQUEMENT L'INDEX, LES OPÉRATIONS DE LECTURE CI-DESSUS DEVRAIENT 
 # soit intégrer la boucle de lecture de l'index, soit être remplacée par des liens
 ################################################################################
@@ -620,6 +621,8 @@ sub _omgr_filiere($$$$$$) {
 			my $sqlnbfpli = "$numencs + "
 					. ($fil->{'ED_MODEDI'} eq 'V' ? 'CEIL(ED_NBPGPLI / 2)' : 'ED_NBPGPLI');
 			# La formule calculant le poids total du pli, et les valeurs associées.
+			# xxxx la formule est fausse car $sqlnbfpli décompte déjà les encarts
+			# xxxx  il faudrait faire la somme des poids des objets recto du plis (à condition de bien avoir 1 ligne / élément)
 			my $sqlpdspli  = "$encpds + $p1->{'ED_POIDSUNIT'} + $ps->{'ED_POIDSUNIT'} * ($sqlnbfpli - 1)";
 
 			my $sql = "UPDATE " . $cfg->{'EDTK_DBI_OUTMNGR'} . " SET ED_IDFILIERE = ?, " .
@@ -731,7 +734,7 @@ sub omgr_export(%) {
 					next if @$res == 0; 
 					
 					# Calcul du nombre total de plis et de pages à notre disposition.
-					my $availplis = sum(map { $$_[0] } @$res);
+					my $availplis= sum(map { $$_[0] } @$res);
 					my $availpgs = sum(map { $$_[0] * $$_[1] } @$res);
 	
 					# Aura-t-on besoin de repasser un traitement pour ce couple (idlot/idfiliere)
@@ -1225,16 +1228,29 @@ sub omgr_check_doclibs ($){
 
 # PURGE DOCLIBS THAT ARE NO LONGER REFERENCED IN THE DATABASE.
 sub omgr_purge_fs($) {
-	my ($dbh) = @_;
+	my ($dbh) = shift;
+	db_backup_agent($dbh);
 
 	my $cfg = config_read('EDTK_DB');
 	my $dir = $cfg->{'EDTK_DIR_DOCLIB'};
 	my @doclibs = glob("$dir/*.pdf");
+	my $weeks_kept=0;
 
-	my $sql = 'SELECT DISTINCT ED_DOCLIB FROM ' . $cfg->{'EDTK_DBI_OUTMNGR'} .
-	    ' WHERE ED_SEQLOT IS NULL';
+	unless (defined ($cfg->{'EDTK_DCLIB_PURGE_WEEKS_KEPT'}) && $cfg->{'EDTK_DCLIB_PURGE_WEEKS_KEPT'} > 0){
+		warn "INFO : EDTK_DCLIB_PURGE_WEEKS_KEPT not defined for optimization purge.\n";
+	} else {
+		$weeks_kept=$cfg->{'EDTK_DCLIB_PURGE_WEEKS_KEPT'};
+	}
+
+	my ($year,$month,$day) = Today();
+	($year,$month,$day) = Add_Delta_Days($year, $month, $day, (-7*$weeks_kept));
+	my $search_date	= sprintf("%04d%02d%02d", $year,$month,$day);;
+
+	my $sql = "SELECT DISTINCT ED_DOCLIB FROM " . $cfg->{'EDTK_DBI_OUTMNGR'} .
+	    " WHERE ED_SEQLOT IS NULL OR ED_DTEDTION > '".$search_date."' ";
 
 	# Transform the list of needed doclibs into a hash for speed.
+	warn "INFO : omgr_purge_fs identifies needed doclibs to safe them.\n";
 	my %needed = map { $_->[0] => 1 } @{$dbh->selectall_arrayref($sql)};
 
 	my @torm = ();
@@ -1248,12 +1264,14 @@ sub omgr_purge_fs($) {
 			warn "INFO : Unexpected filename : \"$file\"\n";
 		}
 	}
+
+	warn "INFO : omgr_purge_fs done.\n";
 return @torm;
 }
 
 
-
 # PRIVATE, NON-EXPORTED FUNCTIONS BELOW.
+########################################
 
 # Compute a new and unique lot sequence.
 sub _get_seqlot {

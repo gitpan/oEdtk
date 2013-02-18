@@ -2,13 +2,14 @@ package oEdtk::DBAdmin;
 
 use DBI;
 use oEdtk::Config	qw(config_read);
+use POSIX			qw(strftime);
 use Text::CSV;
 use strict;
 use warnings;
 
 use Exporter;
 
-our $VERSION		= 0.8011;
+our $VERSION		= 0.8025;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(
 				csv_import
@@ -24,10 +25,51 @@ our @EXPORT_OK		= qw(
 				create_table_SUPPORTS
 				create_table_TRACKING
 				db_connect
+				db_backup_agent
 				historicize_table
+				copy_table
 				move_table
 				@INDEX_COLS
 				);
+
+
+sub move_table (@){
+	warn "INFO : method oEdtk::DBAdmin::move_table is deprecated you should use oEdtk::DBAdmin::copy_table\n";
+	copy_table (@_);
+1;
+}
+
+
+sub copy_table ($$$;$){ 
+	my ($dbh, $table_source, $table_cible, $create_option) = @_;
+	$create_option ||= "";
+
+	# check if source is empty
+	my $sql_check_source = "SELECT SIGN(COUNT(*)) FROM ".$table_source;
+	my $sth = $dbh->prepare($sql_check_source);
+	$sth->execute();
+	my $result = $sth->fetchrow_array;
+	unless ($result){
+		warn "INFO : source $table_source is empty, copy aborted\n";
+		return 1;
+	}
+
+	# preparing data copy from source to cible
+	warn "INFO : data from $table_source will be copyed into $table_cible\n";
+	if ($create_option =~/-create/i) {
+		my $sql_create	= "CREATE TABLE ".$table_cible." AS SELECT * FROM ".$table_source;
+		# en cas d'erreur, DIE pour protéger toute autre opération sur les bases (db_backup_agent, ...)
+		$dbh->do($sql_create, undef, ) or die $dbh->errstr;	
+
+	} else {
+		my $sql_insert	= "INSERT INTO  ".$table_cible." SELECT * FROM ".$table_source;
+		# en cas d'erreur, DIE pour protéger toute autre opération sur les bases (db_backup_agent, ...)
+		$dbh->do($sql_insert, undef, ) or die $dbh->errstr;	
+	}
+	
+	warn "INFO : insert done into $table_cible\n";
+1;
+}
 
 
 sub csv_import ($$$;$){
@@ -152,7 +194,7 @@ sub _db_connect1 {
 	return $dbh;	
 }
 
- 
+
 sub db_connect {
 	my ($cfg, $dsnvar, $dbargs) = @_;
 
@@ -220,25 +262,90 @@ sub historicize_table ($$$){
 	my ($dbh, $table, $suffixe) = @_;
 	my $table_cible =$table."_".$suffixe;
 		
-	move_table ($dbh, $table, $table_cible, '-create');	
+	copy_table ($dbh, $table, $table_cible, '-create');	
 
-	my $sql = "TRUNCATE TABLE $table";
+	my $sql = "TRUNCATE TABLE $table"; # LA CA DEVIENT UN 'MOVE'
 	$dbh->do($sql, undef) or die $dbh->errstr;	
 }
 
 
-sub move_table ($$$;$){
-	my ($dbh, $table_source, $table_cible, $create_option) = @_;
-	$create_option ||= "";
-	# move_table : s'assurer que la table n'est pas vide avant de la bouger !
-	my $sql_create ="CREATE TABLE ".$table_cible." AS SELECT * FROM ".$table_source;
-	my $sql_insert ="INSERT INTO  ".$table_cible." SELECT * FROM ".$table_source;
-
-	if ($create_option =~/-create/i) {
-		$dbh->do($sql_create, undef, ) or die $dbh->errstr;	
-	} else {
-		$dbh->do($sql_insert, undef, ) or die $dbh->errstr;	
+sub db_backup_agent($){
+	# purge sauvegardée des 3 tables de productions : EDTK_DBI_TRACKING EDTK_DBI_OUTMNGR EDTK_DBI_ACQUIT
+	# en fonction du paramétrage EDTK_ENTIRE_YEARS_KEPT
+	my ($dbh) = shift;
+	my $cfg		= config_read('EDTK_DB');
+	unless (defined ($cfg->{'EDTK_ENTIRE_YEARS_KEPT'}) && $cfg->{'EDTK_ENTIRE_YEARS_KEPT'} > 0){
+		warn "INFO : EDTK_ENTIRE_YEARS_KEPT not defined for optimization purge. db_backup_agent not needed.\n";
+		return 1;
 	}
+
+	my $suffixe	= strftime ("%Y%m%d", localtime);
+	$suffixe 		.="_BAK";
+	my $cur_year	= strftime ("%Y", localtime);
+
+	{ # isole le block pour les variables locales
+		# CHECK IF EDTK_DBI_TRACKING HAS OLD STATS
+		my $sql_check="SELECT COUNT(ED_TSTAMP) FROM ".$cfg->{'EDTK_DBI_TRACKING'}." WHERE ED_TSTAMP < ? ";
+		my $check	= ($cur_year - $cfg->{'EDTK_ENTIRE_YEARS_KEPT'}) . "0101000000";
+		my $sth	= $dbh->prepare($sql_check);
+
+		$sth->execute($check);
+		my $result = $sth->fetchrow_array;
+		unless ($result){
+			warn "INFO : db_backup_agent has nothing to do with ".$cfg->{'EDTK_DBI_TRACKING'}."\n";
+		} else {
+			my $cible = $cfg->{'EDTK_DBI_TRACKING'}."_".$suffixe;
+			copy_table ($dbh, $cfg->{'EDTK_DBI_TRACKING'}, $cible, '-create'); 
+			warn "INFO : db_backup_agent done with ".$cfg->{'EDTK_DBI_TRACKING'}." for data older than $check.\n";
+
+			my $sql_clean = "DELETE FROM ".$cfg->{'EDTK_DBI_TRACKING'}." WHERE ED_TSTAMP < ? ";
+			$dbh->do($sql_clean, undef, $check) or die $dbh->errstr;	
+		}
+	}
+
+	{ # isole le block pour les variables locales
+		# CHECK IF EDTK_DBI_OUTMNGR HAS OLD STATS
+		my $sql_check="SELECT COUNT(ED_DTEDTION) FROM ".$cfg->{'EDTK_DBI_OUTMNGR'}." WHERE ED_DTEDTION < ? ";
+		my $check	= ($cur_year - $cfg->{'EDTK_ENTIRE_YEARS_KEPT'}) . "0101";
+		my $sth	= $dbh->prepare($sql_check);
+
+		$sth->execute($check);
+		my $result = $sth->fetchrow_array;
+		unless ($result){
+			warn "INFO : db_backup_agent has nothing to do with ".$cfg->{'EDTK_DBI_OUTMNGR'}."\n";
+		} else {
+			my $cible = $cfg->{'EDTK_DBI_OUTMNGR'}."_".$suffixe;
+			copy_table ($dbh, $cfg->{'EDTK_DBI_OUTMNGR'}, $cible, '-create'); 
+
+			my $sql_clean = "DELETE FROM ".$cfg->{'EDTK_DBI_OUTMNGR'}." WHERE ED_DTEDTION < ? ";
+			$dbh->do($sql_clean, undef, $check) or die $dbh->errstr;	
+
+			warn "INFO : db_backup_agent done with ".$cfg->{'EDTK_DBI_OUTMNGR'}." for data older than $check.\n";
+		}
+	}
+
+	{ # isole le block pour les variables locales
+		# CHECK IF EDTK_DBI_ACQUIT HAS OLD STATS
+		my $sql_check="SELECT COUNT (ED_DTPOST) FROM ".$cfg->{'EDTK_DBI_ACQUIT'}." WHERE ED_DTPOST < ? ";
+		my $check	= ($cur_year - $cfg->{'EDTK_ENTIRE_YEARS_KEPT'}) . "0101";
+		my $sth	= $dbh->prepare($sql_check);
+
+		$sth->execute($check);
+		my $result = $sth->fetchrow_array;
+		unless ($result){
+			warn "INFO : db_backup_agent has nothing to do with ".$cfg->{'EDTK_DBI_ACQUIT'}."\n";
+		} else {
+			my $cible = $cfg->{'EDTK_DBI_ACQUIT'}."_".$suffixe;
+			copy_table ($dbh, $cfg->{'EDTK_DBI_ACQUIT'}, $cible, '-create'); 
+	
+			my $sql_clean = "DELETE FROM ".$cfg->{'EDTK_DBI_ACQUIT'}." WHERE ED_DTPOST < ? ";
+			$dbh->do($sql_clean, undef, $check) or die $dbh->errstr;	
+
+			warn "INFO : db_backup_agent done with ".$cfg->{'EDTK_DBI_ACQUIT'}." for data older than $check.\n";
+		}
+	}
+
+1;
 }
 
 

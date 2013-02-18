@@ -8,14 +8,15 @@ use oEdtk::DBAdmin	qw(db_connect);
 use oEdtk::Outmngr	qw(omgr_purge_fs omgr_lot_pending);
 use oEdtk::Messenger qw(oe_send_mail);
 
-if ($ARGV[0] =~/-h/i) {
+
+if (defined $ARGV[0] && $ARGV[0] =~/-h/i) {
 	warn "Usage : $0\n\n";
 	warn "\tThis removes used doclibs (see index_Block_refs.pl).\n";
 	exit 1;
 }
 
 
-# PURGE DES DCLIB (DE PLUS D'UNE SEMAINE) SI ELLES NE SONT PAS EN ATTENTE D'UN SEQLOT
+# PURGE DES DCLIB (DE PLUS DE EDTK_DCLIB_PURGE_WEEKS_KEPT SEMAINES) SI ELLES NE SONT PAS EN ATTENTE D'UN SEQLOT
 my $cfg = config_read('EDTK_DB', 'MAIL');
 my $dbh = db_connect($cfg, 'EDTK_DBI_DSN');
 my $dir = $cfg->{'EDTK_DIR_OUTMNGR'};

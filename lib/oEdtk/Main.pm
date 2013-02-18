@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.8012;		# release number : Y.YSSS -> Year, Sequence
+our $VERSION 	=0.8021;		# release number : Y.YSSS -> Year, Sequence
 
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
@@ -748,7 +748,7 @@ return ${$refVar};
 }
 
 
-sub oe_fmt_date($) {		# migrer oe_oe_fmt_date
+sub oe_fmt_date($) {		# migrer oe_fmt_date
 	my $date = shift;
 
 	die "ERROR: Unexpected date format: \"$date\"\n"
@@ -911,8 +911,6 @@ sub oe_app_usage() {		# migrer oe_app_usage
  Usage :	$app </source/input/file.dat> [job] [options]
  Usage :	$app --noinputfiles [job] [options]
  options :
-
-		--help		this message
 		--massmail 	to confirm mass treatment
 		--edms		to confirm edms treatment
 		--cgi
@@ -922,7 +920,7 @@ sub oe_app_usage() {		# migrer oe_app_usage
 		--input_code	input caracters encoding
 				(ie : --input_code=iso-8859-1)
 		--noinputfiles	no data file needed for treatment
-
+		--help		this message
 
 EOF
 oe_list_encodings();

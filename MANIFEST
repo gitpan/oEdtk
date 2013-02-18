@@ -39,7 +39,7 @@ lib/oEdtk/lib/db_Edit_Tracking_Table.pl
 lib/oEdtk/lib/db_historicize_ALL.pl
 lib/oEdtk/lib/db_historicize_index.pl
 lib/oEdtk/lib/db_historicize_tracking.pl
-lib/oEdtk/lib/db_move.pl
+lib/oEdtk/lib/db_copy.pl
 lib/oEdtk/lib/db_Schema_init.pl
 lib/oEdtk/lib/edms_process.pl
 lib/oEdtk/lib/html/edtk_ged.html
