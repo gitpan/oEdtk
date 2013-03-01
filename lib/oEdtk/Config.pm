@@ -7,7 +7,7 @@ use Config::IniFiles;
 use Sys::Hostname;
 
 use Exporter;
-our $VERSION		= 0.8011;
+our $VERSION		= 0.8031;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(config_read);
 
@@ -33,6 +33,7 @@ sub config_read(@) {
 		$ini = "$dir/iniEdtk/edtk.ini";
 	} else {
 		$ini = "$dir/iniEdtk/tplate.edtk.ini";
+		warn "INFO : accessing $ini\n";
 	}
  	my $uchost= hostname();
 	$uchost	= uc($uchost);
@@ -46,6 +47,7 @@ sub config_read(@) {
 		last if not defined $ini2 or $ini2 eq $ini or $ini2 eq 'local';
 		$ini = $ini2;
 	}
+
 
 	# Get the DEFAULT and ENVDESC sections by default, override with the optional
 	# sections that we were given, and finally with the hostname section.
@@ -85,7 +87,7 @@ sub config_read(@) {
 
 	# Expand variables inside other variables.
 	foreach my $key (keys %cfg) {
-		while ($cfg{$key} =~ s/\$(\w+)/$cfg{$1}/ge) { 
+		while ($cfg{$key} =~ s/\$(\w+)/$cfg{$1}/ge) {
 			;
 		}
 	}

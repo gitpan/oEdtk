@@ -45,7 +45,7 @@ sub emit {
 			my $macro = "\\edListNew{$self->{'name'}}";
 			foreach (@{$self->{'value'}}) {
 #				my $val = escape($_);
-				my $val = oEdtk::TexDoc::escape($_);
+				my $val = oEdtk::TexDoc::escape($_); # NOT CLEAN ! 
 #				warn "INFO : Appel à oEdtk::Doc::escape dans TexTag $val\n";
 				$macro .= "\\edListAdd{$self->{'name'}}{$val}";
 			}
@@ -84,7 +84,7 @@ my $_CFG		= config_read();
 my $_DICO_CHAR	= oEdtk::Dict->new($_CFG->{'EDTK_DICO_XLAT'}, , { section => 'LATEX' });
 
 # http://woufeil.developpez.com/tutoriels/perl/poo/
-sub escape_0 {
+sub escape_0 { # NOT CLEAN passer par l'héritage ! TexTag->TexDoc
 	my $str = shift;
 	# ESCAPE SPECIAL CARACTERS FOR TEXTAGS
 

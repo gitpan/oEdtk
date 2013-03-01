@@ -33,7 +33,7 @@ use DBI;
 
 use Exporter;
 
-our $VERSION		= 0.8014;
+our $VERSION		= 0.8022;
 our @ISA			= qw(Exporter);
 our @EXPORT_OK		= qw(stats_iddest stats_week stats_month);
 
@@ -86,9 +86,10 @@ sub new {
 
 	# Extract application name from the script name.
 	my $app = $0;
-	$app =~ s/^.*?[\/\\]?([-A-Z0-9]+)\.pl$/$1/;
+	$app =~ s/^.*?[\/\\]?([A-Z0-9-_]+)\.pl$/$1/;
 	if (length($app) > 20) {
-		$app =~ /^(.{20})/;
+		$app =~ s/\.pl$//i;
+		$app =~ /(.{20})$/;
 		warn "INFO : application name \"$app\" too long, truncated to \"$1\"\n";
 		$app = $1;
 	}
@@ -193,13 +194,13 @@ sub track {
 		}
 	}
 
-	if ($job eq 'W' || $job eq 'H') {
+	if ($job eq 'W' || $job eq 'H') { # Halt or Warn event
 		# si le job_evt est 'Warning' ou 'Halt' on gère les messages et la source
 		$values->{'ED_MESSAGE'}	=~ s/\s+/ /g;
 		$values->{'ED_MESSAGE'}	=~ s/^(.{256}).*$/$1/;
 		$values->{'ED_SOURCE'}	= $self->{'source'} if ($job eq 'H');
 
-	} elsif ($job eq 'J') {
+	} elsif ($job eq 'J') { # JOB event
 		$values->{'ED_SOURCE'}	= $self->{'source'};
 
 	} else {
@@ -395,12 +396,14 @@ sub stats_month {
 
 sub _validate_event {
 	# Job Event : looking for one of the following : 
-	#	 Job (default), Spool, Document, Line, Error, Warning, Halt
+	#	 Job (default), Spool, Document, Line, Warning, Error, Halt (critic), Reject
 	my $job = shift;
 
 	warn "INFO : Halt event in Tracking = $job\n" if ($job =~/^H/);
-	if (!defined $job || $job !~ /^([JSDLWEH])/) {
-		die "ERROR: Invalid job event : " . (defined $job ? $job : '(undef)') . "\n";
+	if (!defined $job || $job !~ /^([JSDLWEHR])/) {
+		die "ERROR: Invalid job event : " . (defined $job ? $job : '(undef)') . "\n"
+			. "\t valid events are : Job / Spool / Document / Line / Warning / Reject / Error / Halt (critic)\n"
+			;
 	}
 	return $1;
 }

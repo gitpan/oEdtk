@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use oEdtk::DBAdmin		qw(db_connect);
 use oEdtk::Messenger	qw(oe_send_mail);
 
 
-if (@ARGV > 0 or $ARGV[0] =~/-h/i) {
+if (@ARGV > 0 or ($ARGV[0] and $ARGV[0] =~/-h/i)) {
 	die "Usage: $0 \n\n\tthis will check configuration key in oEdtk.ini setup\n";
 }
 
@@ -35,7 +35,7 @@ if ($opt=~/comset/i) {
 
 warn "STARTING CHECK, loading config \n";
 my $cfg = config_read('MAIL', 'EDTK_DB', 'EDTK_STATS', 'COMPO', $opt);
-warn "\n"; 
+warn "\n";
 
 #[DEFAULT]
 push (@tCheck_access, 'EDTK_DICO');
@@ -73,7 +73,7 @@ foreach my $element (@tCheck_write){
 	} elsif (-w $cfg->{$element}) {
 		push (@tCheckMessage, "$f_element good ($cfg->{$element})\n ");
 	} else {
-		push (@tCheckMessage, "$f_element BAD, NOT WRITABLE ($cfg->{$element})\n ");	
+		push (@tCheckMessage, "$f_element BAD, NOT WRITABLE ($cfg->{$element})\n ");
 	}
 }
 push (@tCheckMessage, "\n ");
@@ -86,7 +86,7 @@ foreach my $element (@tCheck_access){
 	} elsif (-e $cfg->{$element}) {
 		push (@tCheckMessage, "$f_element good ($cfg->{$element})\n ");
 	} else {
-		push (@tCheckMessage, "$f_element BAD, DOESN'T EXIST ($cfg->{$element})\n ");	
+		push (@tCheckMessage, "$f_element BAD, DOESN'T EXIST ($cfg->{$element})\n ");
 	}
 }
 push (@tCheckMessage, "\n ");

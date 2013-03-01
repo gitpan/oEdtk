@@ -1,12 +1,12 @@
 #	Makefile.PL -- Makefile template for oEdtk.
 #	This file is part of the "oEdtk" module package.
 #
-#	SEE README FILE 
+#	SEE README FILE
 #	*******************************************************************
 #	These modules are under GNU GENERAL PUBLIC LICENSE (see COPYING file)
 #	You can use oEdtk as is without any warranty.
 #
-#	Copyright (c) 2005-2011  David AUNAY - GJ CHAILLOU DOMINGO
+#	Copyright (c) 2005-2013  David AUNAY - GJ CHAILLOU DOMINGO
 #
 #	See COPYRIGHT section in oEdtk.pm for usage and distribution rights.
 use POSIX;
@@ -30,9 +30,10 @@ WriteMakefile(
 	NAME			=> 'oEdtk',
 	VERSION_FROM	=> 'lib/oEdtk.pm',
 	PREREQ_PM		=> {
-		# dmake				=> 0,		
+		# dmake				=> 0,
 		Archive::Zip			=> 0,
 		charnames				=> 0,
+		DBD::Oracle			=> 0,
 		Config::IniFiles 		=>'2.30',
 		Cwd					=> 0,
 		Data::Dumper			=> 0,

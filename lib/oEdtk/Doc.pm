@@ -8,6 +8,7 @@ use oEdtk::Config (config_read);
 # a newline character.
 my $LINE_CUTOFF = 120;
 
+
 sub new {
 	my ($class) = @_;
 

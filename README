@@ -31,13 +31,13 @@
 	
 	INSTALLATION
 	***************************************************************************
-
 	With ActivPerl distribution, you can use PPM to install oEdtk module.
 	With all perl distributions you can use CPAN to install oEdtk module.
 	At least, you can download the last release from http://www.cpan.org/
 	
 	BEFORE installation, you have to setup XML-LibXML :
 	- windows : you have to setup XML-LibXML with PPM
+				you should also install dmake utils with PPM
 	- Linux   : you have to setup XML-LibXML with your distribution's  
 				package installer (or apt-get install)
 	
@@ -47,13 +47,6 @@
 	make test
 	make install
 	make clean
-	
-
-	IN CASE OF TROUBLES FOR libxml2 SETUP, YOU SHOULD RATHER USE
-		perl Makefile.PL LIBS='-L/usr/lib' INC='-I/usr/include/libxml2'
-			where your paths should point whereis your libxml2
-		or simply install libxml-libxml-perl (with apt for exemple)
-
 
 	
 	COPYRIGHT AND LICENCE
@@ -69,5 +62,5 @@
 
 	AUTHORS
 	***************************************************************************
-	D Aunay, G Chaillou Domingo, M Henrion 2005-2011
+	D Aunay, G Chaillou Domingo, M Henrion, G Ballin 2005-2013
 	  		

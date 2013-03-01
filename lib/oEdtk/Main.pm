@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION 	=0.8021;		# release number : Y.YSSS -> Year, Sequence
+our $VERSION 	=0.8022;		# release number : Y.YMMS -> Year, Month, Sequence
 
 our @ISA	=	qw(Exporter);
 our @EXPORT 	= 	qw(
@@ -923,6 +923,7 @@ sub oe_app_usage() {		# migrer oe_app_usage
 		--help		this message
 
 EOF
+# 		--notracking	halt tracking, do not track
 oe_list_encodings();
 exit 1;
 }

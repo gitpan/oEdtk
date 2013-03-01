@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               oEdtk
-version:            0.8022
+version:            0.8031
 abstract:           ~
 author:
     - oEdtk group <oedtk@free.fr>
@@ -17,6 +17,7 @@ requires:
     Cwd:                  0
     Data::Dumper:         0
     Date::Calc:           0
+    DBD::Oracle:          0
     DBI:                  1.60
     Digest::MD5:          0
     Email::Sender::Simple:  0

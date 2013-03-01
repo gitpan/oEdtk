@@ -25,13 +25,14 @@ lib/oEdtk/iniEdtk/tplate.edtk.ini
 lib/oEdtk/lang/en
 lib/oEdtk/lang/es
 lib/oEdtk/lang/fr
+lib/oEdtk/lib/acq_Load.pl
 lib/oEdtk/lib/cgi-bin/edtk.cgi
 lib/oEdtk/lib/cgi-bin/edtk_ged.cgi
 lib/oEdtk/lib/cgi-bin/edtk_inged.cgi
 lib/oEdtk/lib/cgi-bin/edtk_para.cgi
 lib/oEdtk/lib/check_oEdtk_ini.pl
-lib/oEdtk/lib/acq_Load.pl
 lib/oEdtk/lib/cob2pm.pl
+lib/oEdtk/lib/db_copy.pl
 lib/oEdtk/lib/db_Create_Acq_Table.pl
 lib/oEdtk/lib/db_Create_Params_Table.pl
 lib/oEdtk/lib/db_Create_Tracking_Table.pl
@@ -39,7 +40,6 @@ lib/oEdtk/lib/db_Edit_Tracking_Table.pl
 lib/oEdtk/lib/db_historicize_ALL.pl
 lib/oEdtk/lib/db_historicize_index.pl
 lib/oEdtk/lib/db_historicize_tracking.pl
-lib/oEdtk/lib/db_copy.pl
 lib/oEdtk/lib/db_Schema_init.pl
 lib/oEdtk/lib/edms_process.pl
 lib/oEdtk/lib/html/edtk_ged.html
@@ -65,6 +65,7 @@ lib/oEdtk/libXls.pm
 lib/oEdtk/logger.pm
 lib/oEdtk/Main.pm
 lib/oEdtk/Messenger.pm
+lib/oEdtk/OmgrIdxDoc.pm
 lib/oEdtk/Outmngr.pm
 lib/oEdtk/README
 lib/oEdtk/Record.pm
