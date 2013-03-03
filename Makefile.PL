@@ -33,7 +33,7 @@ WriteMakefile(
 		# dmake				=> 0,
 		Archive::Zip			=> 0,
 		charnames				=> 0,
-		DBD::Oracle			=> 0,
+		# DBD::Oracle			=> 0,
 		Config::IniFiles 		=>'2.30',
 		Cwd					=> 0,
 		Data::Dumper			=> 0,
