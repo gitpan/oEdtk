@@ -7,9 +7,14 @@ use Config::IniFiles;
 use Sys::Hostname;
 
 use Exporter;
-our $VERSION		= 0.8031;
+our $VERSION		= 0.8034;
 our @ISA			= qw(Exporter);
-our @EXPORT_OK		= qw(config_read);
+our @EXPORT_OK		= qw(config_read get_ini_path);
+my  $_INI_PATH;
+
+sub get_ini_path(){
+	return $_INI_PATH;
+}
 
 
 sub config_read(@) {
@@ -42,6 +47,7 @@ sub config_read(@) {
 	for (;;) {
 		die "ERROR: config file not found or unreadable: $ini\n" unless -r $ini;
 		tie %allcfg, 'Config::IniFiles', (-file => $ini, -default => 'DEFAULT');
+		$_INI_PATH = $ini;
 
 		my $ini2 = (tied %allcfg)->val($uchost, 'iniEdtk');
 		last if not defined $ini2 or $ini2 eq $ini or $ini2 eq 'local';

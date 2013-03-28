@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Exporter;
-our $VERSION	= 0.8031;
+our $VERSION	= 0.8035;
 our @ISA	= qw(Exporter);
 our @EXPORT_OK	= qw(
 			EDMS_edidx_build
@@ -12,6 +12,7 @@ our @EXPORT_OK	= qw(
 			EDMS_idldoc_seqpg
 			EDMS_idx_create_csv
 			EDMS_import
+			EDMS_package
 			EDMS_prepare
 			EDMS_process
 			EDMS_process_zip
@@ -42,14 +43,40 @@ sub EDMS_idldoc_seqpg($$) {
 	return sprintf("${idldoc}_%07d", $page);
 }
 
-# Package a PDF along with its index in a zip archive for later processing.
+# Package a DOC along with its index in a zip archive for later processing.
 sub EDMS_prepare($$$$) {
-	my ($app, $idldoc, $doc_path, $idx_path) = @_;
+	my $app	= shift;
+	my $idldoc= shift;
+	my $doc_path=shift;
+	my $idx_path=shift;
+	my $doc = "$app.$idldoc.pdf";
 
 	my $cfg = config_read('EDOCMNGR');
 	my $zip = Archive::Zip->new();
-	$zip->addFile($doc_path, "$app.$idldoc.pdf");
+	$zip->addFile($doc_path, $doc);
 	$zip->addFile($idx_path, basename($idx_path));
+
+	my $zipfile = "$cfg->{'EDTK_DIR_EDOCMNGR'}/$app.$idldoc.out.zip";
+	die "ERROR: Could not create zip achive \"$zipfile\"\n"
+	    unless $zip->writeToFileNamed($zipfile) == AZ_OK;
+	print "$zipfile\n";
+
+return 1;
+}
+
+
+# Package some documents along with one index in a zip archive.
+sub EDMS_package($$@) {
+	my $app	= shift;
+	my $idldoc= shift;
+	my @elements=@_;
+
+	my $cfg = config_read('EDOCMNGR');
+	my $zip = Archive::Zip->new();
+
+	foreach (@elements){
+		$zip->addFile($_, basename($_));
+	}
 
 	my $zipfile = "$cfg->{'EDTK_DIR_EDOCMNGR'}/$app.$idldoc.out.zip";
 	die "ERROR: Could not create zip achive \"$zipfile\"\n"

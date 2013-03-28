@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use oEdtk;
-use oEdtk::Config		qw(config_read);
+use oEdtk::Config		qw(config_read get_ini_path);
 use oEdtk::DBAdmin		qw(db_connect);
 use oEdtk::Messenger	qw(oe_send_mail);
 
@@ -15,6 +15,7 @@ if (@ARGV > 0 or ($ARGV[0] and $ARGV[0] =~/-h/i)) {
 
 my $opt = $ARGV[0] || "";
 my (@tCheck_access, @tCheck_write, @tCheckMessage);
+
 
 if ($opt=~/comset/i) {
 	# deprecated
@@ -33,8 +34,8 @@ if ($opt=~/comset/i) {
 	push (@tCheck_access, 'C7_WID_PDF');
 }
 
-warn "STARTING CHECK, loading config \n";
 my $cfg = config_read('MAIL', 'EDTK_DB', 'EDTK_STATS', 'COMPO', $opt);
+warn "STARTING CHECK, loading config from " . get_ini_path() ."\n";
 warn "\n";
 
 #[DEFAULT]

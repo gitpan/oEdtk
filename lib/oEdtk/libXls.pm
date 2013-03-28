@@ -10,7 +10,7 @@ use oEdtk::Config	qw(config_read);
 
 use Exporter;
 
-our $VERSION 	= 0.463; 				
+our $VERSION 	= 0.463;
 our @ISA 	= qw(Exporter);
 our @EXPORT 	= qw(prod_Xls_Init
 		     prod_Xls_New		prod_Xls_Insert_Val
@@ -20,7 +20,7 @@ our @EXPORT 	= qw(prod_Xls_Init
 		     %XLS_FORMAT);
 
 
-my $LOCAL_REF_WORKBOOK; 
+my $LOCAL_REF_WORKBOOK;
 my $CFG = config_read();
 
  # METHODES ASSOCIEES A LA GESTION DU FORMAT EXCEL
@@ -31,8 +31,8 @@ my $CFG = config_read();
  my $MAXCOL =32;
  my $FNTSZ1 =12;
  my $FNTSZ2 =10;
- my $FNTSZ3 = 8; 
- my $SHEET  = 0; 
+ my $FNTSZ3 = 8;
+ my $SHEET  = 0;
  our %XLS_FORMAT;
 
  my @TAB_VALUE;
@@ -107,11 +107,12 @@ sub prod_Xls_New (;$$){
 		return prod_Xls_Init($HEADER_LEFT,$HEADER_CENTER,$HEADER_RIGHT);
 	} else {
 		die "No init found for prodEdtkXls\n";
-	}		
+	}
 }
 
+
 sub prod_Xls_Col_Init{
-	# INITIALISATION ET DÉFINITION DES PROPRIÉTÉS STYLES ET LARGEUR DES COLONNES 
+	# INITIALISATION ET DÉFINITION DES PROPRIÉTÉS STYLES ET LARGEUR DES COLONNES
 	my $paire	="";
 	my $cpt	=0;
 	while (my $paire =shift){
@@ -169,7 +170,7 @@ sub prod_Xls_Set_Sheet($) {
 
 	my $i=0;
 	# SI LES COLONNES SONT DÉFINIES EN STYLES ET EN LARGEUR, ON PREND EN COMPTE LES PROPRIÉTÉS
-	while ( $TAB_COL_SIZE[$i][0] ){ 		
+	while ( $TAB_COL_SIZE[$i][0] ){
 		$worksheet ->set_column($i, $i, $TAB_COL_SIZE[$i][1],  $XLS_FORMAT{$TAB_COL_SIZE[$i][0]});
 		$i++;
 	}
@@ -177,14 +178,14 @@ sub prod_Xls_Set_Sheet($) {
 }
 
 sub prod_Xls_Insert_Val{
-	# AJOUT DE LA OU LES VALEURS TRANSMISES AU TABLEAU DE VALEURS LOCAL 
+	# AJOUT DE LA OU LES VALEURS TRANSMISES AU TABLEAU DE VALEURS LOCAL
 
 	@TAB_VALUE=(@TAB_VALUE, @_);
 	1;
 }
 
 sub prod_Xls_Edit_Ligne (;$$){
-	# LA FONCTION PEUT RECEVOIR EN PARAMÈTRE 
+	# LA FONCTION PEUT RECEVOIR EN PARAMÈTRE
 	#	$format = UNE INSTRUCTUCTION DE FORMATTAGE UNIQUE POUR LA LIGNE COURANTE
 	#	$f_tete_col = "HEAD" DESIGNE UNE TETE DE COLONNE A REPETER SUR CHAQUE PAGE
 	my $oldFormat	=0;
@@ -194,7 +195,7 @@ sub prod_Xls_Edit_Ligne (;$$){
 
 	# ON ÉDITE PAS LES LIGNES SANS VALORISATIONS (COMPLÈTEMENT VIDES)
 	if ($#TAB_VALUE == -1) {
-		return "OK", $XLSROW; 	# Sortie 
+		return "OK", $XLSROW; 	# Sortie
 	}
 
 	my $worksheet	=${$LOCAL_REF_WORKBOOK}->sheets($SHEET);
@@ -236,7 +237,7 @@ sub prod_Xls_Edit_Ligne (;$$){
 				$format=$1;
 				$format_unique=1;
 			} else {
-				$format_unique=0;        
+				$format_unique=0;
         		}
 			# OUVERTURE D'UN NOUVEAU FICHIER EXCEL
 			if ($XLSROW != 0) {
@@ -272,7 +273,7 @@ sub prod_Xls_Edit_Ligne (;$$){
 		$statut="NEW";
 
 		&prod_Xls_New('HEAD');
-		&prod_Xls_Insert_Val ("NEW_LINE");	
+		&prod_Xls_Insert_Val ("NEW_LINE");
 		#print "XLSROW=$XLSROW  - \$#TAB_VALUE=$#TAB_VALUE /insert head @TAB_VALUE \n" ;
 	}
 
@@ -286,7 +287,7 @@ sub prod_Xls_Head(){
 	&prod_Xls_Insert_Val (@TAB_HEAD);
 	1;
 }
-	
+
 sub prod_Xls_Set_Format(){
 	#  DEFINITION DES FORMATS PAR DEFAUT
 	$XLS_FORMAT{'T1'} =${$LOCAL_REF_WORKBOOK}->add_format();
@@ -335,7 +336,7 @@ sub prod_Xls_Set_Format(){
 	$XLS_FORMAT{'AL'} ->set_size($FNTSZ3);
 	$XLS_FORMAT{'AL'} ->set_num_format('@'); # POUR EMPECHER EXCEL DE RECONVERTIR LES VALEURS NUMÉRIQUES EN NUMÉRIQUES
 	$XLS_FORMAT{'AL'}->set_text_wrap();
-		
+
 	$XLS_FORMAT{'AR'} =${$LOCAL_REF_WORKBOOK}->add_format();
 	$XLS_FORMAT{'AR'} ->set_align('right');
 	$XLS_FORMAT{'AR'} ->set_border(1);
@@ -355,7 +356,7 @@ sub prod_Xls_Set_Format(){
 	$XLS_FORMAT{'Ac'} ->set_size($FNTSZ3);
 	$XLS_FORMAT{'Ac'} ->set_num_format('@'); # POUR EMPECHER EXCEL DE RECONVERTIR LES VALEURS NUMÉRIQUES EN NUMÉRIQUES
 	$XLS_FORMAT{'Ac'}->set_text_wrap();
-			
+
 	$XLS_FORMAT{'NR'} =${$LOCAL_REF_WORKBOOK}->add_format();
 	$XLS_FORMAT{'NR'} ->set_size($FNTSZ3);
 	$XLS_FORMAT{'NR'} ->set_num_format('# ### ##0.00'); # UN MONTANT DOIT ÊTRE PASSÉ AU FORMAT US
