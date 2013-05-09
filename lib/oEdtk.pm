@@ -6,8 +6,8 @@ BEGIN {
 		use strict;
 
 		# a.ammr a.a année d'existence, mm mois, r release
-		$VERSION	= 0.8051; 
-		$YEAR	= '2013';
+		$VERSION	= 0.8052; 
+		my $YEAR	= '2013';
 		@ISA		= qw(Exporter);
 		@EXPORT	= qw(oEdtk_release);
 }
@@ -18,7 +18,7 @@ BEGIN {
 
 sub oEdtk_release {
 	# warn "DEBUG: >$?< \nDEBUG: >$@<\n";
-	return "\n(c) 2005-$YEAR daunay\@cpan.org - edtk\@free.fr - oEdtk v$VERSION\n";
+	return "\n(c) 2005-2013 daunay\@cpan.org - edtk\@free.fr - oEdtk v$VERSION\n";
 }
 
 
@@ -353,14 +353,14 @@ Example :
 
 =head1 AUTHORS
 
-oEdtk by D Aunay, GJ Chaillou Domingo, M Henrion, G Ballin 2005-$YEAR.
+oEdtk by D Aunay, GJ Chaillou Domingo, M Henrion, G Ballin 2005-2013.
 
 This pod text by GJ Chaillou Domingo, M Henrion and others.
 Perl by Larry Wall and the C<perl5-porters>.
 
 =head1 COPYRIGHT
 
-The oEdtk module is Copyright (c) 2005-$YEAR D Aunay, GJ Chaillou Domingo, M Henrion, G Ballin.
+The oEdtk module is Copyright (c) 2005-2013 D Aunay, GJ Chaillou Domingo, M Henrion, G Ballin.
 All rights reserved.
 
 You may distribute under the terms of either the GNU General Public

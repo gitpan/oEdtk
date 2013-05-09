@@ -87,4 +87,5 @@ README
 t/cp_fr_fixe.dat
 t/test.t
 t/test_fixe_oEdtk.pl
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
