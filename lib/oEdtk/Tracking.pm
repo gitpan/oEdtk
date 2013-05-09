@@ -341,7 +341,7 @@ sub stats_iddest {
         #    'ED_COUNT' => '2',
         #    'ED_APP' => 'CTP-AC001',
         #    'ED_IDDEST' => '0000428193',
-        #    'ED_CORP' => 'MNT',
+        #    'ED_CORP' => 'CORP_1',
         #    'ED_WEEK' => 'S50',
         #    'ED_EMET' => 'P004'
         #  },
@@ -383,7 +383,7 @@ sub stats_month {
 #	print Dumper($rows);
 #          'ED_MONTH' => 'M12',
 #          'ED_COUNT' => '1',
-#          'ED_CORP' => 'MNT',
+#          'ED_CORP' => 'CORP_1',
 #          'ED_APP' => 'DEV-CAMELEON',
 #          'ED_EMET' => '37043'
 
